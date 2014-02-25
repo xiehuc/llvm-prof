@@ -47,7 +47,7 @@
 
 #include "llvm/Transforms/Instrumentation.h"
 #include "ProfilingUtils.h"
-#include "llvm/Analysis/PathNumbering.h"
+#include "PathNumbering.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/InstrTypes.h"
@@ -62,6 +62,8 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
+#include "InitializeProfilerPass.h"
+#include "ProfileInstrumentations.h"
 #include <vector>
 
 #define HASH_THRESHHOLD 100000

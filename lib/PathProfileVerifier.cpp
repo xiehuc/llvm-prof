@@ -14,13 +14,15 @@
 #define DEBUG_TYPE "path-profile-verifier"
 
 #include "llvm/Analysis/Passes.h"
-#include "llvm/Analysis/PathProfileInfo.h"
-#include "llvm/Analysis/ProfileInfoTypes.h"
+#include "PathProfileInfo.h"
+#include "ProfileInfoTypes.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
+#include "InitializeProfilerPass.h"
+#include "ProfileInstrumentations.h"
 #include <stdio.h>
 
 using namespace llvm;

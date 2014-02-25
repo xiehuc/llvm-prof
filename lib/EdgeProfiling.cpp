@@ -25,6 +25,8 @@
 #include "llvm/Pass.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
+#include "InitializeProfilerPass.h"
+#include "ProfileInstrumentations.h"
 #include <set>
 using namespace llvm;
 

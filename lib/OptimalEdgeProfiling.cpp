@@ -19,14 +19,16 @@
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/Passes.h"
-#include "llvm/Analysis/ProfileInfo.h"
-#include "llvm/Analysis/ProfileInfoLoader.h"
+#include "ProfileInfo.h"
+#include "ProfileInfoLoader.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
+#include "InitializeProfilerPass.h"
+#include "ProfileInstrumentations.h"
 using namespace llvm;
 
 STATISTIC(NumEdgesInserted, "The # of edges inserted.");

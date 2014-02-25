@@ -34,7 +34,7 @@
 #include "llvm/Support/DebugLoc.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/InstIterator.h"
-#include "llvm/Support/PathV2.h"
+#include "PathV2.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Utils/ModuleUtils.h"
 #include <string>
@@ -410,7 +410,7 @@ void GCOVProfiler::emitProfileNotes() {
     DICompileUnit CU(CU_Nodes->getOperand(i));
     std::string ErrorInfo;
     raw_fd_ostream out(mangleName(CU, "gcno").c_str(), ErrorInfo,
-                       raw_fd_ostream::F_Binary);
+                       sys::fs::F_Binary);
     out.write("oncg", 4);
     out.write(ReversedVersion, 4);
     out.write("MVLL", 4);

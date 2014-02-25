@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 #define DEBUG_TYPE "profile-verifier"
 #include "llvm/Analysis/Passes.h"
-#include "llvm/Analysis/ProfileInfo.h"
+#include "ProfileInfo.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Pass.h"
@@ -24,6 +24,7 @@
 #include "llvm/Support/Format.h"
 #include "llvm/Support/InstIterator.h"
 #include "llvm/Support/raw_ostream.h"
+#include "InitializeProfilerPass.h"
 #include <set>
 using namespace llvm;
 

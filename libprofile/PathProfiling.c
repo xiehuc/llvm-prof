@@ -14,7 +14,7 @@
 \*===----------------------------------------------------------------------===*/
 
 #include "Profiling.h"
-#include "llvm/Analysis/ProfileInfoTypes.h"
+#include "ProfileInfoTypes.h"
 #include "llvm/Support/DataTypes.h"
 #include <sys/types.h>
 #if !defined(_MSC_VER) && !defined(__MINGW32__)

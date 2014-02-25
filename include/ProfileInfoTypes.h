@@ -27,7 +27,7 @@ enum ProfilingStorageType {
   ProfilingHash = 2
 };
 
-#include "llvm/Analysis/ProfileDataTypes.h"
+#include "ProfileDataTypes.h"
 
 /*
  * The header for tables that map path numbers to path counters.

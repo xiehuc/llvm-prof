@@ -15,8 +15,8 @@
 #include "llvm/Analysis/Passes.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/Statistic.h"
-#include "llvm/Analysis/ProfileInfo.h"
-#include "llvm/Analysis/ProfileInfoLoader.h"
+#include "ProfileInfo.h"
+#include "ProfileInfoLoader.h"
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/InstrTypes.h"
 #include "llvm/IR/Module.h"
@@ -26,6 +26,8 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/raw_ostream.h"
+#include "InitializeProfilerPass.h"
+#include "ProfileInstrumentations.h"
 #include <set>
 using namespace llvm;
 

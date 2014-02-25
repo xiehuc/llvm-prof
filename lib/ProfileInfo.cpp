@@ -12,13 +12,15 @@
 //
 //===----------------------------------------------------------------------===//
 #define DEBUG_TYPE "profile-info"
-#include "llvm/Analysis/ProfileInfo.h"
+#include "ProfileInfo.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/Analysis/Passes.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/CFG.h"
+#include "InitializeProfilerPass.h"
+#include "ProfileInstrumentations.h"
 #include <limits>
 #include <queue>
 #include <set>

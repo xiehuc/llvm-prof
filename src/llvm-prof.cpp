@@ -15,8 +15,8 @@
 
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/Analysis/Passes.h"
-#include "llvm/Analysis/ProfileInfo.h"
-#include "llvm/Analysis/ProfileInfoLoader.h"
+#include "ProfileInfo.h"
+#include "ProfileInfoLoader.h"
 #include "llvm/Assembly/AssemblyAnnotationWriter.h"
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/IR/InstrTypes.h"
