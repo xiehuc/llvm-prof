@@ -13,3 +13,7 @@ target_link_libraries(llvm-prof
 	${LLVM_LIBRARIES}
 	LLVMProfiling-shared
 	)
+
+install(TARGETS llvm-prof
+	DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
+	)

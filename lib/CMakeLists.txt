@@ -46,3 +46,6 @@ target_link_libraries(LLVMProfiling-shared
 set_target_properties(LLVMProfiling-shared
 	PROPERTIES
 	OUTPUT_NAME "LLVMProfiling" )
+
+install(TARGETS LLVMProfiling-static LLVMProfiling-shared
+	DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
