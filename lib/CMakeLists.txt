@@ -1,6 +1,6 @@
 set(SOURCES
 	EdgeProfiling.cpp
-	GCOVProfiling.cpp
+	#GCOVProfiling.cpp					#seems llvm 3.4 keeps gcov profiling
 	OptimalEdgeProfiling.cpp
 	PathProfileInfo.cpp
 	PathProfileVerifier.cpp
@@ -22,14 +22,12 @@ include_directories(
 	${LLVM_INCLUDE_DIRS}
 	../include
 	)
-llvm_map_components_to_libraries(LLVM_CORE_LIBS 
-	analysis transformutils)
 
 add_library(LLVMProfiling-static STATIC
 	${SOURCES}
 	)
 target_link_libraries(LLVMProfiling-static
-	${LLVM_CORE_LIBS}
+	${LLVM_DYNAMIC_LIBRARY}
 	)
 
 set_target_properties(LLVMProfiling-static
@@ -40,7 +38,7 @@ add_library(LLVMProfiling-shared SHARED
 	${SOURCES}
 	)
 target_link_libraries(LLVMProfiling-shared
-	${LLVM_CORE_LIBS}
+	${LLVM_DYNAMIC_LIBRARY}
 	)
 
 set_target_properties(LLVMProfiling-shared
