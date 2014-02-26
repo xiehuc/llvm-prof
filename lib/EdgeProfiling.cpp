@@ -38,7 +38,7 @@ namespace {
   public:
     static char ID; // Pass identification, replacement for typeid
     EdgeProfiler() : ModulePass(ID) {
-      initializeEdgeProfilerPass(*PassRegistry::getPassRegistry());
+      //initializeEdgeProfilerPass(*PassRegistry::getPassRegistry());
     }
 
     virtual const char *getPassName() const {

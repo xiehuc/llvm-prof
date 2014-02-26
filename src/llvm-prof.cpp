@@ -140,6 +140,9 @@ namespace {
     }
 
     bool runOnModule(Module &M);
+	virtual const char* getPassName() const {
+		return "Print Profile Info";
+	}
   };
 }
 
