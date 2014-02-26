@@ -366,6 +366,10 @@ INITIALIZE_PASS(PathProfiler, "insert-path-profiling",
                 "Insert instrumentation for Ball-Larus path profiling",
                 false, false)
 
+static RegisterPass<PathProfiler> X("insert-path-profiling",
+                "Insert instrumentation for Ball-Larus path profiling",
+                false, false);
+
 ModulePass *llvm::createPathProfilerPass() { return new PathProfiler(); }
 
 namespace llvm {

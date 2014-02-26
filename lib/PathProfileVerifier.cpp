@@ -60,6 +60,10 @@ INITIALIZE_PASS(PathProfileVerifier, "path-profile-verifier",
                 "Compare the path profile derived edge profile against the "
                 "edge profile.", true, true)
 
+static RegisterPass<PathProfileVerifier> X("path-profile-verifier",
+                "Compare the path profile derived edge profile against the "
+                "edge profile.", true, true);
+
 ModulePass *llvm::createPathProfileVerifierPass() {
   return new PathProfileVerifier();
 }

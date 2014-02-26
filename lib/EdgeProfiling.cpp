@@ -51,6 +51,10 @@ char EdgeProfiler::ID = 0;
 INITIALIZE_PASS(EdgeProfiler, "insert-edge-profiling",
                 "Insert instrumentation for edge profiling", false, false)
 
+// regist pass for opt load
+static RegisterPass<EdgeProfiler> X("insert-edge-profiling",
+		"Insert instrumentation for edge profiling",false,false);
+
 ModulePass *llvm::createEdgeProfilerPass() { return new EdgeProfiler(); }
 
 bool EdgeProfiler::runOnModule(Module &M) {

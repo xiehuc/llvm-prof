@@ -376,6 +376,9 @@ INITIALIZE_AG_DEPENDENCY(ProfileInfo)
 INITIALIZE_PASS_END(ProfileVerifierPass, "profile-verifier",
                 "Verify profiling information", false, true)
 
+static RegisterPass<ProfileVerifierPass> X("profile-verifier",
+                "Verify profiling information", false, true);
+
 namespace llvm {
   FunctionPass *createProfileVerifierPass() {
     return new ProfileVerifierPass(ProfileVerifierDisableAssertions); 

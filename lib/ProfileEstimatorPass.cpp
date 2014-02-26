@@ -80,6 +80,9 @@ INITIALIZE_PASS_DEPENDENCY(LoopInfo)
 INITIALIZE_AG_PASS_END(ProfileEstimatorPass, ProfileInfo, "profile-estimator",
                 "Estimate profiling information", false, true, false)
 
+static RegisterPass<ProfileEstimatorPass> X("profile-estimator",
+                "Estimate profiling information", false, true);
+
 namespace llvm {
   char &ProfileEstimatorPassID = ProfileEstimatorPass::ID;
 

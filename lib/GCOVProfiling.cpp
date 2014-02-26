@@ -140,6 +140,9 @@ char GCOVProfiler::ID = 0;
 INITIALIZE_PASS(GCOVProfiler, "insert-gcov-profiling",
                 "Insert instrumentation for GCOV profiling", false, false)
 
+static RegisterPass<GCOVProfiler> X("insert-gcov-profiling",
+                "Insert instrumentation for GCOV profiling", false, false);
+
 ModulePass *llvm::createGCOVProfilerPass(const GCOVOptions &Options) {
   return new GCOVProfiler(Options);
 }

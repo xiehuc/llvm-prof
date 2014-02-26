@@ -93,6 +93,7 @@ INITIALIZE_AG_PASS(PathProfileLoaderPass, PathProfileInfo,
                    "Load path profile information from file",
                    false, true, false)
 
+
 char &llvm::PathProfileLoaderPassID = PathProfileLoaderPass::ID;
 
 // link PathLoader as a pass, and make it available as an optimisation
