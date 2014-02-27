@@ -79,8 +79,8 @@ INITIALIZE_PASS_BEGIN(ProfileMetadataLoaderPass, "profile-metadata-loader",
 INITIALIZE_PASS_END(ProfileMetadataLoaderPass, "profile-metadata-loader",
               "Load profile information from llvmprof.out", false, true)
 
-static RegisterPass<ProfileMetadataLoaderPass> X("profile-metadata-loader",
-              "Load profile information from llvmprof.out", false, true);
+//static RegisterPass<ProfileMetadataLoaderPass> X("profile-metadata-loader",
+//              "Load profile information from llvmprof.out", false, true);
 
 char &llvm::ProfileMetadataLoaderPassID = ProfileMetadataLoaderPass::ID;
 

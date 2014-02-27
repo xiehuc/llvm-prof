@@ -47,10 +47,10 @@ namespace {
   public:
     static char ID; // Class identification, replacement for typeinfo
     explicit LoaderPass(const std::string &filename = "")
-      : ModulePass(ID), Filename(filename) {
-      //initializeLoaderPassPass(*PassRegistry::getPassRegistry());
-		  initializeProfileInfoAnalysisGroup(*PassRegistry::getPassRegistry());
-		  if (filename.empty()) Filename = ProfileInfoFilename;
+		: ModulePass(ID), Filename(filename) {
+			initializeLoaderPassPass(*PassRegistry::getPassRegistry());
+			initializeProfileInfoAnalysisGroup(*PassRegistry::getPassRegistry());
+			if (filename.empty()) Filename = ProfileInfoFilename;
     }
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
@@ -86,8 +86,8 @@ char LoaderPass::ID = 0;
 INITIALIZE_AG_PASS(LoaderPass, ProfileInfo, "profile-loader",
               "Load profile information from llvmprof.out", false, true, false)
 
-static RegisterPass<LoaderPass> X("profile-loader",
-              "Load profile information from llvmprof.out", false, true);
+//static RegisterPass<LoaderPass> X("profile-loader",
+//              "Load profile information from llvmprof.out", false, true);
 
 char &llvm::ProfileLoaderPassID = LoaderPass::ID;
 
