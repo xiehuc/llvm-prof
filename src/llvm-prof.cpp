@@ -52,6 +52,7 @@ namespace {
                      cl::desc("Print LLVM code with frequency annotations"));
   cl::alias PrintAnnotated2("A", cl::desc("Alias for --annotated-llvm"),
                             cl::aliasopt(PrintAnnotatedLLVM));
+  cl::opt<bool> ListAll("list-all", cl::desc("List all blocks"));
   cl::opt<bool>
   PrintAllCode("print-all-code",
                cl::desc("Print annotated code for the entire program"));
@@ -219,12 +220,15 @@ bool ProfileInfoPrinterPass::runOnModule(Module &M) {
        PairSecondSortReverse<BasicBlock*>());
   
   outs() << "\n===" << std::string(73, '-') << "===\n";
-  outs() << "Top 20 most frequently executed basic blocks:\n\n";
+  if(!ListAll)
+	  outs() << "Top 20 most frequently executed basic blocks:\n\n";
+  else
+	  outs() << "Sorted executed basic blocks:\n\n";
   
   // Print out the function frequencies...
   outs() <<" ##      %% \tFrequency\n";
   unsigned BlocksToPrint = Counts.size();
-  if (BlocksToPrint > 20) BlocksToPrint = 20;
+  if (!ListAll && BlocksToPrint > 20) BlocksToPrint = 20;
   for (unsigned i = 0; i != BlocksToPrint; ++i) {
     if (Counts[i].second == 0) break;
     Function *F = Counts[i].first->getParent();
