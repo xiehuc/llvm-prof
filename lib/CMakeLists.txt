@@ -18,7 +18,7 @@ set(SOURCES
 	)
 
 #disable debug ability
-add_definitions(${LLVM_DEFINITIONS} -DNDEBUG)
+add_definitions(${LLVM_DEFINITIONS} -DNDEBUG -Wall)
 include_directories(
 	${LLVM_INCLUDE_DIRS}
 	../include
