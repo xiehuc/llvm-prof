@@ -17,7 +17,7 @@ typedef struct ValueItem{
 
 typedef SLIST_HEAD(ValueLink, ValueItem) ValueLink;
 
-ValueLink* ValueHead = NULL;
+static ValueLink* ValueHead = NULL;
 
 void ValueProfAtExitHandler(void)
 {
@@ -28,12 +28,18 @@ void ValueProfAtExitHandler(void)
 	int i=0;
 	for(i=0;i<NumElements;i++){
 		ValueItem* item = NULL;
-		buffer = malloc0(sizeof(int)*ArrayStart[i]);
-		int* w = buffer;
-		SLIST_FOREACH(item, &ValueHead[i], next){
-			*w++ = item->value;
+		size_t len = sizeof(int)*ArrayStart[i];
+		buffer = malloc0(len);
+		if(SLIST_EMPTY(&ValueHead[i])){
+			*buffer = -1;
+			len = sizeof(int);
+		}else{
+			int* w = buffer+ArrayStart[i];
+			SLIST_FOREACH(item, &ValueHead[i], next){
+				*--w = item->value;
+			}
 		}
-		if(write(OutFile,buffer,ArrayStart[i])<0){
+		if(write(OutFile,buffer,len)<0){
 			fprintf(stderr,"error: unable to write to output file.");
 			exit(0);
 		}
@@ -44,7 +50,7 @@ void ValueProfAtExitHandler(void)
 void llvm_profiling_trap_value(int index,int value)
 {
 	++ArrayStart[index];
-	ValueItem* item = memset(malloc(sizeof(*item)),0,sizeof(*item));
+	ValueItem* item = malloc0(sizeof(*item));
 	item->value = value;
 	SLIST_INSERT_HEAD(&ValueHead[index], item, next);
 }
