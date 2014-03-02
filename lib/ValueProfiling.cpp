@@ -17,9 +17,11 @@ ValueProfiler::ValueProfiler():ModulePass(ID)
 
 Value* ValueProfiler::insertValueTrap(BasicBlock* Header,Value* v)
 {
+	//ignore constant value to reduce memory pressure
+	if(isa<Constant>(v)) return NULL;
 	Module* M = Header->getParent()->getParent();
 	LLVMContext& Context = v->getContext();
-	Type* Int64Ty = Type::getInt64Ty(Context);
+	Type* Int32Ty = Type::getInt32Ty(Context);
 	BasicBlock::iterator InsertPos = Header->getTerminator();
 	while (isa<AllocaInst>(InsertPos)) ++InsertPos;
 
@@ -27,20 +29,18 @@ Value* ValueProfiler::insertValueTrap(BasicBlock* Header,Value* v)
 	Constant* FuncEntry = M->getOrInsertFunction("llvm_profiling_trap_value",
 			Type::getVoidTy(Context),
 			Type::getInt32Ty(Context), 
-			Int64Ty,NULL);
+			Int32Ty,NULL);
 	std::vector<Value* > Args(2);
 	Args[0] = Constant::getIntegerValue(Type::getInt32Ty(Context),APInt(32,numTrapedValues));
-	Args[1] = Constant::getNullValue(Int64Ty);
+	Args[1] = Constant::getNullValue(Int32Ty);
 	++numTrapedValues;
-	if(v->getType()!=Type::getInt32Ty(Context)){
-		CastInst::CastOps opcode = CastInst::getCastOpcode(v, true, Type::getInt32Ty(Context), true);
-		Args[1] = CastInst::Create(opcode, v, Int64Ty, "cycle.cast", InsertPos);
-		outs()<<*Header<<"\n";
+	if(v->getType()!=Int32Ty){
+		CastInst::CastOps opcode = CastInst::getCastOpcode(v, true, Int32Ty, true);
+		Args[1] = CastInst::Create(opcode, v, Int32Ty, "cycle.cast", InsertPos);
 	}else{
 		Args[1] = v;
 	}
 	CallInst* RET = CallInst::Create(FuncEntry, Args, "", InsertPos);
-	outs()<<*RET<<"\n";
 	return RET;
 }
 

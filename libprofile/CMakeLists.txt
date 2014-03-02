@@ -4,11 +4,11 @@ set(SOURCES
   PathProfiling.c
   EdgeProfiling.c
   OptimalEdgeProfiling.c
-  Profiling.h
+  ValueProfiling.c
   )
 
 include_directories(../include ${LLVM_INCLUDE_DIRS})
-add_definitions(${LLVM_DEFINITIONS})
+add_definitions(${LLVM_DEFINITIONS} -Wall)
 
 add_library( profile_rt-static ${SOURCES} )
 set_target_properties( profile_rt-static
