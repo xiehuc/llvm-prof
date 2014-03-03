@@ -47,9 +47,10 @@ void ValueProfAtExitHandler(void)
 	}
 }
 
-void llvm_profiling_trap_value(int index,int value)
+void llvm_profiling_trap_value(int index,int value,int isConstant)
 {
 	++ArrayStart[index];
+	if(isConstant) return;
 	ValueItem* item = malloc0(sizeof(*item));
 	item->value = value;
 	SLIST_INSERT_HEAD(&ValueHead[index], item, next);

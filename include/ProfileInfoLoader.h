@@ -34,6 +34,8 @@ class ProfileInfoLoader {
   std::vector<unsigned>    EdgeCounts;
   std::vector<unsigned>    OptimalEdgeCounts;
   std::vector<unsigned>    BBTrace;
+  std::vector<unsigned>	   ValueCounts;
+  std::vector<std::vector<int> > ValueContents;
 public:
   // ProfileInfoLoader ctor - Read the specified profiling data file, exiting
   // the program if the file is invalid or broken.
@@ -72,6 +74,14 @@ public:
   //
   const std::vector<unsigned> &getRawOptimalEdgeCounts() const {
     return OptimalEdgeCounts;
+  }
+
+  const std::vector<unsigned> &getRawValueCounts() const {
+	  return ValueCounts;
+  }
+
+  const std::vector<int> &getRawValueContent(int index) const {
+	  return ValueContents[index];
   }
 
 };

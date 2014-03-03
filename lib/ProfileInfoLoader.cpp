@@ -77,6 +77,43 @@ static void ReadProfilingBlock(const char *ToolName, FILE *F,
   }
 }
 
+static void ReadValueProfilingContents(const char* ToolName, FILE* F, 
+		bool ShouldByteSwap, const std::vector<unsigned>& Counts,
+		std::vector<std::vector<int> >& Data)
+{
+#define EXIT_IF_ERROR \
+    errs() << ToolName << ": data packet truncated!\n";\
+    perror(0);\
+    exit(1);
+
+	if(Data.size() < Counts.size())
+		Data.resize(Counts.size());
+	int first;
+	std::vector<int> TempSpace;
+	for(unsigned i=0;i<Counts.size();++i){
+		if(fread(&first,sizeof(int),1,F) != 1) {
+			EXIT_IF_ERROR;
+		}
+		first = ByteSwap(first, ShouldByteSwap);
+		if(first == -1){
+			Data[i].push_back(-1);
+			continue;
+		}
+		TempSpace.clear();
+		TempSpace.resize(Counts[i]);
+		TempSpace[0] = first;
+		if(fread(&TempSpace[1],sizeof(int)*(Counts[i]-1),1,F) != 1){
+			EXIT_IF_ERROR;
+		}
+		int len = Data[i].size();
+		Data[i].resize(len+TempSpace.size());
+		//tranverse TempSpace with ByteSwap and append to Data[i]
+		std::transform(TempSpace.begin(), TempSpace.end(), Data[i].begin()+len,
+				std::bind2nd(std::ptr_fun(ByteSwap), ShouldByteSwap));
+	}
+#undef EXIT_IF_ERROR
+}
+
 const unsigned ProfileInfoLoader::Uncounted = ~0U;
 
 // ProfileInfoLoader ctor - Read the specified profiling data file, exiting the
@@ -143,6 +180,11 @@ ProfileInfoLoader::ProfileInfoLoader(const char *ToolName,
     case BBTraceInfo:
       ReadProfilingBlock(ToolName, F, ShouldByteSwap, BBTrace);
       break;
+
+	case ValueInfo:
+	  ReadProfilingBlock(ToolName, F, ShouldByteSwap, ValueCounts);
+	  ReadValueProfilingContents(ToolName, F, ShouldByteSwap, ValueCounts, ValueContents);
+	  break;
 
     default:
       errs() << ToolName << ": Unknown packet type #" << PacketType << "!\n";

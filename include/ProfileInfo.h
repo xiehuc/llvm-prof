@@ -25,6 +25,7 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/raw_ostream.h"
+#include <llvm/IR/Instructions.h>
 #include <cassert>
 #include <map>
 #include <set>
@@ -60,6 +61,11 @@ namespace llvm {
     typedef std::map<Edge, double> EdgeWeights;
     typedef std::map<const BType*, double> BlockCounts;
     typedef std::map<const BType*, const BType*> Path;
+	struct ValueCounts{
+		CallInst* pos;
+		unsigned Nums;
+		std::vector<int> Contents;
+	};
 
   protected:
     // EdgeInformation - Count the number of times a transition between two
@@ -73,6 +79,8 @@ namespace llvm {
 
     // FunctionInformation - Count the number of times a function is executed.
     std::map<const FType*, double> FunctionInformation;
+
+	std::map<const Value*, ValueCounts> ValueInformation;
 
     ProfileInfoT<MachineFunction, MachineBasicBlock> *MachineProfile;
   public:

@@ -4,6 +4,7 @@
 #include <llvm/IR/Module.h>
 #include <llvm/Pass.h>
 #include <llvm/IR/Instructions.h>
+#include <llvm/IR/Constants.h>
 #include <llvm/Support/raw_ostream.h>
 
 using namespace llvm;
@@ -23,13 +24,12 @@ static Instruction* insertValueTrap(Value* v,Module* M,int numTrapedValues,Inser
 	LLVMContext& Context = v->getContext();
 	Type* Int32Ty = Type::getInt32Ty(Context);
 
-	Constant* FuncEntry = M->getOrInsertFunction("llvm_profiling_trap_value",
-			Type::getVoidTy(Context),
-			Type::getInt32Ty(Context), 
-			Int32Ty,NULL);
-	std::vector<Value* > Args(2);
-	Args[0] = Constant::getIntegerValue(Type::getInt32Ty(Context),APInt(32,numTrapedValues));
+	Constant* FuncEntry = M->getOrInsertFunction( "llvm_profiling_trap_value",
+			Type::getVoidTy(Context), Int32Ty, Int32Ty, Int32Ty, NULL);
+	std::vector<Value* > Args(3);
+	Args[0] = Constant::getIntegerValue(Int32Ty,APInt(32,numTrapedValues));
 	Args[1] = Constant::getNullValue(Int32Ty);
+	Args[2] = isa<Constant>(v)?Constant::getIntegerValue(Int32Ty, APInt(32,1)):Constant::getNullValue(Int32Ty);
 	if(v->getType()!=Int32Ty){
 		CastInst::CastOps opcode = CastInst::getCastOpcode(v, true, Int32Ty, true);
 		Args[1] = CastInst::Create(opcode, v, Int32Ty, "cycle.cast", InsertPos);
@@ -41,11 +41,11 @@ static Instruction* insertValueTrap(Value* v,Module* M,int numTrapedValues,Inser
 
 Instruction* ValueProfiler::insertValueTrap(Value* v, BasicBlock* InsertTail)
 {
-	if(isa<Constant>(v)){
+	/*if(isa<Constant>(v)){
 		pair<int,BasicBlock*> Store(numTrapedValues++,InsertTail);
 		ConstantTraps.push_back(Store);
 		return NULL;
-	}else
+	}else*/
 		return ::insertValueTrap(v, InsertTail->getParent()->getParent(),
 				numTrapedValues++,InsertTail);
 }
@@ -53,11 +53,11 @@ Instruction* ValueProfiler::insertValueTrap(Value* v, BasicBlock* InsertTail)
 Instruction* ValueProfiler::insertValueTrap(Value* v,Instruction* InsertBefore)
 {
 	//ignore constant value to reduce memory pressure
-	if(isa<Constant>(v)){
+	/*if(isa<Constant>(v)){
 		pair<int,BasicBlock*> Store(numTrapedValues++,InsertBefore->getParent());
 		ConstantTraps.push_back(Store);
 		return NULL;
-	}else
+	}else*/
 		return ::insertValueTrap(v,
 				InsertBefore->getParent()->getParent()->getParent(),
 				numTrapedValues++, InsertBefore);
@@ -71,7 +71,7 @@ bool ValueProfiler::runOnModule(Module& M)
 			GlobalVariable::InternalLinkage, Constant::getNullValue(ATy),
 			"ValueProfCounters");
 	InsertProfilingInitCall(Main, "llvm_start_value_profiling",Counters);
-	for(ConstantTrapTy::iterator I = ConstantTraps.begin(),E = ConstantTraps.end();I!=E;I++)
-		IncrementCounterInBlock(I->second, I->first, Counters);
+	//for(ConstantTrapTy::iterator I = ConstantTraps.begin(),E = ConstantTraps.end();I!=E;I++)
+	//	IncrementCounterInBlock(I->second, I->first, Counters);
 	return true;
 }
