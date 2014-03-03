@@ -21,6 +21,7 @@
 #include "llvm/Support/CFG.h"
 #include "InitializeProfilerPass.h"
 #include "ProfileInstrumentations.h"
+#include <llvm/IR/Constants.h>
 #include <limits>
 #include <queue>
 #include <set>
@@ -57,6 +58,52 @@ const double ProfileInfoT<Function,BasicBlock>::MissingValue = -1;
 
 template<> const
 double ProfileInfoT<MachineFunction, MachineBasicBlock>::MissingValue = -1;
+
+template<> double
+ProfileInfoT<Function,BasicBlock>::getExecutionCount(const Value* V) {
+	std::map<const Value*,ValueCounts>::iterator J = 
+		ValueInformation.find(V);
+	if(J != ValueInformation.end()) return (double)J->second.Nums;
+	return MissingValue;
+}
+
+
+template<> const std::vector<int>&
+ProfileInfoT<Function,BasicBlock>::getValueContents(const Value* V) {
+	static std::vector<int> MissingContent(0);
+	static std::vector<int> ConstantContent;
+	std::map<const Value*,ValueCounts>::iterator J = 
+		ValueInformation.find(V);
+	if(J != ValueInformation.end()){
+		if(!isa<Constant>(V))
+			return J->second.Contents;
+		ConstantContent.resize(J->second.Nums);
+		int filled = cast<ConstantInt>(V)->getSExtValue();
+		std::fill(ConstantContent.begin(), ConstantContent.end(), filled);
+		return ConstantContent;
+	}
+	return MissingContent;
+}
+
+template<> std::vector<CallInst*>
+ProfileInfoT<Function,BasicBlock>::getAllTrapedValues() {
+	std::vector<CallInst*> ret;
+	ret.reserve(ValueInformation.size());
+	std::map<const Value*,ValueCounts>::iterator J = ValueInformation.begin(),
+		E = ValueInformation.end();
+	for(;J!=E;++J){
+		ret.push_back(J->second.pos);
+	}
+	return ret;
+}
+
+template<> const CallInst*
+ProfileInfoT<Function,BasicBlock>::getTrapedValue(const Value* V) {
+	std::map<const Value*,ValueCounts>::iterator J = 
+		ValueInformation.find(V);
+	if(J != ValueInformation.end()) return J->second.pos;
+	return NULL;
+}
 
 template<> double
 ProfileInfoT<Function,BasicBlock>::getExecutionCount(const BasicBlock *BB) {

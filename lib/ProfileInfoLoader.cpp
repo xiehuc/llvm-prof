@@ -102,8 +102,10 @@ static void ReadValueProfilingContents(const char* ToolName, FILE* F,
 		TempSpace.clear();
 		TempSpace.resize(Counts[i]);
 		TempSpace[0] = first;
-		if(fread(&TempSpace[1],sizeof(int)*(Counts[i]-1),1,F) != 1){
-			EXIT_IF_ERROR;
+		if(Counts[i]>1){
+			if(fread(&TempSpace[1],sizeof(int)*(Counts[i]-1),1,F) != 1){
+				EXIT_IF_ERROR;
+			}
 		}
 		int len = Data[i].size();
 		Data[i].resize(len+TempSpace.size());

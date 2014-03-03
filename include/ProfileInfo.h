@@ -113,6 +113,14 @@ namespace llvm {
 
     double getExecutionCount(const BType *BB);
 
+	double getExecutionCount(const Value* V);
+
+	const std::vector<int>& getValueContents(const Value* V);
+
+	std::vector<CallInst*> getAllTrapedValues();
+
+	const CallInst* getTrapedValue(const Value* V);
+
     void setExecutionCount(const BType *BB, double w);
 
     void addExecutionCount(const BType *BB, double w);

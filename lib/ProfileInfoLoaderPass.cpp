@@ -28,6 +28,8 @@
 #include "llvm/Support/raw_ostream.h"
 #include "InitializeProfilerPass.h"
 #include "ProfileInstrumentations.h"
+#include <llvm/Support/InstIterator.h>
+#include <llvm/IR/Constants.h>
 #include <set>
 using namespace llvm;
 
@@ -267,6 +269,31 @@ bool LoaderPass::runOnModule(Module &M) {
       errs() << "WARNING: profile information is inconsistent with "
              << "the current program!\n";
     }
+  }
+
+  ValueInformation.clear();
+  Counters = PIL.getRawValueCounts();
+  if(Counters.size() > 0) {
+	  ReadCount = 0;
+	  for(Module::iterator F = M.begin(),E = M.end(); F!= E; ++F) {
+		  if (F->isDeclaration()) continue;
+		  for(inst_iterator I = inst_begin(F),IE = inst_end(F); I!=IE; ++I){
+			  CallInst* Call = dyn_cast<CallInst>(&*I);
+			  if(!Call) continue;
+			  if(Call->getCalledFunction()->getName() != "llvm_profiling_trap_value") continue;
+			  Value* trapValue = Call->getArgOperand(1);
+			  int index = dyn_cast<ConstantInt>(Call->getArgOperand(0))->getSExtValue();
+			  ValueCounts Ins;
+			  Ins.pos = Call;
+			  Ins.Nums = Counters[index];
+			  Ins.Contents = PIL.getRawValueContent(index);
+			  //should NOT insert two values into one cell.
+			  assert(ValueInformation.find(trapValue) == ValueInformation.end());
+			  if(!isa<Constant>(trapValue))
+				  assert(Ins.Contents.size() == Counters[index]);
+			  ValueInformation[trapValue] = Ins;
+		  }
+	  }
   }
 
   return false;

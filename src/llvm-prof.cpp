@@ -31,8 +31,10 @@
 #include "llvm/Support/Signals.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/system_error.h"
+#include <llvm/IR/Instructions.h>
 #include <algorithm>
 #include <iomanip>
+#include <vector>
 #include <map>
 #include <set>
 
@@ -53,6 +55,7 @@ namespace {
   cl::alias PrintAnnotated2("A", cl::desc("Alias for --annotated-llvm"),
                             cl::aliasopt(PrintAnnotatedLLVM));
   cl::opt<bool> ListAll("list-all", cl::desc("List all blocks"));
+  cl::opt<bool> ValueContentPrint("value-content", cl::desc("Print detailed value content in value profiling"));
   cl::opt<bool>
   PrintAllCode("print-all-code",
                cl::desc("Print annotated code for the entire program"));
@@ -141,6 +144,7 @@ namespace {
     }
 
     bool runOnModule(Module &M);
+	void printValueContent();
 	virtual const char* getPassName() const {
 		return "Print Profile Info";
 	}
@@ -148,6 +152,21 @@ namespace {
 }
 
 char ProfileInfoPrinterPass::ID = 0;
+
+void ProfileInfoPrinterPass::printValueContent() 
+{
+	ProfileInfo &PI = getAnalysis<ProfileInfo>();
+	const std::vector<CallInst*> Calls = PI.getAllTrapedValues();
+	for(std::vector<CallInst*>::const_iterator I = Calls.begin(), E = Calls.end(); I!=E; ++I){
+		Value* traped = (*I)->getArgOperand(1);
+		std::vector<int> Contents = PI.getValueContents(traped);
+		if(isa<Constant>(traped))outs()<<"Constant:\t"; 
+		else outs()<<"Variable:\t" ;
+		for(unsigned i=0;i<Contents.size();++i)
+			outs()<<Contents[i]<<"\t";
+		outs()<<"\n";
+	}
+}
 
 bool ProfileInfoPrinterPass::runOnModule(Module &M) {
   ProfileInfo &PI = getAnalysis<ProfileInfo>();
@@ -157,6 +176,10 @@ bool ProfileInfoPrinterPass::runOnModule(Module &M) {
 
   // Output a report. Eventually, there will be multiple reports selectable on
   // the command line, for now, just keep things simple.
+  if(ValueContentPrint){
+	  printValueContent();
+	  return false;
+  }
 
   // Emit the most frequent function table...
   std::vector<std::pair<Function*, double> > FunctionCounts;
