@@ -9,7 +9,7 @@ set(SOURCES
 
 include_directories(../include ${LLVM_INCLUDE_DIRS})
 add_definitions(${LLVM_DEFINITIONS} -Wall)
-if(OUTPIT_HASPID)
+if(OUTPUT_HASPID)
 	add_definitions(-DOUTPUT_HASPID)
 endif()
 
