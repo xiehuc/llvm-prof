@@ -1,6 +1,9 @@
 
 add_definitions(${LLVM_DEFINITIONS} -Wall)
-include_directories(../include)
+include_directories(
+    ${LLVM_INCLUDE_DIRS}
+    ../include 
+    )
 
 llvm_map_components_to_libraries(LLVM_LINK_COMPONENTS bitreader )
 
