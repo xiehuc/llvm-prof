@@ -6,6 +6,8 @@ set(CMAKE_MODULE_PATH
 	${CMAKE_SOURCE_DIR}/cmake
 	)
 
+option(OUTPUT_HASPID "Output name contain pid to support mpi program" OFF)
+
 set(LLVM_RECOMMAND_VERSION "" CACHE STRING "Switch the llvm version")
 find_package(LLVM)
 

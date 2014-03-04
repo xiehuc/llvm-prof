@@ -9,6 +9,9 @@ set(SOURCES
 
 include_directories(../include ${LLVM_INCLUDE_DIRS})
 add_definitions(${LLVM_DEFINITIONS} -Wall)
+if(OUTPUT_HASPID)
+	add_definitions(-DOUTPUT_HASPID)
+endif()
 
 add_library( profile_rt-static ${SOURCES} )
 set_target_properties( profile_rt-static
