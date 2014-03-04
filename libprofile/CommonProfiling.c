@@ -46,6 +46,7 @@ static void check_environment_variable(void) {
     SavedEnvVar = strdup(EnvVar);
     OutputFilename = SavedEnvVar;
   }
+
 }
 
 /* save_arguments - Save argc and argv as passed into the program for the file
@@ -121,7 +122,14 @@ int getOutFile() {
    * for appending, creating it if it does not already exist.
    */
   if (OutFile == -1) {
+#ifdef OUTPUT_HASPID
+	char OutputFilenameRuntime[1024] = {0};
+	pid_t pid = getpid();
+	snprintf(OutputFilenameRuntime,sizeof(OutputFilenameRuntime),"%s.%lu",OutputFilename,pid);
+    OutFile = open(OutputFilenameRuntime, O_CREAT | O_WRONLY, 0666);
+#else
     OutFile = open(OutputFilename, O_CREAT | O_WRONLY, 0666);
+#endif
     lseek(OutFile, 0, SEEK_END); /* O_APPEND prevents seeking */
     if (OutFile == -1) {
       fprintf(stderr, "LLVM profiling runtime: while opening '%s': ",
