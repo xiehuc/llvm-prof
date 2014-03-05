@@ -279,8 +279,8 @@ bool LoaderPass::runOnModule(Module &M) {
 		  if (F->isDeclaration()) continue;
 		  for(inst_iterator I = inst_begin(F),IE = inst_end(F); I!=IE; ++I){
 			  CallInst* Call = dyn_cast<CallInst>(&*I);
-			  if(!Call) continue;
-			  if(Call->getCalledFunction()->getName() != "llvm_profiling_trap_value") continue;
+              if(!Call) continue;
+			  if(Call->getCalledValue()->getName() != "llvm_profiling_trap_value") continue;
 			  Value* trapValue = Call->getArgOperand(1);
 			  int index = dyn_cast<ConstantInt>(Call->getArgOperand(0))->getSExtValue();
 			  ValueCounts Ins;

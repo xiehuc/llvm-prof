@@ -83,7 +83,9 @@ _llvm_config(LLVM_LD_FLAGS --ldflags)
 string(REGEX MATCH "-l.*" LLVM_LIBRARIES ${LLVM_LD_FLAGS})
 
 find_library(LLVM_DYNAMIC_LIBRARY 
-	NAMES "LLVM" "LLVM-${LLVM_VERSION}")
+	NAMES "LLVM" "LLVM-${LLVM_VERSION}"
+    PATHS ${LLVM_LIBRARY_DIRS}
+    )
 
 macro(llvm_map_components_to_libraries _var_name)
     _llvm_config(${_var_name} --libs "${ARGN}")
