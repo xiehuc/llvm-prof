@@ -20,6 +20,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <assert.h>
+#include <vector>
 using namespace llvm;
 
 // ByteSwap - Byteswap 'Var' if 'Really' is true.
@@ -89,27 +90,14 @@ static void ReadValueProfilingContents(const char* ToolName, FILE* F,
 
 	if(Data.size() < Counts.size())
 		Data.resize(Counts.size());
-	int first;
 	std::vector<int> TempSpace;
 	for(unsigned i=0;i<Counts.size();++i){
-		if(fread(&first,sizeof(int),1,F) != 1) {
-			EXIT_IF_ERROR;
-		}
-		first = ByteSwap(first, ShouldByteSwap);
-		//if is constant or count==0
-		if(first == -1){
-			Data[i].push_back(-1);
-			continue;
-		}
+		if(Counts[i]==0) continue;
 		TempSpace.clear();
 		TempSpace.resize(Counts[i]);
-		TempSpace[0] = first;
-		if(Counts[i]>1){
-			if(fread(&TempSpace[1],sizeof(int)*(Counts[i]-1),1,F) != 1){
-				EXIT_IF_ERROR;
-			}
+		if(fread(&TempSpace[0],sizeof(int)*Counts[i],1,F) != 1){
+			EXIT_IF_ERROR;
 		}
-        assert(find(TempSpace.begin(),TempSpace.end(),-1)==TempSpace.end());
 		int len = Data[i].size();
 		Data[i].resize(len+TempSpace.size());
 		//tranverse TempSpace with ByteSwap and append to Data[i]
@@ -133,6 +121,7 @@ ProfileInfoLoader::ProfileInfoLoader(const char *ToolName,
     perror(0);
     exit(1);
   }
+  std::vector<unsigned> WriteCount;
 
   // Keep reading packets until we run out of them.
   unsigned PacketType;
@@ -188,7 +177,12 @@ ProfileInfoLoader::ProfileInfoLoader(const char *ToolName,
 
 	case ValueInfo:
 	  ReadProfilingBlock(ToolName, F, ShouldByteSwap, ValueCounts);
-	  ReadValueProfilingContents(ToolName, F, ShouldByteSwap, ValueCounts, ValueContents);
+	  break;
+	
+	case ValueContent:
+	  WriteCount.clear();
+	  ReadProfilingBlock(ToolName, F, ShouldByteSwap, WriteCount);
+	  ReadValueProfilingContents(ToolName, F, ShouldByteSwap, WriteCount, ValueContents);
 	  break;
 
     default:

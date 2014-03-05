@@ -10,6 +10,8 @@
 
 static unsigned *ArrayStart;
 static unsigned NumElements;
+//record true write value content count.
+static unsigned *WriteCount;
 
 typedef struct ValueItem{
 	int value;
@@ -22,39 +24,37 @@ static ValueLink* ValueHead = NULL;
 
 void ValueProfAtExitHandler(void)
 {
-	write_profiling_data(ValueInfo, ArrayStart, NumElements);
-	int* buffer = NULL;
+#define EXIT_ON_ERROR {\
+	fprintf(stderr,"error: unable to write to output file.");\
+	exit(0); }
 
+	int* buffer = NULL;
 	int OutFile = getOutFile();
+	write_profiling_data(ValueInfo, ArrayStart, NumElements);
+	write_profiling_data(ValueContent, WriteCount, NumElements);
 	int i=0;
 	for(i=0;i<NumElements;i++){
+		size_t len = sizeof(int)*WriteCount[i];
+		if(len==0) continue;
+		buffer = malloc0(len);
 		ValueItem* item = NULL;
-		size_t len = sizeof(int)*ArrayStart[i];
-		buffer = NULL;
-		if(SLIST_EMPTY(&ValueHead[i])){
-			len = sizeof(int);
-			buffer = malloc0(len);
-			*buffer = -1;
-		}else{
-			buffer = malloc0(len);
-			int* w = buffer+ArrayStart[i];
-			SLIST_FOREACH(item, &ValueHead[i], next){
-                assert(item->value!=-1);
-				*--w = item->value;
-			}
+		int* w = buffer+WriteCount[i];
+		SLIST_FOREACH(item, &ValueHead[i], next){
+			*--w = item->value;
 		}
-		if(write(OutFile,buffer,len)<0){
-			fprintf(stderr,"error: unable to write to output file.");
-			exit(0);
-		}
+		if(write(OutFile,buffer,len)<0)
+			EXIT_ON_ERROR;
 		free(buffer);
 	}
+	close(OutFile);
+#undef EXIT_ON_ERROR
 }
 
 void llvm_profiling_trap_value(int index,int value,int isConstant)
 {
 	++ArrayStart[index];
 	if(isConstant) return;
+	++WriteCount[index];
 	ValueItem* item = malloc0(sizeof(*item));
 	item->value = value;
 	SLIST_INSERT_HEAD(&ValueHead[index], item, next);
@@ -66,6 +66,7 @@ int llvm_start_value_profiling(int argc, const char **argv,
   ArrayStart = arrayStart;
   NumElements = numElements;
   ValueHead = malloc0(sizeof(ValueLink)*NumElements);
+  WriteCount = malloc0(sizeof(unsigned)*NumElements);
   atexit(ValueProfAtExitHandler);
   return Ret;
 }

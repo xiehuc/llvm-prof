@@ -31,6 +31,7 @@ enum ProfilingType {
 	BBTraceInfo  = 6,   /* Basic block trace information   */
 	OptEdgeInfo  = 7,    /* Edge profiling information, optimal version */
 	ValueInfo    = 100,
+	ValueContent = 101,
 };
 
 #if defined(__cplusplus)
