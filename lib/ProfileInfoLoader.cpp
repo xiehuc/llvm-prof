@@ -19,6 +19,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include <cstdio>
 #include <cstdlib>
+#include <assert.h>
 using namespace llvm;
 
 // ByteSwap - Byteswap 'Var' if 'Really' is true.
@@ -95,6 +96,7 @@ static void ReadValueProfilingContents(const char* ToolName, FILE* F,
 			EXIT_IF_ERROR;
 		}
 		first = ByteSwap(first, ShouldByteSwap);
+		//if is constant or count==0
 		if(first == -1){
 			Data[i].push_back(-1);
 			continue;

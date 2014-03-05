@@ -29,11 +29,13 @@ void ValueProfAtExitHandler(void)
 	for(i=0;i<NumElements;i++){
 		ValueItem* item = NULL;
 		size_t len = sizeof(int)*ArrayStart[i];
-		buffer = malloc0(len);
+		buffer = NULL;
 		if(SLIST_EMPTY(&ValueHead[i])){
-			*buffer = -1;
 			len = sizeof(int);
+			buffer = malloc0(len);
+			*buffer = -1;
 		}else{
+			buffer = malloc0(len);
 			int* w = buffer+ArrayStart[i];
 			SLIST_FOREACH(item, &ValueHead[i], next){
 				*--w = item->value;

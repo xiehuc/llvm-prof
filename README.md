@@ -12,9 +12,15 @@ build
 
 	$ mkdir build
 	$ cd build
-	$ cmake ..
+	$ cmake .. 
 	$ make 
 	$ sudo make install
+
+option
+-------
+
+*  `LLVM_RECOMMAND_VERSION` : select which llvm version to build
+*  `OUTPUT_HASPID`          : does llvmprof.out contain a pid for mpi program
 
 note
 -----
