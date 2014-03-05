@@ -4,6 +4,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <assert.h>
 
 #define malloc0(sz) memset(malloc(sz),0,sz)
 
@@ -38,6 +39,7 @@ void ValueProfAtExitHandler(void)
 			buffer = malloc0(len);
 			int* w = buffer+ArrayStart[i];
 			SLIST_FOREACH(item, &ValueHead[i], next){
+                assert(item->value!=-1);
 				*--w = item->value;
 			}
 		}

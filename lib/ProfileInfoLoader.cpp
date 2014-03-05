@@ -109,6 +109,7 @@ static void ReadValueProfilingContents(const char* ToolName, FILE* F,
 				EXIT_IF_ERROR;
 			}
 		}
+        assert(find(TempSpace.begin(),TempSpace.end(),-1)==TempSpace.end());
 		int len = Data[i].size();
 		Data[i].resize(len+TempSpace.size());
 		//tranverse TempSpace with ByteSwap and append to Data[i]
@@ -192,6 +193,10 @@ ProfileInfoLoader::ProfileInfoLoader(const char *ToolName,
 
     default:
       errs() << ToolName << ": Unknown packet type #" << PacketType << "!\n";
+      errs() << "at position "<<ftell(F) <<"/";
+      fseek(F,0,SEEK_END);
+      errs() << ftell(F) <<"\n";
+      fclose(F);
       exit(1);
     }
   }
