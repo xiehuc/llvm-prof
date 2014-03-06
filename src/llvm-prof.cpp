@@ -33,10 +33,9 @@
 #include "llvm/Support/system_error.h"
 #include <llvm/IR/Instructions.h>
 #include <algorithm>
-#include <iomanip>
+#include <iterator>
+#include <iostream>
 #include <vector>
-#include <map>
-#include <set>
 
 using namespace llvm;
 
@@ -160,10 +159,11 @@ void ProfileInfoPrinterPass::printValueContent()
 	for(std::vector<CallInst*>::const_iterator I = Calls.begin(), E = Calls.end(); I!=E; ++I){
 		Value* traped = (*I)->getArgOperand(1);
 		std::vector<int> Contents = PI.getValueContents(traped);
-		if(isa<Constant>(traped))outs()<<"Constant:\t"; 
-		else outs()<<"Variable:\t" ;
+		if(isa<Constant>(traped))outs()<<"Constant";
+		else outs()<<"Variable";
+		outs()<<"("<<(unsigned)PI.getExecutionCount(traped)<<"):\t";
 		for(unsigned i=0;i<Contents.size();++i)
-			outs()<<Contents[i]<<"\t";
+			outs()<<Contents[i]<<",";
 		outs()<<"\n";
 	}
 }
