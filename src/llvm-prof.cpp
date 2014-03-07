@@ -143,6 +143,13 @@ namespace {
     }
 
     bool runOnModule(Module &M);
+	void printExecutionCommands();
+	void printFunctionCounts(std::vector<std::pair<Function*, double> >&
+			FunctionCounts);
+	std::set<Function*> 
+		printBasicBlockCounts( std::vector<std::pair<BasicBlock*, double> >&
+			Counts);
+	void printAnnotatedCode(std::set<Function*>& FunctionToPrint,Module& M);
 	void printValueContent();
 	virtual const char* getPassName() const {
 		return "Print Profile Info";
@@ -168,118 +175,144 @@ void ProfileInfoPrinterPass::printValueContent()
 	}
 }
 
+void ProfileInfoPrinterPass::printExecutionCommands()
+{
+	// Output a report. Eventually, there will be multiple reports selectable on
+	// the command line, for now, just keep things simple.
+	outs() << "===" << std::string(73, '-') << "===\n"
+		<< "LLVM profiling output for execution";
+	if (PIL.getNumExecutions() != 1) outs() << "s";
+	outs() << ":\n";
+
+	for (unsigned i = 0, e = PIL.getNumExecutions(); i != e; ++i) {
+		outs() << "  ";
+		if (e != 1) outs() << i+1 << ". ";
+		outs() << PIL.getExecution(i) << "\n";
+	}
+}
+
+void ProfileInfoPrinterPass::printFunctionCounts( 
+		std::vector<std::pair<Function*, double> >& FunctionCounts)
+{
+	// Sort by the frequency, backwards.
+	sort(FunctionCounts.begin(), FunctionCounts.end(),
+			PairSecondSortReverse<Function*>());
+
+	double TotalExecutions = 0;
+	for (unsigned i = 0, e = FunctionCounts.size(); i != e; ++i)
+		TotalExecutions += FunctionCounts[i].second;
+
+	if(TotalExecutions == 0) return;
+
+	outs() << "\n===" << std::string(73, '-') << "===\n";
+	outs() << "Function execution frequencies:\n\n";
+
+	// Print out the function frequencies...
+	outs() << " ##   Frequency\n";
+	for (unsigned i = 0, e = FunctionCounts.size(); i != e; ++i) {
+		if (FunctionCounts[i].second == 0) {
+			outs() << "\n  NOTE: " << e-i << " function" 
+				<< (e-i-1 ? "s were" : " was") << " never executed!\n";
+			break;
+		}
+
+		outs() << format("%3d", i+1) << ". "
+			<< format("%5.2g", FunctionCounts[i].second) << "/"
+			<< format("%g", TotalExecutions) << " "
+			<< FunctionCounts[i].first->getName() << "\n";
+	}
+}
+
+std::set<Function*> 
+ProfileInfoPrinterPass::printBasicBlockCounts(
+		std::vector<std::pair<BasicBlock *, double> > &Counts)
+{
+	std::set<Function*> FunctionsToPrint;
+
+	double TotalExecutions = 0;
+	for (unsigned i = 0, e = Counts.size(); i != e; ++i)
+		TotalExecutions += Counts[i].second;
+
+	if(TotalExecutions == 0) return FunctionsToPrint;
+
+	// Sort by the frequency, backwards.
+	sort(Counts.begin(), Counts.end(),
+			PairSecondSortReverse<BasicBlock*>());
+
+	outs() << "\n===" << std::string(73, '-') << "===\n";
+	if(!ListAll)
+		outs() << "Top 20 most frequently executed basic blocks:\n\n";
+	else
+		outs() << "Sorted executed basic blocks:\n\n";
+
+	// Print out the function frequencies...
+	outs() <<" ##      %% \tFrequency\n";
+	unsigned BlocksToPrint = Counts.size();
+	if (!ListAll && BlocksToPrint > 20) BlocksToPrint = 20;
+	for (unsigned i = 0; i != BlocksToPrint; ++i) {
+		if (Counts[i].second == 0) break;
+		Function *F = Counts[i].first->getParent();
+		outs() << format("%3d", i+1) << ". "
+			<< format("%5g", Counts[i].second/(double)TotalExecutions*100)<<"% "
+			<< format("%5.0f", Counts[i].second) << "/"
+			<< format("%g", TotalExecutions) << "\t"
+			<< F->getName() << "() - "
+			<< Counts[i].first->getName() << "\n";
+		FunctionsToPrint.insert(F);
+	}
+	return FunctionsToPrint;
+}
+
+void ProfileInfoPrinterPass::printAnnotatedCode(
+		std::set<Function *> &FunctionsToPrint,
+		Module& M)
+{
+	ProfileInfo &PI = getAnalysis<ProfileInfo>();
+	if (PrintAnnotatedLLVM || PrintAllCode) {
+		outs() << "\n===" << std::string(73, '-') << "===\n";
+		outs() << "Annotated LLVM code for the module:\n\n";
+
+		ProfileAnnotator PA(PI);
+
+		if (FunctionsToPrint.empty() || PrintAllCode)
+			M.print(outs(), &PA);
+		else
+			// Print just a subset of the functions.
+			for (std::set<Function*>::iterator I = FunctionsToPrint.begin(),
+					E = FunctionsToPrint.end(); I != E; ++I)
+				(*I)->print(outs(), &PA);
+	}
+}
+
 bool ProfileInfoPrinterPass::runOnModule(Module &M) {
-  ProfileInfo &PI = getAnalysis<ProfileInfo>();
-  std::map<const Function  *, unsigned> FuncFreqs;
-  std::map<const BasicBlock*, unsigned> BlockFreqs;
-  std::map<ProfileInfo::Edge, unsigned> EdgeFreqs;
+	ProfileInfo &PI = getAnalysis<ProfileInfo>();
+	std::set<Function*> FunctionToPrint;
 
-  // Output a report. Eventually, there will be multiple reports selectable on
-  // the command line, for now, just keep things simple.
-  if(ValueContentPrint){
-	  printValueContent();
-	  return false;
-  }
+	if(ValueContentPrint){
+		printValueContent();
+		return false;
+	}
 
-  // Emit the most frequent function table...
-  std::vector<std::pair<Function*, double> > FunctionCounts;
-  std::vector<std::pair<BasicBlock*, double> > Counts;
-  for (Module::iterator FI = M.begin(), FE = M.end(); FI != FE; ++FI) {
-    if (FI->isDeclaration()) continue;
-    double w = ignoreMissing(PI.getExecutionCount(FI));
-    FunctionCounts.push_back(std::make_pair(FI, w));
-    for (Function::iterator BB = FI->begin(), BBE = FI->end(); 
-         BB != BBE; ++BB) {
-      double w = ignoreMissing(PI.getExecutionCount(BB));
-      Counts.push_back(std::make_pair(BB, w));
-    }
-  }
+	std::vector<std::pair<Function*, double> > FunctionCounts;
+	std::vector<std::pair<BasicBlock*, double> > Counts;
+	for (Module::iterator FI = M.begin(), FE = M.end(); FI != FE; ++FI) {
+		if (FI->isDeclaration()) continue;
+		double w = ignoreMissing(PI.getExecutionCount(FI));
+		FunctionCounts.push_back(std::make_pair(FI, w));
+		for (Function::iterator BB = FI->begin(), BBE = FI->end(); 
+				BB != BBE; ++BB) {
+			double w = ignoreMissing(PI.getExecutionCount(BB));
+			Counts.push_back(std::make_pair(BB, w));
+		}
+	}
 
-  // Sort by the frequency, backwards.
-  sort(FunctionCounts.begin(), FunctionCounts.end(),
-            PairSecondSortReverse<Function*>());
+	printExecutionCommands();
+	// Emit the most frequent function table...
+	printFunctionCounts(FunctionCounts);
+	FunctionToPrint = printBasicBlockCounts(Counts);
+	printAnnotatedCode(FunctionToPrint,M);
 
-  double TotalExecutions = 0;
-  for (unsigned i = 0, e = FunctionCounts.size(); i != e; ++i)
-    TotalExecutions += FunctionCounts[i].second;
-
-  outs() << "===" << std::string(73, '-') << "===\n"
-         << "LLVM profiling output for execution";
-  if (PIL.getNumExecutions() != 1) outs() << "s";
-  outs() << ":\n";
-
-  for (unsigned i = 0, e = PIL.getNumExecutions(); i != e; ++i) {
-    outs() << "  ";
-    if (e != 1) outs() << i+1 << ". ";
-    outs() << PIL.getExecution(i) << "\n";
-  }
-
-  outs() << "\n===" << std::string(73, '-') << "===\n";
-  outs() << "Function execution frequencies:\n\n";
-
-  // Print out the function frequencies...
-  outs() << " ##   Frequency\n";
-  for (unsigned i = 0, e = FunctionCounts.size(); i != e; ++i) {
-    if (FunctionCounts[i].second == 0) {
-      outs() << "\n  NOTE: " << e-i << " function" 
-        << (e-i-1 ? "s were" : " was") << " never executed!\n";
-      break;
-    }
-
-    outs() << format("%3d", i+1) << ". "
-           << format("%5.2g", FunctionCounts[i].second) << "/"
-           << format("%g", TotalExecutions) << " "
-           << FunctionCounts[i].first->getName() << "\n";
-  }
-
-  std::set<Function*> FunctionsToPrint;
-
-  TotalExecutions = 0;
-  for (unsigned i = 0, e = Counts.size(); i != e; ++i)
-    TotalExecutions += Counts[i].second;
-  
-  // Sort by the frequency, backwards.
-  sort(Counts.begin(), Counts.end(),
-       PairSecondSortReverse<BasicBlock*>());
-  
-  outs() << "\n===" << std::string(73, '-') << "===\n";
-  if(!ListAll)
-	  outs() << "Top 20 most frequently executed basic blocks:\n\n";
-  else
-	  outs() << "Sorted executed basic blocks:\n\n";
-  
-  // Print out the function frequencies...
-  outs() <<" ##      %% \tFrequency\n";
-  unsigned BlocksToPrint = Counts.size();
-  if (!ListAll && BlocksToPrint > 20) BlocksToPrint = 20;
-  for (unsigned i = 0; i != BlocksToPrint; ++i) {
-    if (Counts[i].second == 0) break;
-    Function *F = Counts[i].first->getParent();
-    outs() << format("%3d", i+1) << ". "
-           << format("%5g", Counts[i].second/(double)TotalExecutions*100)<<"% "
-           << format("%5.0f", Counts[i].second) << "/"
-           << format("%g", TotalExecutions) << "\t"
-           << F->getName() << "() - "
-           << Counts[i].first->getName() << "\n";
-    FunctionsToPrint.insert(F);
-  }
-
-  if (PrintAnnotatedLLVM || PrintAllCode) {
-    outs() << "\n===" << std::string(73, '-') << "===\n";
-    outs() << "Annotated LLVM code for the module:\n\n";
-  
-    ProfileAnnotator PA(PI);
-
-    if (FunctionsToPrint.empty() || PrintAllCode)
-      M.print(outs(), &PA);
-    else
-      // Print just a subset of the functions.
-      for (std::set<Function*>::iterator I = FunctionsToPrint.begin(),
-             E = FunctionsToPrint.end(); I != E; ++I)
-        (*I)->print(outs(), &PA);
-  }
-
-  return false;
+	return false;
 }
 
 int main(int argc, char **argv) {
