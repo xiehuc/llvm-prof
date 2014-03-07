@@ -150,6 +150,7 @@ namespace {
 		printBasicBlockCounts( std::vector<std::pair<BasicBlock*, double> >&
 			Counts);
 	void printAnnotatedCode(std::set<Function*>& FunctionToPrint,Module& M);
+	void printValueCounts();
 	void printValueContent();
 	virtual const char* getPassName() const {
 		return "Print Profile Info";
@@ -263,6 +264,46 @@ ProfileInfoPrinterPass::printBasicBlockCounts(
 	return FunctionsToPrint;
 }
 
+void ProfileInfoPrinterPass::printValueCounts()
+{
+	ProfileInfo& PI = getAnalysis<ProfileInfo>();
+	std::vector<CallInst*> trapes = PI.getAllTrapedValues();
+	if(trapes.empty()) return;
+
+	std::vector<std::pair<CallInst*,double> > ValueCounts(trapes.size());
+	double TotalExecutions = 0;
+	for(int i=0,e=trapes.size();i!=e;++i){
+		Value* v = trapes[i]->getArgOperand(1);
+		ValueCounts[i] = std::make_pair(trapes[i], PI.getExecutionCount(v));
+		TotalExecutions += PI.getExecutionCount(v);
+	}
+
+	if(TotalExecutions == 0) return;
+
+	sort(ValueCounts.begin(),ValueCounts.end(),PairSecondSortReverse<CallInst*>());
+
+	outs() << "\n===" << std::string(73, '-') << "===\n";
+	if(!ListAll)
+		outs() << "Top 20 most frequently executed value trapes:\n\n";
+	else
+		outs() << "Sorted executed value trapes:\n\n";
+	outs() <<" ##      Frequency\t\tValue\t\t\tPosition\n";
+	unsigned ValuesToPrint = ValueCounts.size();
+	if (!ListAll && ValuesToPrint > 20) ValuesToPrint = 20;
+	for (unsigned i = 0; i != ValuesToPrint; ++i) {
+		if (ValueCounts[i].second == 0) break;
+		BasicBlock* BB = ValueCounts[i].first->getParent();
+		Function* F = BB->getParent();
+		unsigned idx = PI.getTrapedIndex(ValueCounts[i].first);
+		outs() << format("%3d", idx) << ". "
+			<< format("%5.0f", ValueCounts[i].second)  <<"\t"
+			<< *ValueCounts[i].first->getArgOperand(1) <<"\t"
+			<< F->getName()<<":\""
+			<< BB->getName() <<"\"\t"
+			<< "\n";
+	}
+}
+
 void ProfileInfoPrinterPass::printAnnotatedCode(
 		std::set<Function *> &FunctionsToPrint,
 		Module& M)
@@ -310,6 +351,7 @@ bool ProfileInfoPrinterPass::runOnModule(Module &M) {
 	// Emit the most frequent function table...
 	printFunctionCounts(FunctionCounts);
 	FunctionToPrint = printBasicBlockCounts(Counts);
+	printValueCounts();
 	printAnnotatedCode(FunctionToPrint,M);
 
 	return false;

@@ -105,6 +105,13 @@ ProfileInfoT<Function,BasicBlock>::getTrapedValue(const Value* V) {
 	return NULL;
 }
 
+template<> unsigned
+ProfileInfoT<Function,BasicBlock>::getTrapedIndex(const CallInst* V) {
+	ConstantInt* C = dyn_cast<ConstantInt>(V->getArgOperand(0));
+	if(!C) return -1;
+	return C->getZExtValue();
+}
+
 template<> double
 ProfileInfoT<Function,BasicBlock>::getExecutionCount(const BasicBlock *BB) {
   std::map<const Function*, BlockCounts>::iterator J =

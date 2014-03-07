@@ -121,6 +121,8 @@ namespace llvm {
 
 	const CallInst* getTrapedValue(const Value* V);
 
+	unsigned getTrapedIndex(const CallInst*);
+
     void setExecutionCount(const BType *BB, double w);
 
     void addExecutionCount(const BType *BB, double w);
