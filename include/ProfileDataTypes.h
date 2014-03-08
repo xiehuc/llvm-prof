@@ -31,12 +31,11 @@ enum ProfilingType {
 	BBTraceInfo  = 6,   /* Basic block trace information   */
 	OptEdgeInfo  = 7,    /* Edge profiling information, optimal version */
 	ValueInfo    = 100,
-	ValueContent = 101,
 };
 
 enum ProfilingFlags {
-	CONSTANT_COMPRESS = 0x0,
-	RUN_LENGTH_COMPRESS = 0x1
+	CONSTANT_COMPRESS = 1<<0,
+	RUN_LENGTH_COMPRESS = 1<<1
 };
 
 

@@ -121,9 +121,10 @@ namespace llvm {
 
 	std::vector<CallInst*> getAllTrapedValues();
 
-	const CallInst* getTrapedValue(const Value* V);
+	const CallInst* findTrapedValue(const Value* V);
 
-	unsigned getTrapedIndex(const CallInst*);
+	static unsigned getTrapedIndex(const CallInst*);
+	static const Value* getTrapedTarget(const CallInst* V);
 
     void setExecutionCount(const BType *BB, double w);
 

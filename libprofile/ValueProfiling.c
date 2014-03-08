@@ -24,11 +24,6 @@ typedef struct ValueHead{
 	unsigned count;//real write bits length
 	enum ProfilingFlags flags; //should only use under 32bit
 	int pos; //current write position in first trunk
-#ifdef ENABLE_COMPRESS
-	struct {
-		int last_value;
-	}compress;
-#endif
 	ValueEntry entry;
 }ValueHead;
 
@@ -65,6 +60,7 @@ void ValueProfAtExitHandler(void)
 				w-=trunk_size;
 			}
 		}
+		assert(w==buffer);
 		if(write(OutFile,buffer,len)<0)
 			EXIT_ON_ERROR;
 		free(buffer);
@@ -76,7 +72,10 @@ void ValueProfAtExitHandler(void)
 void llvm_profiling_trap_value(int index,int value,int isConstant)
 {
 	++ArrayStart[index];
-	if(isConstant) return;
+	if(isConstant){
+		ValueLink[index].flags |= CONSTANT_COMPRESS;
+		return;
+	}
 	int* _pos = &ValueLink[index].pos;
 #define pos (*_pos)
 	ValueEntry* entry = &ValueLink[index].entry;
@@ -87,7 +86,7 @@ void llvm_profiling_trap_value(int index,int value,int isConstant)
 	}
 	ValueItem* item = SLIST_FIRST(entry);
 #ifdef ENABLE_COMPRESS
-	if(pos == 0||item->value[pos-2]!=value||item->value[pos-1]==INT_MAX){
+	if(pos == 0||item->value[pos-2]!=value||item->value[pos-1]+1==INT_MAX){
 		item->value[pos]=value;
 		item->value[pos+1]=1;
 		pos+=2;
@@ -110,7 +109,6 @@ int llvm_start_value_profiling(int argc, const char **argv,
   ValueLink = malloc0(sizeof(*ValueLink)*NumElements);
   int i=0;
   for(i=0;i<NumElements;++i){
-	  ValueLink[i].flags |= CONSTANT_COMPRESS;
 #ifdef ENABLE_COMPRESS
 	  ValueLink[i].flags |= RUN_LENGTH_COMPRESS;
 #endif

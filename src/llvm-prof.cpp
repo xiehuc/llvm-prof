@@ -165,7 +165,7 @@ void ProfileInfoPrinterPass::printValueContent()
 	ProfileInfo &PI = getAnalysis<ProfileInfo>();
 	const std::vector<CallInst*> Calls = PI.getAllTrapedValues();
 	for(std::vector<CallInst*>::const_iterator I = Calls.begin(), E = Calls.end(); I!=E; ++I){
-		Value* traped = (*I)->getArgOperand(1);
+		const Value* traped = PI.getTrapedTarget(*I);
 		std::vector<int> Contents = PI.getValueContents(traped);
 		if(isa<Constant>(traped))outs()<<"Constant";
 		else outs()<<"Variable";
@@ -273,7 +273,7 @@ void ProfileInfoPrinterPass::printValueCounts()
 	std::vector<std::pair<CallInst*,double> > ValueCounts(trapes.size());
 	double TotalExecutions = 0;
 	for(int i=0,e=trapes.size();i!=e;++i){
-		Value* v = trapes[i]->getArgOperand(1);
+		const Value* v = PI.getTrapedTarget(trapes[i]);
 		ValueCounts[i] = std::make_pair(trapes[i], PI.getExecutionCount(v));
 		TotalExecutions += PI.getExecutionCount(v);
 	}
@@ -297,7 +297,7 @@ void ProfileInfoPrinterPass::printValueCounts()
 		unsigned idx = PI.getTrapedIndex(ValueCounts[i].first);
 		outs() << format("%3d", idx) << ". "
 			<< format("%5.0f", ValueCounts[i].second)  <<"\t"
-			<< *ValueCounts[i].first->getArgOperand(1) <<"\t"
+			<< *PI.getTrapedTarget(ValueCounts[i].first) <<"\t"
 			<< F->getName()<<":\""
 			<< BB->getName() <<"\"\t"
 			<< "\n";

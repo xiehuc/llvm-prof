@@ -167,3 +167,10 @@ void llvm::InsertProfilingShutdownCall(Function *Callee, Module *Mod) {
   GlobalDtors->setInitializer(ConstantArray::get(
       cast<ArrayType>(GlobalDtors->getType()->getElementType()), dtors));
 }
+
+llvm::Value* llvm::castoff(llvm::Value* v)
+{
+	if(CastInst* CI = dyn_cast<CastInst>(v)){
+		return castoff(CI->getOperand(0));
+	}else return v;
+}

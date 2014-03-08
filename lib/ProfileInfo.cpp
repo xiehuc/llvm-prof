@@ -21,6 +21,7 @@
 #include "llvm/Support/CFG.h"
 #include "InitializeProfilerPass.h"
 #include "ProfileInstrumentations.h"
+#include "ProfilingUtils.h"
 #include <llvm/IR/Constants.h>
 #include <functional>
 #include <limits>
@@ -101,10 +102,17 @@ ProfileInfoT<Function,BasicBlock>::getValueContents(const Value* V) {
 }
 
 template<> unsigned
-ProfileInfoT<Function,BasicBlock>::getTrapedIndex(const CallInst* V) {
+ProfileInfoT<Function,BasicBlock>::getTrapedIndex(const CallInst* V) 
+{
 	ConstantInt* C = dyn_cast<ConstantInt>(V->getArgOperand(0));
 	if(!C) return -1;
 	return C->getZExtValue();
+}
+
+template<> const Value*
+ProfileInfoT<Function,BasicBlock>::getTrapedTarget(const CallInst* V)
+{
+	return castoff(V->getOperand(1));
 }
 
 inline 
@@ -128,7 +136,7 @@ ProfileInfoT<Function,BasicBlock>::getAllTrapedValues() {
 }
 
 template<> const CallInst*
-ProfileInfoT<Function,BasicBlock>::getTrapedValue(const Value* V) {
+ProfileInfoT<Function,BasicBlock>::findTrapedValue(const Value* V) {
 	std::map<const Value*,ValueCounts>::iterator J = 
 		ValueInformation.find(V);
 	if(J != ValueInformation.end()) return J->second.pos;

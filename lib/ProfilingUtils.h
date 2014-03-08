@@ -23,6 +23,7 @@ namespace llvm {
   class GlobalValue;
   class Module;
   class PointerType;
+  class Value;
 
   void InsertProfilingInitCall(Function *MainFn, const char *FnName,
                                GlobalValue *Arr = 0,
@@ -31,6 +32,8 @@ namespace llvm {
                                GlobalValue *CounterArray,
                                bool beginning = true);
   void InsertProfilingShutdownCall(Function *Callee, Module *Mod);
+
+  Value* castoff(Value*);
 }
 
 #endif

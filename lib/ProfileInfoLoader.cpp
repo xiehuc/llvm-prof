@@ -94,6 +94,7 @@ static void ReadValueProfilingContents(const char* ToolName, FILE* F,
 	for(unsigned i=0;i<Counts;++i){
 		unsigned count = 0;
 		if(fread(&count,sizeof(unsigned),1,F) != 1) EXIT_IF_ERROR;
+		count = ByteSwap(count, ShouldByteSwap);
 		if(count==0) continue;
 		TempSpace.clear();
 		TempSpace.resize(count);
