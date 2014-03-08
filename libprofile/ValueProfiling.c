@@ -7,6 +7,7 @@
 #include <assert.h>
 
 #define malloc0(sz) memset(malloc(sz),0,sz)
+#define trunk_size 100
 
 static unsigned *ArrayStart;
 static unsigned NumElements;
@@ -14,13 +15,18 @@ static unsigned NumElements;
 static unsigned *WriteCount;
 
 typedef struct ValueItem{
-	int value;
 	SLIST_ENTRY(ValueItem) next;
+	int value[trunk_size];
 }ValueItem;
+typedef SLIST_HEAD(ValueEntry,ValueItem) ValueEntry;
 
-typedef SLIST_HEAD(ValueLink, ValueItem) ValueLink;
+typedef struct ValueHead{
+	int flags;
+	int pos;
+	ValueEntry entry;
+}ValueHead;
 
-static ValueLink* ValueHead = NULL;
+static ValueHead* ValueLink = NULL;
 
 void ValueProfAtExitHandler(void)
 {
@@ -38,9 +44,17 @@ void ValueProfAtExitHandler(void)
 		if(len==0) continue;
 		buffer = malloc0(len);
 		ValueItem* item = NULL;
+		ValueEntry* entry = &ValueLink[i].entry;
 		int* w = buffer+WriteCount[i];
-		SLIST_FOREACH(item, &ValueHead[i], next){
-			*--w = item->value;
+		SLIST_FOREACH(item, entry, next){
+			if(item == SLIST_FIRST(entry)){
+				int size = ValueLink[i].pos;
+				memcpy(w-size,item->value,sizeof(int)*size);
+				w-=size;
+			}else{
+				memcpy(w-trunk_size,item->value,sizeof(int)*trunk_size);
+				w-=trunk_size;
+			}
 		}
 		if(write(OutFile,buffer,len)<0)
 			EXIT_ON_ERROR;
@@ -55,9 +69,16 @@ void llvm_profiling_trap_value(int index,int value,int isConstant)
 	++ArrayStart[index];
 	if(isConstant) return;
 	++WriteCount[index];
-	ValueItem* item = malloc0(sizeof(*item));
-	item->value = value;
-	SLIST_INSERT_HEAD(&ValueHead[index], item, next);
+	int pos = ValueLink[index].pos;
+	ValueEntry* entry = &ValueLink[index].entry;
+	if(pos >= trunk_size || SLIST_EMPTY(entry)){
+		ValueItem* ins = malloc0(sizeof(ValueItem));
+		SLIST_INSERT_HEAD(entry, ins, next);
+		pos = ValueLink[index].pos = 0;
+	}
+	ValueItem* item = SLIST_FIRST(entry);
+	item->value[pos] = value;
+	++ValueLink[index].pos;
 }
 
 int llvm_start_value_profiling(int argc, const char **argv,
@@ -65,7 +86,7 @@ int llvm_start_value_profiling(int argc, const char **argv,
   int Ret = save_arguments(argc, argv);
   ArrayStart = arrayStart;
   NumElements = numElements;
-  ValueHead = malloc0(sizeof(ValueLink)*NumElements);
+  ValueLink = malloc0(sizeof(*ValueLink)*NumElements);
   WriteCount = malloc0(sizeof(unsigned)*NumElements);
   atexit(ValueProfAtExitHandler);
   return Ret;
