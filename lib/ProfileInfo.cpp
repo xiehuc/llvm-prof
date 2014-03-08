@@ -22,6 +22,7 @@
 #include "InitializeProfilerPass.h"
 #include "ProfileInstrumentations.h"
 #include <llvm/IR/Constants.h>
+#include <functional>
 #include <limits>
 #include <queue>
 #include <set>
@@ -85,6 +86,20 @@ ProfileInfoT<Function,BasicBlock>::getValueContents(const Value* V) {
 	return MissingContent;
 }
 
+template<> unsigned
+ProfileInfoT<Function,BasicBlock>::getTrapedIndex(const CallInst* V) {
+	ConstantInt* C = dyn_cast<ConstantInt>(V->getArgOperand(0));
+	if(!C) return -1;
+	return C->getZExtValue();
+}
+
+inline 
+int SortBasedIndex(CallInst* a,CallInst* b)
+{
+	return dyn_cast<ConstantInt>(a->getArgOperand(0))->getZExtValue() 
+		< dyn_cast<ConstantInt>(b->getArgOperand(0))->getZExtValue();
+}
+
 template<> std::vector<CallInst*>
 ProfileInfoT<Function,BasicBlock>::getAllTrapedValues() {
 	std::vector<CallInst*> ret;
@@ -94,6 +109,7 @@ ProfileInfoT<Function,BasicBlock>::getAllTrapedValues() {
 	for(;J!=E;++J){
 		ret.push_back(J->second.pos);
 	}
+	std::sort(ret.begin(), ret.end(), SortBasedIndex);
 	return ret;
 }
 
@@ -105,12 +121,6 @@ ProfileInfoT<Function,BasicBlock>::getTrapedValue(const Value* V) {
 	return NULL;
 }
 
-template<> unsigned
-ProfileInfoT<Function,BasicBlock>::getTrapedIndex(const CallInst* V) {
-	ConstantInt* C = dyn_cast<ConstantInt>(V->getArgOperand(0));
-	if(!C) return -1;
-	return C->getZExtValue();
-}
 
 template<> double
 ProfileInfoT<Function,BasicBlock>::getExecutionCount(const BasicBlock *BB) {
