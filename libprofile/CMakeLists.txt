@@ -12,6 +12,9 @@ add_definitions(${LLVM_DEFINITIONS} -Wall)
 if(OUTPUT_HASPID)
 	add_definitions(-DOUTPUT_HASPID)
 endif()
+if(ENABLE_COMPRESS)
+	add_definitions(-DENABLE_COMPRESS)
+endif()
 
 add_library( profile_rt-static ${SOURCES} )
 set_target_properties( profile_rt-static

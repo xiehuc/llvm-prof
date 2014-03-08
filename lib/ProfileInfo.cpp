@@ -73,15 +73,29 @@ template<> const std::vector<int>&
 ProfileInfoT<Function,BasicBlock>::getValueContents(const Value* V) {
 	static std::vector<int> MissingContent(0);
 	static std::vector<int> ConstantContent;
+	static std::vector<int> UnCompress;
 	std::map<const Value*,ValueCounts>::iterator J = 
 		ValueInformation.find(V);
 	if(J != ValueInformation.end()){
-		if(!isa<Constant>(V))
-			return J->second.Contents;
-		ConstantContent.resize(J->second.Nums);
-		int filled = cast<ConstantInt>(V)->getSExtValue();
-		std::fill(ConstantContent.begin(), ConstantContent.end(), filled);
-		return ConstantContent;
+		if(isa<Constant>(V)){
+			ConstantContent.resize(J->second.Nums);
+			int filled = cast<ConstantInt>(V)->getSExtValue();
+			std::fill(ConstantContent.begin(), ConstantContent.end(), filled);
+			return ConstantContent;
+		}else if(J->second.flags & RUN_LENGTH_COMPRESS){
+			UnCompress.resize(J->second.Nums);
+			std::vector<int>::iterator write = UnCompress.begin();
+			for(std::vector<int>::const_iterator I = J->second.Contents.begin(),
+					E = J->second.Contents.end();I<E;I+=2){
+				int value = *I;
+				size_t len = *(I+1);
+				std::fill(write,write+len,value);
+				write+=len;
+			}
+			return UnCompress;
+
+		}
+		return J->second.Contents;
 	}
 	return MissingContent;
 }

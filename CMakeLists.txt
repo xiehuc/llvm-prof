@@ -7,6 +7,7 @@ set(CMAKE_MODULE_PATH
 	)
 
 option(OUTPUT_HASPID "Output name contain pid to support mpi program" OFF)
+option(ENABLE_COMPRESS "Enable Run Length Compress to decrease memory footprint" ON)
 
 set(LLVM_RECOMMAND_VERSION "" CACHE STRING "Switch the llvm version")
 find_package(LLVM)

@@ -35,7 +35,8 @@ enum ProfilingType {
 };
 
 enum ProfilingFlags {
-	RUN_LENGTH_COMPRESS = 0x0
+	CONSTANT_COMPRESS = 0x0,
+	RUN_LENGTH_COMPRESS = 0x1
 };
 
 
