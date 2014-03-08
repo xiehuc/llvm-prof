@@ -26,6 +26,7 @@
 #include "llvm/Support/Format.h"
 #include "llvm/Support/raw_ostream.h"
 #include <llvm/IR/Instructions.h>
+#include "ProfileDataTypes.h"
 #include <cassert>
 #include <map>
 #include <set>
@@ -62,8 +63,9 @@ namespace llvm {
     typedef std::map<const BType*, double> BlockCounts;
     typedef std::map<const BType*, const BType*> Path;
 	struct ValueCounts{
-		CallInst* pos;
 		unsigned Nums;
+		enum ProfilingFlags flags;
+		CallInst* pos;
 		std::vector<int> Contents;
 	};
 

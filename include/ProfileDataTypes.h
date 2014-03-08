@@ -34,6 +34,11 @@ enum ProfilingType {
 	ValueContent = 101,
 };
 
+enum ProfilingFlags {
+	RUN_LENGTH_COMPRESS = 0x0
+};
+
+
 #if defined(__cplusplus)
 }
 #endif

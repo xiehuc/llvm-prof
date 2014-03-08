@@ -80,28 +80,29 @@ static void ReadProfilingBlock(const char *ToolName, FILE *F,
 }
 
 static void ReadValueProfilingContents(const char* ToolName, FILE* F, 
-		bool ShouldByteSwap, const std::vector<unsigned>& Counts,
+		bool ShouldByteSwap, const size_t Counts, 
 		std::vector<std::vector<int> >& Data)
 {
-#define EXIT_IF_ERROR \
+#define EXIT_IF_ERROR {\
     errs() << ToolName << ": data packet truncated!\n";\
     perror(0);\
-    exit(1);
+    exit(1);}
 
-	if(Data.size() < Counts.size())
-		Data.resize(Counts.size());
+	if(Data.size() < Counts)
+		Data.resize(Counts);
 	std::vector<int> TempSpace;
-	for(unsigned i=0;i<Counts.size();++i){
-		if(Counts[i]==0) continue;
+	for(unsigned i=0;i<Counts;++i){
+		unsigned count = 0;
+		if(fread(&count,sizeof(unsigned),1,F) != 1) EXIT_IF_ERROR;
+		if(count==0) continue;
 		TempSpace.clear();
-		TempSpace.resize(Counts[i]);
-		if(fread(&TempSpace[0],sizeof(int)*Counts[i],1,F) != 1){
+		TempSpace.resize(count);
+		if(fread(&TempSpace[0],sizeof(int)*count,1,F) != 1){
 			EXIT_IF_ERROR;
 		}
-		int len = Data[i].size();
-		Data[i].resize(len+TempSpace.size());
-		//tranverse TempSpace with ByteSwap and append to Data[i]
-		std::transform(TempSpace.begin(), TempSpace.end(), Data[i].begin()+len,
+		Data[i].resize(TempSpace.size());
+		//tranverse TempSpace with ByteSwap and write to Data[i]
+		std::transform(TempSpace.begin(), TempSpace.end(), Data[i].begin(),
 				std::bind2nd(std::ptr_fun(ByteSwap), ShouldByteSwap));
 	}
 #undef EXIT_IF_ERROR
@@ -177,12 +178,7 @@ ProfileInfoLoader::ProfileInfoLoader(const char *ToolName,
 
 	case ValueInfo:
 	  ReadProfilingBlock(ToolName, F, ShouldByteSwap, ValueCounts);
-	  break;
-	
-	case ValueContent:
-	  WriteCount.clear();
-	  ReadProfilingBlock(ToolName, F, ShouldByteSwap, WriteCount);
-	  ReadValueProfilingContents(ToolName, F, ShouldByteSwap, WriteCount, ValueContents);
+	  ReadValueProfilingContents(ToolName, F, ShouldByteSwap, ValueCounts.size(), ValueContents);
 	  break;
 
     default:

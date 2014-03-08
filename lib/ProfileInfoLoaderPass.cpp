@@ -286,7 +286,10 @@ bool LoaderPass::runOnModule(Module &M) {
 			  ValueCounts Ins;
 			  Ins.pos = Call;
 			  Ins.Nums = Counters[index];
-			  Ins.Contents = PIL.getRawValueContent(index);
+			  const std::vector<int>& content = PIL.getRawValueContent(index);
+			  Ins.flags = (ProfilingFlags)content.front();
+			  Ins.Contents.resize(content.size());
+			  copy(content.begin(),content.end(),Ins.Contents.begin());
 			  //should NOT insert two values into one cell.
 			  assert(ValueInformation.find(trapValue) == ValueInformation.end());
 			  if(!isa<Constant>(trapValue))
