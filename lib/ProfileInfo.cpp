@@ -62,25 +62,30 @@ template<> const
 double ProfileInfoT<MachineFunction, MachineBasicBlock>::MissingValue = -1;
 
 template<> double
-ProfileInfoT<Function,BasicBlock>::getExecutionCount(const Value* V) {
-	std::map<const Value*,ValueCounts>::iterator J = 
+ProfileInfoT<Function,BasicBlock>::getExecutionCount(const CallInst* V) {
+	std::map<const CallInst*,ValueCounts>::iterator J = 
 		ValueInformation.find(V);
 	if(J != ValueInformation.end()) return (double)J->second.Nums;
 	return MissingValue;
 }
 
+template<> const Value*
+ProfileInfoT<Function,BasicBlock>::getTrapedTarget(const CallInst* V)
+{
+	return castoff(V->getOperand(1));
+}
 
 template<> const std::vector<int>&
-ProfileInfoT<Function,BasicBlock>::getValueContents(const Value* V) {
+ProfileInfoT<Function,BasicBlock>::getValueContents(const CallInst* V) {
 	static std::vector<int> MissingContent(0);
 	static std::vector<int> ConstantContent;
 	static std::vector<int> UnCompress;
-	std::map<const Value*,ValueCounts>::iterator J = 
+	std::map<const CallInst*,ValueCounts>::iterator J = 
 		ValueInformation.find(V);
 	if(J != ValueInformation.end()){
-		if(isa<Constant>(V)){
+		if(J->second.flags & CONSTANT_COMPRESS){
 			ConstantContent.resize(J->second.Nums);
-			int filled = cast<ConstantInt>(V)->getSExtValue();
+			int filled = cast<ConstantInt>(getTrapedTarget(V))->getZExtValue();
 			std::fill(ConstantContent.begin(), ConstantContent.end(), filled);
 			return ConstantContent;
 		}else if(J->second.flags & RUN_LENGTH_COMPRESS){
@@ -109,32 +114,27 @@ ProfileInfoT<Function,BasicBlock>::getTrapedIndex(const CallInst* V)
 	return C->getZExtValue();
 }
 
-template<> const Value*
-ProfileInfoT<Function,BasicBlock>::getTrapedTarget(const CallInst* V)
-{
-	return castoff(V->getOperand(1));
-}
-
 inline 
-int SortBasedIndex(CallInst* a,CallInst* b)
+int SortBasedIndex(const CallInst* a,const CallInst* b)
 {
 	return dyn_cast<ConstantInt>(a->getArgOperand(0))->getZExtValue() 
 		< dyn_cast<ConstantInt>(b->getArgOperand(0))->getZExtValue();
 }
 
-template<> std::vector<CallInst*>
+template<> std::vector<const CallInst*>
 ProfileInfoT<Function,BasicBlock>::getAllTrapedValues() {
-	std::vector<CallInst*> ret;
+	std::vector<const CallInst*> ret;
 	ret.reserve(ValueInformation.size());
-	std::map<const Value*,ValueCounts>::iterator J = ValueInformation.begin(),
+	std::map<const CallInst*,ValueCounts>::iterator J = ValueInformation.begin(),
 		E = ValueInformation.end();
 	for(;J!=E;++J){
-		ret.push_back(J->second.pos);
+		ret.push_back(J->first);
 	}
 	std::sort(ret.begin(), ret.end(), SortBasedIndex);
 	return ret;
 }
 
+/*
 template<> const CallInst*
 ProfileInfoT<Function,BasicBlock>::findTrapedValue(const Value* V) {
 	std::map<const Value*,ValueCounts>::iterator J = 
@@ -142,6 +142,7 @@ ProfileInfoT<Function,BasicBlock>::findTrapedValue(const Value* V) {
 	if(J != ValueInformation.end()) return J->second.pos;
 	return NULL;
 }
+*/
 
 
 template<> double

@@ -65,7 +65,6 @@ namespace llvm {
 	struct ValueCounts{
 		unsigned Nums;
 		enum ProfilingFlags flags;
-		CallInst* pos;
 		std::vector<int> Contents;
 	};
 
@@ -82,7 +81,7 @@ namespace llvm {
     // FunctionInformation - Count the number of times a function is executed.
     std::map<const FType*, double> FunctionInformation;
 
-	std::map<const Value*, ValueCounts> ValueInformation;
+	std::map<const CallInst*, ValueCounts> ValueInformation;
 
     ProfileInfoT<MachineFunction, MachineBasicBlock> *MachineProfile;
   public:
@@ -115,13 +114,10 @@ namespace llvm {
 
     double getExecutionCount(const BType *BB);
 
-	double getExecutionCount(const Value* V);
-
-	const std::vector<int>& getValueContents(const Value* V);
-
-	std::vector<CallInst*> getAllTrapedValues();
-
-	const CallInst* findTrapedValue(const Value* V);
+	double getExecutionCount(const CallInst* V);
+	const std::vector<int>& getValueContents(const CallInst* V);
+	std::vector<const CallInst*> getAllTrapedValues();
+	//const CallInst* findTrapedValue(const Value* V);
 
 	static unsigned getTrapedIndex(const CallInst*);
 	static const Value* getTrapedTarget(const CallInst* V);

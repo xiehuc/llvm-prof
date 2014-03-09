@@ -163,13 +163,14 @@ char ProfileInfoPrinterPass::ID = 0;
 void ProfileInfoPrinterPass::printValueContent() 
 {
 	ProfileInfo &PI = getAnalysis<ProfileInfo>();
-	const std::vector<CallInst*> Calls = PI.getAllTrapedValues();
-	for(std::vector<CallInst*>::const_iterator I = Calls.begin(), E = Calls.end(); I!=E; ++I){
+	std::vector<const CallInst*> Calls = PI.getAllTrapedValues();
+	assert(Calls.size() == PIL.getRawValueCounts().size());
+	for(std::vector<const CallInst*>::const_iterator I = Calls.begin(), E = Calls.end(); I!=E; ++I){
+		std::vector<int> Contents = PI.getValueContents(*I);
 		const Value* traped = PI.getTrapedTarget(*I);
-		std::vector<int> Contents = PI.getValueContents(traped);
 		if(isa<Constant>(traped))outs()<<"Constant";
 		else outs()<<"Variable";
-		outs()<<"("<<(unsigned)PI.getExecutionCount(traped)<<"):\t";
+		outs()<<"("<<(unsigned)PI.getExecutionCount(*I)<<"):\t";
 		std::vector<int>::iterator II = Contents.begin(),EE=Contents.end(),BND;
 		while(II!=EE){
 			BND = std::upper_bound(II, EE, *II);
@@ -276,20 +277,19 @@ ProfileInfoPrinterPass::printBasicBlockCounts(
 void ProfileInfoPrinterPass::printValueCounts()
 {
 	ProfileInfo& PI = getAnalysis<ProfileInfo>();
-	std::vector<CallInst*> trapes = PI.getAllTrapedValues();
+	std::vector<const CallInst*> trapes = PI.getAllTrapedValues();
 	if(trapes.empty()) return;
 
-	std::vector<std::pair<CallInst*,double> > ValueCounts(trapes.size());
+	std::vector<std::pair<const CallInst*,double> > ValueCounts(trapes.size());
 	double TotalExecutions = 0;
 	for(int i=0,e=trapes.size();i!=e;++i){
-		const Value* v = PI.getTrapedTarget(trapes[i]);
-		ValueCounts[i] = std::make_pair(trapes[i], PI.getExecutionCount(v));
-		TotalExecutions += PI.getExecutionCount(v);
+		ValueCounts[i] = std::make_pair(trapes[i], PI.getExecutionCount(trapes[i]));
+		TotalExecutions += PI.getExecutionCount(trapes[i]);
 	}
 
 	if(TotalExecutions == 0) return;
 
-	sort(ValueCounts.begin(),ValueCounts.end(),PairSecondSortReverse<CallInst*>());
+	sort(ValueCounts.begin(),ValueCounts.end(),PairSecondSortReverse<const CallInst*>());
 
 	outs() << "\n===" << std::string(73, '-') << "===\n";
 	if(!ListAll)
@@ -301,8 +301,8 @@ void ProfileInfoPrinterPass::printValueCounts()
 	if (!ListAll && ValuesToPrint > 20) ValuesToPrint = 20;
 	for (unsigned i = 0; i != ValuesToPrint; ++i) {
 		if (ValueCounts[i].second == 0) break;
-		BasicBlock* BB = ValueCounts[i].first->getParent();
-		Function* F = BB->getParent();
+		const BasicBlock* BB = ValueCounts[i].first->getParent();
+		const Function* F = BB->getParent();
 		unsigned idx = PI.getTrapedIndex(ValueCounts[i].first);
 		outs() << format("%3d", idx) << ". "
 			<< format("%5.0f", ValueCounts[i].second)  <<"\t"

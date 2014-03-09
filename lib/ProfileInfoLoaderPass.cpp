@@ -282,20 +282,15 @@ bool LoaderPass::runOnModule(Module &M) {
 			  CallInst* Call = dyn_cast<CallInst>(&*I);
               if(!Call) continue;
 			  if(Call->getCalledValue()->getName() != "llvm_profiling_trap_value") continue;
-			  Value* trapValue = castoff(Call->getArgOperand(1));
 			  unsigned index = getTrapedIndex(Call);
 			  ValueCounts Ins;
-			  Ins.pos = Call;
 			  Ins.Nums = Counters[index];
 			  const std::vector<int>& content = PIL.getRawValueContent(index);
 			  Ins.flags = (ProfilingFlags)content.front();
 			  Ins.Contents.resize(content.size()-1);
 			  copy(content.begin()+1,content.end(),Ins.Contents.begin());
 			  //should NOT insert two values into one cell.
-			  assert(ValueInformation.find(trapValue) == ValueInformation.end());
-			  if(!isa<Constant>(trapValue))
-				  assert(Ins.Contents.size() == Counters[index]);
-			  ValueInformation[trapValue] = Ins;
+			  ValueInformation[Call] = Ins;
 		  }
 	  }
   }
