@@ -179,7 +179,7 @@ void ProfileInfoPrinterPass::printValueContent()
 				outs()<<*II<<"<repeat "<<len<<" times>,";
 			else
 				for(unsigned i=0;i<len;i++)
-					outs()<<Contents[i]<<",";
+					outs()<<*II<<",";
 			II=BND;
 		}
 		outs()<<"\n";
