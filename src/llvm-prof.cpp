@@ -170,8 +170,17 @@ void ProfileInfoPrinterPass::printValueContent()
 		if(isa<Constant>(traped))outs()<<"Constant";
 		else outs()<<"Variable";
 		outs()<<"("<<(unsigned)PI.getExecutionCount(traped)<<"):\t";
-		for(unsigned i=0;i<Contents.size();++i)
-			outs()<<Contents[i]<<",";
+		std::vector<int>::iterator II = Contents.begin(),EE=Contents.end(),BND;
+		while(II!=EE){
+			BND = std::upper_bound(II, EE, *II);
+			size_t len = BND-II;
+			if (len>5)
+				outs()<<*II<<"<repeat "<<len<<" times>,";
+			else
+				for(unsigned i=0;i<len;i++)
+					outs()<<Contents[i]<<",";
+			II=BND;
+		}
 		outs()<<"\n";
 	}
 }
