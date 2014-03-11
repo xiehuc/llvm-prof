@@ -16,19 +16,25 @@ set(SOURCES
 	ProfileVerifierPass.cpp
 	ProfilingUtils.cpp
 	)
-
+add_definitions(-fno-rtti)
 #disable debug ability
 add_definitions(${LLVM_DEFINITIONS} -DNDEBUG -Wall)
 include_directories(
 	${LLVM_INCLUDE_DIRS}
 	../include
 	)
+link_directories(${LLVM_LIBRARY_DIRS})
 
 add_library(LLVMProfiling-static STATIC
 	${SOURCES}
 	)
+
+llvm_map_components_to_libraries(LLVM_PROF_LIBRARY all)
+
 target_link_libraries(LLVMProfiling-static
-	${LLVM_DYNAMIC_LIBRARY}
+	#${LLVM_DYNAMIC_LIBRARY}
+	${LLVM_PROF_LIBRARY}
+	${LLVM_LIBRARY}
 	)
 
 set_target_properties(LLVMProfiling-static
@@ -39,7 +45,9 @@ add_library(LLVMProfiling-shared SHARED
 	${SOURCES}
 	)
 target_link_libraries(LLVMProfiling-shared
-	${LLVM_DYNAMIC_LIBRARY}
+	#${LLVM_DYNAMIC_LIBRARY}
+	${LLVM_PROF_LIBRARY}
+	${LLVM_LIBRARY}
 	)
 
 set_target_properties(LLVMProfiling-shared

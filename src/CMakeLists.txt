@@ -1,9 +1,11 @@
-
+add_definitions(-fno-rtti)
 add_definitions(${LLVM_DEFINITIONS} -Wall)
 include_directories(
     ${LLVM_INCLUDE_DIRS}
     ../include 
     )
+
+link_directories(${LLVM_LIBRARY_DIRS})
 
 llvm_map_components_to_libraries(LLVM_LINK_COMPONENTS bitreader )
 
@@ -13,7 +15,7 @@ add_executable(llvm-prof
 
 target_link_libraries(llvm-prof
 	${LLVM_LIBRARIES}
-	${LLVM_DYNAMIC_LIBRARY}
+	#${LLVM_DYNAMIC_LIBRARY}
 	LLVMProfiling-shared
 	)
 
