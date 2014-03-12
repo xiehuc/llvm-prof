@@ -16,6 +16,8 @@ set(SOURCES
 	ProfileVerifierPass.cpp
 	ProfilingUtils.cpp
 	)
+#some platform need disable rtti to void 
+#undefined reference `typeinfo for xxx`
 add_definitions(-fno-rtti)
 #disable debug ability
 add_definitions(${LLVM_DEFINITIONS} -DNDEBUG -Wall)
