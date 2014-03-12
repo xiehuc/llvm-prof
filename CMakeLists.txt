@@ -12,6 +12,8 @@ option(ENABLE_COMPRESS "Enable Run Length Compress to decrease memory footprint"
 set(LLVM_RECOMMAND_VERSION "" CACHE STRING "Switch the llvm version")
 find_package(LLVM)
 
+option(DYNAMIC_LINK "Link Dynamic LLVM Libraries" ${LLVM_DYNAMIC_LIBRARY_FOUND})
+
 configure_file(llvm-prof.pc.in ${CMAKE_BINARY_DIR}/llvm-prof.pc @ONLY)
 install(FILES ${CMAKE_BINARY_DIR}/llvm-prof.pc DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/pkgconfig)
 message(STATUS "Add ${CMAKE_INSTALL_PREFIX}/lib/pkgconfig to $PKG_CONFIG_PATH "

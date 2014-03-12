@@ -29,10 +29,13 @@ add_library(LLVMProfiling-static STATIC
 	${SOURCES}
 	)
 
-llvm_map_components_to_libraries(LLVM_PROF_LIBRARY all)
+if(DYNAMIC_LINK)
+	set(LLVM_PROF_LIBRARY ${LLVM_DYNAMIC_LIBRARY})
+else()
+	llvm_map_components_to_libraries(LLVM_PROF_LIBRARY bitreader analysis transformutils)
+endif()
 
 target_link_libraries(LLVMProfiling-static
-	#${LLVM_DYNAMIC_LIBRARY}
 	${LLVM_PROF_LIBRARY}
 	${LLVM_LIBRARY}
 	)
@@ -45,7 +48,6 @@ add_library(LLVMProfiling-shared SHARED
 	${SOURCES}
 	)
 target_link_libraries(LLVMProfiling-shared
-	#${LLVM_DYNAMIC_LIBRARY}
 	${LLVM_PROF_LIBRARY}
 	${LLVM_LIBRARY}
 	)
