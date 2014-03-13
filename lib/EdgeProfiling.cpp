@@ -106,7 +106,7 @@ bool EdgeProfiler::runOnModule(Module &M) {
           // only have a single successor, insert the counter in this block,
           // otherwise insert it in the successor block.
           if (TI->getNumSuccessors() == 1) {
-            // Insert counter at the start of the block
+            // Insert counter at the end of the block
             IncrementCounterInBlock(BB, i++, Counters, false);
           } else {
             // Insert counter at the start of the block
