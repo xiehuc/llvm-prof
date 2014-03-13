@@ -54,6 +54,7 @@ namespace {
   cl::alias PrintAnnotated2("A", cl::desc("Alias for --annotated-llvm"),
                             cl::aliasopt(PrintAnnotatedLLVM));
   cl::opt<bool> ListAll("list-all", cl::desc("List all blocks"));
+  cl::opt<bool> Unsort("unsort",cl::desc("Directly print without sort order"));
   cl::opt<bool> ValueContentPrint("value-content", cl::desc("Print detailed value content in value profiling"));
   cl::opt<bool>
   PrintAllCode("print-all-code",
@@ -206,8 +207,9 @@ void ProfileInfoPrinterPass::printFunctionCounts(
 		std::vector<std::pair<Function*, double> >& FunctionCounts)
 {
 	// Sort by the frequency, backwards.
-	sort(FunctionCounts.begin(), FunctionCounts.end(),
-			PairSecondSortReverse<Function*>());
+	if(!Unsort)
+		sort(FunctionCounts.begin(), FunctionCounts.end(),
+				PairSecondSortReverse<Function*>());
 
 	double TotalExecutions = 0;
 	for (unsigned i = 0, e = FunctionCounts.size(); i != e; ++i)
@@ -221,7 +223,7 @@ void ProfileInfoPrinterPass::printFunctionCounts(
 	// Print out the function frequencies...
 	outs() << " ##   Frequency\n";
 	for (unsigned i = 0, e = FunctionCounts.size(); i != e; ++i) {
-		if (FunctionCounts[i].second == 0) {
+		if (!Unsort && FunctionCounts[i].second == 0) {
 			outs() << "\n  NOTE: " << e-i << " function" 
 				<< (e-i-1 ? "s were" : " was") << " never executed!\n";
 			break;
@@ -247,8 +249,9 @@ ProfileInfoPrinterPass::printBasicBlockCounts(
 	if(TotalExecutions == 0) return FunctionsToPrint;
 
 	// Sort by the frequency, backwards.
-	sort(Counts.begin(), Counts.end(),
-			PairSecondSortReverse<BasicBlock*>());
+	if(!Unsort)
+		sort(Counts.begin(), Counts.end(),
+				PairSecondSortReverse<BasicBlock*>());
 
 	outs() << "\n===" << std::string(73, '-') << "===\n";
 	if(!ListAll)
@@ -261,7 +264,7 @@ ProfileInfoPrinterPass::printBasicBlockCounts(
 	unsigned BlocksToPrint = Counts.size();
 	if (!ListAll && BlocksToPrint > 20) BlocksToPrint = 20;
 	for (unsigned i = 0; i != BlocksToPrint; ++i) {
-		if (Counts[i].second == 0) break;
+		if (!Unsort && Counts[i].second == 0) break;
 		Function *F = Counts[i].first->getParent();
 		outs() << format("%3d", i+1) << ". "
 			<< format("%5g", Counts[i].second/(double)TotalExecutions*100)<<"% "
@@ -289,7 +292,8 @@ void ProfileInfoPrinterPass::printValueCounts()
 
 	if(TotalExecutions == 0) return;
 
-	sort(ValueCounts.begin(),ValueCounts.end(),PairSecondSortReverse<const CallInst*>());
+	if(!Unsort)
+		sort(ValueCounts.begin(),ValueCounts.end(),PairSecondSortReverse<const CallInst*>());
 
 	outs() << "\n===" << std::string(73, '-') << "===\n";
 	if(!ListAll)
@@ -300,7 +304,7 @@ void ProfileInfoPrinterPass::printValueCounts()
 	unsigned ValuesToPrint = ValueCounts.size();
 	if (!ListAll && ValuesToPrint > 20) ValuesToPrint = 20;
 	for (unsigned i = 0; i != ValuesToPrint; ++i) {
-		if (ValueCounts[i].second == 0) break;
+		if (!Unsort && ValueCounts[i].second == 0) break;
 		const BasicBlock* BB = ValueCounts[i].first->getParent();
 		const Function* F = BB->getParent();
 		unsigned idx = PI.getTrapedIndex(ValueCounts[i].first);
