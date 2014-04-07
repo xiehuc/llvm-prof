@@ -11,12 +11,15 @@ using namespace llvm;
 using namespace std;
 
 char ValueProfiler::ID = 0;
+int ValueProfiler::numTrapedValues = 0;
+
+static RegisterPass<ValueProfiler> X("value-profiling", "Insert Value Profiling into Module", false, true);
 
 ValueProfiler::ValueProfiler():ModulePass(ID)
 {
-	numTrapedValues = 0;
 	Counters = NULL;
 }
+
 
 template<typename InsertTy>
 static Instruction* insertValueTrap(Value* v,Module* M,int numTrapedValues,InsertTy InsertPos)
@@ -46,8 +49,8 @@ Instruction* ValueProfiler::insertValueTrap(Value* v, BasicBlock* InsertTail)
 		ConstantTraps.push_back(Store);
 		return NULL;
 	}else*/
-		return ::insertValueTrap(v, InsertTail->getParent()->getParent(),
-				numTrapedValues++,InsertTail);
+	return ::insertValueTrap(v, InsertTail->getParent()->getParent(),
+			numTrapedValues++,InsertTail);
 }
 
 Instruction* ValueProfiler::insertValueTrap(Value* v,Instruction* InsertBefore)
@@ -58,9 +61,9 @@ Instruction* ValueProfiler::insertValueTrap(Value* v,Instruction* InsertBefore)
 		ConstantTraps.push_back(Store);
 		return NULL;
 	}else*/
-		return ::insertValueTrap(v,
-				InsertBefore->getParent()->getParent()->getParent(),
-				numTrapedValues++, InsertBefore);
+	return ::insertValueTrap(v,
+			InsertBefore->getParent()->getParent()->getParent(),
+			numTrapedValues++, InsertBefore);
 }
 
 bool ValueProfiler::runOnModule(Module& M)
