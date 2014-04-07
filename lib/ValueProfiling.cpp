@@ -13,7 +13,7 @@ using namespace std;
 char ValueProfiler::ID = 0;
 int ValueProfiler::numTrapedValues = 0;
 
-static RegisterPass<ValueProfiler> X("value-profiling", "Insert Value Profiling into Module", false, true);
+static RegisterPass<ValueProfiler> X("insert-value-profiling", "Insert Value Profiling into Module", false, true);
 
 ValueProfiler::ValueProfiler():ModulePass(ID)
 {
