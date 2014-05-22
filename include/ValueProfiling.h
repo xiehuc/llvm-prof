@@ -146,6 +146,7 @@ namespace llvm{
 	class ValueProfiler: public ModulePass
 	{
 		static int numTrapedValues;
+      static bool avaliable;
 
 		GlobalVariable* Counters;
 		typedef std::vector<std::pair<int,BasicBlock*> > ConstantTrapTy;
@@ -153,9 +154,14 @@ namespace llvm{
 		public:
 		static char ID;
 		ValueProfiler();
-		//insert a value profiler, return inserted call instruction
-		static Instruction* insertValueTrap(Value* value,BasicBlock* InsertTail);
-		static Instruction* insertValueTrap(Value* value,Instruction* InsertBefore);
+      //if opt enable -insert-value-profiling
+      static bool Avaliable(){ return avaliable;}
+		/* 
+       * insert a value profiler , return inserted call instruction
+       * if avaliable == false , return value
+       */
+		static Value* insertValueTrap(Value* value,BasicBlock* InsertTail);
+		static Value* insertValueTrap(Value* value,Instruction* InsertBefore);
 		//insert initial profiling for module
 		bool runOnModule(Module& M);
 		int getNumTrapedValues() const { return numTrapedValues;}

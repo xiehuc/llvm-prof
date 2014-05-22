@@ -12,12 +12,14 @@ using namespace std;
 
 char ValueProfiler::ID = 0;
 int ValueProfiler::numTrapedValues = 0;
+bool ValueProfiler::avaliable = false;
 
 static RegisterPass<ValueProfiler> X("insert-value-profiling", "Insert Value Profiling into Module", false, true);
 
 ValueProfiler::ValueProfiler():ModulePass(ID)
 {
 	Counters = NULL;
+   avaliable = true;
 }
 
 
@@ -42,8 +44,9 @@ static Instruction* insertValueTrap(Value* v,Module* M,int numTrapedValues,Inser
 	return CallInst::Create(FuncEntry, Args, "", InsertPos);
 }
 
-Instruction* ValueProfiler::insertValueTrap(Value* v, BasicBlock* InsertTail)
+Value* ValueProfiler::insertValueTrap(Value* v, BasicBlock* InsertTail)
 {
+   if(!avaliable) return v;
 	/*if(isa<Constant>(v)){
 		pair<int,BasicBlock*> Store(numTrapedValues++,InsertTail);
 		ConstantTraps.push_back(Store);
@@ -53,8 +56,9 @@ Instruction* ValueProfiler::insertValueTrap(Value* v, BasicBlock* InsertTail)
 			numTrapedValues++,InsertTail);
 }
 
-Instruction* ValueProfiler::insertValueTrap(Value* v,Instruction* InsertBefore)
+Value* ValueProfiler::insertValueTrap(Value* v,Instruction* InsertBefore)
 {
+   if(!avaliable) return v;
 	//ignore constant value to reduce memory pressure
 	/*if(isa<Constant>(v)){
 		pair<int,BasicBlock*> Store(numTrapedValues++,InsertBefore->getParent());
