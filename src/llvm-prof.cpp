@@ -55,6 +55,7 @@ namespace {
                             cl::aliasopt(PrintAnnotatedLLVM));
   cl::opt<bool> ListAll("list-all", cl::desc("List all blocks"));
   cl::opt<bool> Unsort("unsort",cl::desc("Directly print without sort order"));
+  cl::opt<bool> DiffMode("diff",cl::desc("Compare two out file"));
   cl::opt<bool> ValueContentPrint("value-content", cl::desc("Print detailed value content in value profiling"));
   cl::opt<bool>
   PrintAllCode("print-all-code",
@@ -156,6 +157,16 @@ namespace {
 	virtual const char* getPassName() const {
 		return "Print Profile Info";
 	}
+  };
+
+  class ProfileInfoCompare
+  {
+     ProfileInfoLoader& Lhs;
+     ProfileInfoLoader& Rhs;
+     public:
+     explicit ProfileInfoCompare(ProfileInfoLoader& LHS,ProfileInfoLoader& RHS)
+        :Lhs(LHS), Rhs(RHS) {}
+     bool run();
   };
 }
 
@@ -370,6 +381,31 @@ bool ProfileInfoPrinterPass::runOnModule(Module &M) {
 	return false;
 }
 
+bool ProfileInfoCompare::run()
+{
+#define CRITICAL_EQUAL(what) if(Lhs.get##what() != Rhs.get##what()){\
+      errs()<<#what" differ\n";\
+      return 0;\
+   }
+#define WARN_EQUAL(what) if(Lhs.getRaw##what() != Rhs.getRaw##what()){\
+      errs()<<#what" differ\n";\
+   }
+
+   CRITICAL_EQUAL(NumExecutions);
+   WARN_EQUAL(BlockCounts);
+   WARN_EQUAL(EdgeCounts);
+   WARN_EQUAL(FunctionCounts);
+   WARN_EQUAL(ValueCounts);
+   if(Lhs.getRawValueCounts().size() == Rhs.getRawValueCounts().size()){
+      for(uint i=0;i<Lhs.getRawValueCounts().size();++i){
+         if(Lhs.getRawValueContent(i) != Rhs.getRawValueContent(i))
+            errs()<<"ValueContent at "<<i<<" differ\n";
+      }
+   }
+   return 0;
+#undef CRITICAL_EQUAL
+}
+
 int main(int argc, char **argv) {
   // Print a stack trace if we signal out.
   sys::PrintStackTraceOnErrorSignal();
@@ -385,14 +421,22 @@ int main(int argc, char **argv) {
   OwningPtr<MemoryBuffer> Buffer;
   error_code ec;
   Module *M = 0;
+  if(DiffMode) {
+     ProfileInfoLoader PIL1(argv[0], BitcodeFile);
+     ProfileInfoLoader PIL2(argv[0], ProfileDataFile);
+
+     ProfileInfoCompare Compare(PIL1,PIL2);
+     Compare.run();
+     return 0;
+  }
   if (!(ec = MemoryBuffer::getFileOrSTDIN(BitcodeFile, Buffer))) {
-    M = ParseBitcodeFile(Buffer.get(), Context, &ErrorMessage);
+     M = ParseBitcodeFile(Buffer.get(), Context, &ErrorMessage);
   } else
-    ErrorMessage = ec.message();
+     ErrorMessage = ec.message();
   if (M == 0) {
-    errs() << argv[0] << ": " << BitcodeFile << ": "
-      << ErrorMessage << "\n";
-    return 1;
+     errs() << argv[0] << ": " << BitcodeFile << ": "
+        << ErrorMessage << "\n";
+     return 1;
   }
 
   // Read the profiling information. This is redundant since we load it again
