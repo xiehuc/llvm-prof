@@ -56,10 +56,10 @@ namespace {
   cl::opt<bool> ListAll("list-all", cl::desc("List all blocks"));
   cl::opt<bool> Unsort("unsort",cl::desc("Directly print without sort order"));
   cl::opt<bool> DiffMode("diff",cl::desc("Compare two out file"));
-  cl::opt<bool> ValueContentPrint("value-content", cl::desc("Print detailed value content in value profiling"));
-  cl::opt<bool>
-  PrintAllCode("print-all-code",
-               cl::desc("Print annotated code for the entire program"));
+  cl::opt<bool> ValueContentPrint("value-content", 
+        cl::desc("Print detailed value content in value profiling"));
+  cl::opt<bool> PrintAllCode("print-all-code", 
+        cl::desc("Print annotated code for the entire program"));
 }
 
 // PairSecondSort - A sorting predicate to sort by the second element of a pair.

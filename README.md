@@ -28,6 +28,9 @@ argument
 
 * `-list-all`      : print out all outputs
 * `-value-content` : print out traped value detail content instead of brief report
+* `-unsort`        : print out outputs without sort
+* `-diff`          : compare two output file and report whether they are different
+                     example: ``llvm-prof -diff a.out b.out``
 
 note
 -----
