@@ -31,7 +31,7 @@ static Instruction* insertValueTrap(Value* v,Module* M,int numTrapedValues,Inser
 
 	Constant* FuncEntry = M->getOrInsertFunction( "llvm_profiling_trap_value",
 			Type::getVoidTy(Context), Int32Ty, Int32Ty, Int32Ty, NULL);
-	std::vector<Value* > Args(3);
+	Value* Args[3];
 	Args[0] = Constant::getIntegerValue(Int32Ty,APInt(32,numTrapedValues));
 	Args[1] = Constant::getNullValue(Int32Ty);
 	Args[2] = isa<Constant>(v)?Constant::getIntegerValue(Int32Ty, APInt(32,1)):Constant::getNullValue(Int32Ty);
@@ -78,7 +78,5 @@ bool ValueProfiler::runOnModule(Module& M)
 			GlobalVariable::InternalLinkage, Constant::getNullValue(ATy),
 			"ValueProfCounters");
 	InsertProfilingInitCall(Main, "llvm_start_value_profiling",Counters);
-	//for(ConstantTrapTy::iterator I = ConstantTraps.begin(),E = ConstantTraps.end();I!=E;I++)
-	//	IncrementCounterInBlock(I->second, I->first, Counters);
 	return true;
 }

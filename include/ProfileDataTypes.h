@@ -29,10 +29,12 @@ enum ProfilingType {
 	EdgeInfo     = 4,   /* Edge profiling information      */
 	PathInfo     = 5,   /* Path profiling information      */
 	BBTraceInfo  = 6,   /* Basic block trace information   */
-	OptEdgeInfo  = 7,    /* Edge profiling information, optimal version */
-	ValueInfo    = 100,
+	OptEdgeInfo  = 7,   /* Edge profiling information, optimal version */
+	ValueInfo    = 100, /* Value profiling information     */
+   SLGInfo      = 101, /* StoreLoadGlobal profiling info  */
 };
 
+// special flags used in value profiling
 enum ProfilingFlags {
 	CONSTANT_COMPRESS = 1<<0,
 	RUN_LENGTH_COMPRESS = 1<<1
