@@ -62,11 +62,11 @@ namespace llvm {
     typedef std::map<Edge, double> EdgeWeights;
     typedef std::map<const BType*, double> BlockCounts;
     typedef std::map<const BType*, const BType*> Path;
-	struct ValueCounts{
-		unsigned Nums;
-		enum ProfilingFlags flags;
-		std::vector<int> Contents;
-	};
+    struct ValueCounts{
+       unsigned Nums;
+       enum ProfilingFlags flags;
+       std::vector<int> Contents;
+    };
 
   protected:
     // EdgeInformation - Count the number of times a transition between two
@@ -81,7 +81,9 @@ namespace llvm {
     // FunctionInformation - Count the number of times a function is executed.
     std::map<const FType*, double> FunctionInformation;
 
-	std::map<const CallInst*, ValueCounts> ValueInformation;
+    std::map<const CallInst*, ValueCounts> ValueInformation;
+
+    std::map<const Instruction*, const Instruction*> SLGInformation;
 
     ProfileInfoT<MachineFunction, MachineBasicBlock> *MachineProfile;
   public:
@@ -114,13 +116,26 @@ namespace llvm {
 
     double getExecutionCount(const BType *BB);
 
-	double getExecutionCount(const CallInst* V);
-	const std::vector<int>& getValueContents(const CallInst* V);
-	std::vector<const CallInst*> getAllTrapedValues();
-	//const CallInst* findTrapedValue(const Value* V);
+    double getExecutionCount(const CallInst* V);
+    const std::vector<int>& getValueContents(const CallInst* V);
+    /** return traped instructions.
+     * if Instruction is CallInst it is ValueProfiling
+     * if Instruction is LoadInst it is SLGProfiling
+     */
+    std::vector<const Instruction*> getAllTrapedValues();
 
-	static unsigned getTrapedIndex(const CallInst*);
-	static const Value* getTrapedTarget(const CallInst* V);
+    /** return traped index with Instruction.
+     * if Instruction is CallInst, it would directly return first arguments as
+     * integer
+     * if Instruction is LoadInst, it would find the prev instruction and
+     * assume it is a CallInst
+     */
+    static unsigned getTrapedIndex(const Instruction*);
+    /** return traped target with Instruction.
+     * if Instruction is CallInst, it would directly return traped value
+     * if Instruction is LoadInst, it would directly return related store inst
+     */
+    const Value* getTrapedTarget(const Instruction* V);
 
     void setExecutionCount(const BType *BB, double w);
 

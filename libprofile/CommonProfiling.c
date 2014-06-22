@@ -123,9 +123,9 @@ int getOutFile() {
    */
   if (OutFile == -1) {
 #ifdef OUTPUT_HASPID
-	char OutputFilenameRuntime[1024] = {0};
-	pid_t pid = getpid();
-	snprintf(OutputFilenameRuntime,sizeof(OutputFilenameRuntime),"%s.%lu",OutputFilename,pid);
+	 char OutputFilenameRuntime[1024] = {0};
+	 pid_t pid = getpid();
+	 snprintf(OutputFilenameRuntime,sizeof(OutputFilenameRuntime),"%s.%lu",OutputFilename, (unsigned long)pid);
     OutFile = open(OutputFilenameRuntime, O_CREAT | O_WRONLY, 0666);
 #else
     OutFile = open(OutputFilename, O_CREAT | O_WRONLY, 0666);

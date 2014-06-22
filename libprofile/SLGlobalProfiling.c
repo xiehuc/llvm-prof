@@ -31,7 +31,7 @@ void ValueProfAtExitHandler(void)
    write_profiling_data(SLGInfo, ArrayStart, NumElements);
 }
 
-void llvm_profiling_trap_store(void* ptr, int32_t idx)
+void llvm_profiling_trap_store(int32_t idx, void* ptr)
 {
    addr_map_v* v = malloc0(sizeof(*v)), *h = NULL;
    v->ptr = ptr;
@@ -43,7 +43,7 @@ void llvm_profiling_trap_store(void* ptr, int32_t idx)
    }
 }
 
-void llvm_profiling_trap_load(void* ptr, int32_t idx)
+void llvm_profiling_trap_load(int32_t idx, void* ptr)
 {
    addr_map_v item = {ptr,0}, *v = NULL;
    v = RB_FIND(addr_map_tree, &addr_map, &item);

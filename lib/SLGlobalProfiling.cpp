@@ -62,22 +62,22 @@ bool SLGlobalProfiling::runOnModule(Module &M)
    Type* Int32Ty = IntegerType::getInt32Ty(C);
    APInt loadCount = APInt::getNullValue(32); // get a 32 bit zero
    APInt storeCount = APInt::getNullValue(32);
-   Constant* StoreCall = M.getOrInsertFunction("llvm_profiling_trap_store", VoidTy, VoidPtrTy, 
-         Int32Ty, NULL);
-   Constant* LoadCall = M.getOrInsertFunction("llvm_profiling_trap_load", VoidTy, VoidPtrTy, 
-         Int32Ty, NULL);
+   Constant* StoreCall = M.getOrInsertFunction("llvm_profiling_trap_store",
+         VoidTy, Int32Ty, VoidPtrTy, NULL);
+   Constant* LoadCall = M.getOrInsertFunction("llvm_profiling_trap_load",
+         VoidTy, Int32Ty, VoidPtrTy, NULL);
    llvm::Value* callArgs[2];
 
    for(Module::iterator F = M.begin(), ME = M.end(); F != ME; ++F){
       for(inst_iterator I = inst_begin(F), E = inst_end(F); I!=E; ++I){
          if(access_global_variable(&*I)){
             if(StoreInst* SI = dyn_cast<StoreInst>(&*I)){
-               callArgs[0] = CastInst::CreatePointerCast(SI->getPointerOperand(), VoidPtrTy, "", SI);
-               callArgs[1] = Constant::getIntegerValue(Int32Ty, storeCount++);
+               callArgs[0] = Constant::getIntegerValue(Int32Ty, storeCount++);
+               callArgs[1] = CastInst::CreatePointerCast(SI->getPointerOperand(), VoidPtrTy, "", SI);
                CallInst::Create(StoreCall, callArgs, "", SI);
             }else if(LoadInst* LI = dyn_cast<LoadInst>(&*I)){
-               callArgs[0] = CastInst::CreatePointerCast(LI->getPointerOperand(), VoidPtrTy, "", LI);
-               callArgs[1] = Constant::getIntegerValue(Int32Ty, loadCount++);
+               callArgs[0] = Constant::getIntegerValue(Int32Ty, loadCount++);
+               callArgs[1] = CastInst::CreatePointerCast(LI->getPointerOperand(), VoidPtrTy, "", LI);
                CallInst::Create(LoadCall, callArgs, "", LI);
             }
          }

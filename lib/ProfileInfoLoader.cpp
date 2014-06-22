@@ -90,8 +90,8 @@ static void ReadValueProfilingContents(const char* ToolName, FILE* F,
 
 	if(Data.size() < Counts)
 		Data.resize(Counts);
-	std::vector<int> TempSpace;
-	for(unsigned i=0;i<Counts;++i){
+   std::vector<int> TempSpace;
+   for(unsigned i=0;i<Counts;++i){
 		unsigned count = 0;
 		if(fread(&count,sizeof(unsigned),1,F) != 1) EXIT_IF_ERROR;
 		count = ByteSwap(count, ShouldByteSwap);
@@ -181,6 +181,10 @@ ProfileInfoLoader::ProfileInfoLoader(const char *ToolName,
 	  ReadProfilingBlock(ToolName, F, ShouldByteSwap, ValueCounts);
 	  ReadValueProfilingContents(ToolName, F, ShouldByteSwap, ValueCounts.size(), ValueContents);
 	  break;
+
+   case SLGInfo:
+     ReadProfilingBlock(ToolName, F, ShouldByteSwap, SLGCounts);
+     break;
 
     default:
       errs() << ToolName << ": Unknown packet type #" << PacketType << "!\n";

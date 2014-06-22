@@ -36,6 +36,7 @@ class ProfileInfoLoader {
   std::vector<unsigned>    BBTrace;
   std::vector<unsigned>	   ValueCounts;
   std::vector<std::vector<int> > ValueContents;
+  std::vector<unsigned>    SLGCounts;
 public:
   // ProfileInfoLoader ctor - Read the specified profiling data file, exiting
   // the program if the file is invalid or broken.
@@ -82,6 +83,10 @@ public:
 
   const std::vector<int> &getRawValueContent(int index) const {
 	  return ValueContents[index];
+  }
+
+  const std::vector<unsigned> &getRawSLGCounts() const {
+     return SLGCounts;
   }
 
 };

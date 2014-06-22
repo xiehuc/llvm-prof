@@ -154,6 +154,7 @@ namespace {
 	void printAnnotatedCode(std::set<Function*>& FunctionToPrint,Module& M);
 	void printValueCounts();
 	void printValueContent();
+   void printSLGCounts();
 	virtual const char* getPassName() const {
 		return "Print Profile Info";
 	}
@@ -175,14 +176,14 @@ char ProfileInfoPrinterPass::ID = 0;
 void ProfileInfoPrinterPass::printValueContent() 
 {
 	ProfileInfo &PI = getAnalysis<ProfileInfo>();
-	std::vector<const CallInst*> Calls = PI.getAllTrapedValues();
-	assert(Calls.size() == PIL.getRawValueCounts().size());
-	for(std::vector<const CallInst*>::const_iterator I = Calls.begin(), E = Calls.end(); I!=E; ++I){
-		std::vector<int> Contents = PI.getValueContents(*I);
-		const Value* traped = PI.getTrapedTarget(*I);
+	std::vector<const Instruction*> Calls = PI.getAllTrapedValues();
+	for(std::vector<const Instruction*>::const_iterator I = Calls.begin(), E = Calls.end(); I!=E; ++I){
+      const CallInst* CI = dyn_cast<CallInst>(*I);
+		std::vector<int> Contents = PI.getValueContents(CI);
+		const Value* traped = PI.getTrapedTarget(CI);
 		if(isa<Constant>(traped))outs()<<"Constant";
 		else outs()<<"Variable";
-		outs()<<"("<<(unsigned)PI.getExecutionCount(*I)<<"):\t";
+		outs()<<"("<<(unsigned)PI.getExecutionCount(CI)<<"):\t";
 		std::vector<int>::iterator II = Contents.begin(),EE=Contents.end(),BND;
 		while(II!=EE){
 			BND = std::upper_bound(II, EE, *II);
@@ -291,14 +292,16 @@ ProfileInfoPrinterPass::printBasicBlockCounts(
 void ProfileInfoPrinterPass::printValueCounts()
 {
 	ProfileInfo& PI = getAnalysis<ProfileInfo>();
-	std::vector<const CallInst*> trapes = PI.getAllTrapedValues();
+	std::vector<const Instruction*> trapes = PI.getAllTrapedValues();
 	if(trapes.empty()) return;
 
-	std::vector<std::pair<const CallInst*,double> > ValueCounts(trapes.size());
+	std::vector<std::pair<const CallInst*,double> > ValueCounts;
 	double TotalExecutions = 0;
 	for(int i=0,e=trapes.size();i!=e;++i){
-		ValueCounts[i] = std::make_pair(trapes[i], PI.getExecutionCount(trapes[i]));
-		TotalExecutions += PI.getExecutionCount(trapes[i]);
+      const CallInst* CI = dyn_cast<CallInst>(trapes[i]);
+      if(!CI) continue;
+		ValueCounts.push_back(std::make_pair(CI, PI.getExecutionCount(CI)));
+		TotalExecutions += PI.getExecutionCount(CI);
 	}
 
 	if(TotalExecutions == 0) return;
@@ -326,6 +329,37 @@ void ProfileInfoPrinterPass::printValueCounts()
 			<< BB->getName() <<"\"\t"
 			<< "\n";
 	}
+}
+
+void ProfileInfoPrinterPass::printSLGCounts()
+{
+	ProfileInfo& PI = getAnalysis<ProfileInfo>();
+	std::vector<const Instruction*> trapes = PI.getAllTrapedValues();
+   bool first = true;
+
+   for(unsigned i=0;i<trapes.size();i++){
+      const LoadInst* LI = dyn_cast<LoadInst>(trapes[i]);
+      if(!LI) continue;
+
+      if(first){
+         outs() << "\n===" << std::string(73, '-') << "===\n";
+         outs() << "store load global profiling information:\n\n";
+         outs() <<" ##      Load\t\tStore\t\t\tStore Position\n";
+         first = false;
+      }
+
+      unsigned idx = PI.getTrapedIndex(LI);
+      const StoreInst* SI = dyn_cast<StoreInst>(PI.getTrapedTarget(LI));
+      assert(SI);
+		const BasicBlock* BB = SI->getParent();
+		const Function* F = BB->getParent();
+		outs() << format("%3d", idx) << ". "
+			<< *LI  <<"\t"
+			<< *SI <<"\t"
+			<< F->getName()<<":\""
+			<< BB->getName() <<"\"\t"
+			<< "\n";
+   }
 }
 
 void ProfileInfoPrinterPass::printAnnotatedCode(
@@ -376,6 +410,7 @@ bool ProfileInfoPrinterPass::runOnModule(Module &M) {
 	printFunctionCounts(FunctionCounts);
 	FunctionToPrint = printBasicBlockCounts(Counts);
 	printValueCounts();
+   printSLGCounts();
 	printAnnotatedCode(FunctionToPrint,M);
 
 	return false;

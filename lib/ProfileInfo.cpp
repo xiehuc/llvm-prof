@@ -70,9 +70,14 @@ ProfileInfoT<Function,BasicBlock>::getExecutionCount(const CallInst* V) {
 }
 
 template<> const Value*
-ProfileInfoT<Function,BasicBlock>::getTrapedTarget(const CallInst* V)
+ProfileInfoT<Function,BasicBlock>::getTrapedTarget(const Instruction* V)
 {
-	return castoff(V->getOperand(1));
+   if(isa<CallInst>(V))
+      return castoff(V->getOperand(1));
+   else if(isa<LoadInst>(V)){
+      return SLGInformation[V];
+   }
+   return NULL;
 }
 
 template<> const std::vector<int>&
@@ -107,43 +112,40 @@ ProfileInfoT<Function,BasicBlock>::getValueContents(const CallInst* V) {
 }
 
 template<> unsigned
-ProfileInfoT<Function,BasicBlock>::getTrapedIndex(const CallInst* V) 
+ProfileInfoT<Function,BasicBlock>::getTrapedIndex(const Instruction* V) 
 {
-	ConstantInt* C = dyn_cast<ConstantInt>(V->getArgOperand(0));
+   const CallInst* CI = dyn_cast<CallInst>(V);
+   if(dyn_cast<LoadInst>(V)){
+      CI = dyn_cast<CallInst>(V->getPrevNode());
+   }
+   if(!CI) return -1;
+	ConstantInt* C = dyn_cast<ConstantInt>(CI->getArgOperand(0));
 	if(!C) return -1;
 	return C->getZExtValue();
 }
 
 inline 
-int SortBasedIndex(const CallInst* a,const CallInst* b)
+int SortBasedIndex(const Instruction* a,const Instruction* b)
 {
-	return dyn_cast<ConstantInt>(a->getArgOperand(0))->getZExtValue() 
-		< dyn_cast<ConstantInt>(b->getArgOperand(0))->getZExtValue();
+   return ProfileInfo::getTrapedIndex(a) < ProfileInfo::getTrapedIndex(b);
 }
 
-template<> std::vector<const CallInst*>
+template<> std::vector<const Instruction*>
 ProfileInfoT<Function,BasicBlock>::getAllTrapedValues() {
-	std::vector<const CallInst*> ret;
+	std::vector<const Instruction*> ret;
 	ret.reserve(ValueInformation.size());
 	std::map<const CallInst*,ValueCounts>::iterator J = ValueInformation.begin(),
 		E = ValueInformation.end();
 	for(;J!=E;++J){
 		ret.push_back(J->first);
 	}
+   std::map<const Instruction*, const Instruction*>::iterator SLG_Ite =
+      SLGInformation.begin(), SLG_E = SLGInformation.end();
+   for(;SLG_Ite!=SLG_E;++SLG_Ite)
+      ret.push_back(SLG_Ite->first);
 	std::sort(ret.begin(), ret.end(), SortBasedIndex);
 	return ret;
 }
-
-/*
-template<> const CallInst*
-ProfileInfoT<Function,BasicBlock>::findTrapedValue(const Value* V) {
-	std::map<const Value*,ValueCounts>::iterator J = 
-		ValueInformation.find(V);
-	if(J != ValueInformation.end()) return J->second.pos;
-	return NULL;
-}
-*/
-
 
 template<> double
 ProfileInfoT<Function,BasicBlock>::getExecutionCount(const BasicBlock *BB) {

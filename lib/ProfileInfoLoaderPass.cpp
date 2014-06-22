@@ -32,6 +32,7 @@
 #include <llvm/Support/InstIterator.h>
 #include <llvm/IR/Constants.h>
 #include <set>
+#include <vector>
 using namespace llvm;
 
 STATISTIC(NumEdgesRead, "The # of edges read.");
@@ -280,7 +281,7 @@ bool LoaderPass::runOnModule(Module &M) {
 		  if (F->isDeclaration()) continue;
 		  for(inst_iterator I = inst_begin(F),IE = inst_end(F); I!=IE; ++I){
 			  CallInst* Call = dyn_cast<CallInst>(&*I);
-              if(!Call) continue;
+           if(!Call) continue;
 			  if(Call->getCalledValue()->getName() != "llvm_profiling_trap_value") continue;
 			  unsigned index = getTrapedIndex(Call);
 			  ValueCounts Ins;
@@ -293,6 +294,35 @@ bool LoaderPass::runOnModule(Module &M) {
 			  ValueInformation[Call] = Ins;
 		  }
 	  }
+  }
+
+  SLGInformation.clear();
+  Counters = PIL.getRawSLGCounts();
+  if(Counters.size() > 0) {
+     unsigned NumStore = *max(Counters.begin(),Counters.end());
+     std::vector<Instruction*> Cache(NumStore);
+     ReadCount = 0; 
+     for(Module::iterator F = M.begin(), E = M.end(); F!=E; ++F){
+        for(inst_iterator I = inst_begin(F), IE = inst_end(F); I!=IE; ++I){
+           CallInst* Call = dyn_cast<CallInst>(&*I);
+           if(!Call) continue;
+           if(Call->getCalledValue()->getName() != "llvm_profiling_trap_store" 
+                 && Call->getCalledValue()->getName() != "llvm_profiling_trap_load")
+              continue;
+           unsigned index = getTrapedIndex(Call);
+           Instruction* SLI = Call->getNextNode();
+           assert(SLI && (isa<LoadInst>(SLI) || isa<StoreInst>(SLI)) );
+           if(isa<StoreInst>(SLI)) index = Counters[index];
+           if(Cache[index]){
+              Instruction* SLJ = Cache[index];
+              if(isa<StoreInst>(SLJ) && isa<LoadInst>(SLI)) SLGInformation.insert(std::make_pair(SLI,SLJ));
+              else if(isa<StoreInst>(SLI) && isa<LoadInst>(SLJ)) SLGInformation.insert(std::make_pair(SLJ,SLI));
+              else
+                 assert(0 && "It shouldn't happen");
+           }else
+              Cache[index] = SLI;
+        }
+     }
   }
 
   return false;
