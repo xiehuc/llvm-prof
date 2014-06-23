@@ -33,6 +33,7 @@
 #include <llvm/IR/Constants.h>
 #include <set>
 #include <vector>
+#include <numeric>
 using namespace llvm;
 
 STATISTIC(NumEdgesRead, "The # of edges read.");
@@ -159,6 +160,14 @@ void LoaderPass::readEdge(ProfileInfo::Edge e,
       SpanningTree.insert(e);
     }
   }
+}
+
+/** signal max **/
+inline unsigned sig_max(unsigned acc, unsigned b)
+{
+   // if b == -1; always return acc
+   if(b == ~0U) return acc;
+   else return std::max(acc,b);
 }
 
 bool LoaderPass::runOnModule(Module &M) {
@@ -299,8 +308,8 @@ bool LoaderPass::runOnModule(Module &M) {
   SLGInformation.clear();
   Counters = PIL.getRawSLGCounts();
   if(Counters.size() > 0) {
-     unsigned NumStore = *max(Counters.begin(),Counters.end());
-     std::vector<Instruction*> Cache(NumStore);
+     unsigned MaxStore = std::accumulate(Counters.begin(), Counters.end(), 0, sig_max);
+     std::vector<const Instruction*> Cache(MaxStore+1);
      ReadCount = 0; 
      for(Module::iterator F = M.begin(), E = M.end(); F!=E; ++F){
         for(inst_iterator I = inst_begin(F), IE = inst_end(F); I!=IE; ++I){
@@ -312,9 +321,16 @@ bool LoaderPass::runOnModule(Module &M) {
            unsigned index = getTrapedIndex(Call);
            Instruction* SLI = Call->getNextNode();
            assert(SLI && (isa<LoadInst>(SLI) || isa<StoreInst>(SLI)) );
-           if(isa<StoreInst>(SLI)) index = Counters[index];
+           if(isa<LoadInst>(SLI)){
+              index = Counters[index];
+              if(index == 0 || index == ~0U/*unsigned -1*/){ 
+                 SLGInformation[SLI] = NULL;
+                 continue;
+              }
+           }
+           if(index >= Cache.size()) continue;
            if(Cache[index]){
-              Instruction* SLJ = Cache[index];
+              const Instruction* SLJ = Cache[index];
               if(isa<StoreInst>(SLJ) && isa<LoadInst>(SLI)) SLGInformation.insert(std::make_pair(SLI,SLJ));
               else if(isa<StoreInst>(SLI) && isa<LoadInst>(SLJ)) SLGInformation.insert(std::make_pair(SLJ,SLI));
               else

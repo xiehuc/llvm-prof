@@ -349,16 +349,21 @@ void ProfileInfoPrinterPass::printSLGCounts()
       }
 
       unsigned idx = PI.getTrapedIndex(LI);
-      const StoreInst* SI = dyn_cast<StoreInst>(PI.getTrapedTarget(LI));
-      assert(SI);
-		const BasicBlock* BB = SI->getParent();
-		const Function* F = BB->getParent();
+      const Value* T = PI.getTrapedTarget(LI);
 		outs() << format("%3d", idx) << ". "
-			<< *LI  <<"\t"
-			<< *SI <<"\t"
-			<< F->getName()<<":\""
-			<< BB->getName() <<"\"\t"
-			<< "\n";
+			<< *LI  <<"\n  -->";
+      if(T){
+         const StoreInst* SI = dyn_cast<StoreInst>(T);
+         assert(SI);
+         const BasicBlock* BB = SI->getParent();
+         const Function* F = BB->getParent();
+         outs() << *SI <<"\t\t ## "
+            << F->getName()<<":\""
+            << BB->getName() <<"\"\t"
+            << "\n";
+      }else{
+         outs() << "  unknow\n";
+      }
    }
 }
 
@@ -431,6 +436,7 @@ bool ProfileInfoCompare::run()
    WARN_EQUAL(EdgeCounts);
    WARN_EQUAL(FunctionCounts);
    WARN_EQUAL(ValueCounts);
+   WARN_EQUAL(SLGCounts);
    if(Lhs.getRawValueCounts().size() == Rhs.getRawValueCounts().size()){
       for(uint i=0;i<Lhs.getRawValueCounts().size();++i){
          if(Lhs.getRawValueContent(i) != Rhs.getRawValueContent(i))
