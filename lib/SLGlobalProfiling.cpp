@@ -10,6 +10,7 @@
 
 #include <llvm/Pass.h>
 #include <llvm/IR/Module.h>
+#include <llvm/IR/Function.h>
 #include <llvm/IR/Constants.h>
 #include <llvm/IR/Instructions.h>
 #include <llvm/Support/InstIterator.h>
@@ -62,6 +63,7 @@ bool SLGlobalProfiling::runOnModule(Module &M)
    Type* Int32Ty = IntegerType::getInt32Ty(C);
    APInt loadCount = APInt::getNullValue(32); // get a 32 bit zero
    APInt storeCount = APInt::getNullValue(32);
+   storeCount++;// it start from 1
    Constant* StoreCall = M.getOrInsertFunction("llvm_profiling_trap_store",
          VoidTy, Int32Ty, VoidPtrTy, NULL);
    Constant* LoadCall = M.getOrInsertFunction("llvm_profiling_trap_load",
@@ -86,9 +88,16 @@ bool SLGlobalProfiling::runOnModule(Module &M)
 
    Type* CounterTy = ArrayType::get(Int32Ty, loadCount.getZExtValue());
    GlobalVariable* Counters = new GlobalVariable(M, CounterTy, false,
-         GlobalVariable::InternalLinkage, Constant::getAllOnesValue(CounterTy),
+         GlobalVariable::InternalLinkage, Constant::getNullValue(CounterTy),
          "SLGCounters");
-   InsertProfilingInitCall(M.getFunction("main"), "llvm_start_slg_profiling", Counters);
+   Function* MainFn = M.getFunction("main");
+   InsertProfilingInitCall(MainFn, "llvm_start_slg_profiling", Counters);
+
+   Constant* SettingFn = M.getOrInsertFunction("llvm_start_slg_setting", VoidTy, Int32Ty, NULL);
+   Value* SettingArgs[] = {
+      Constant::getIntegerValue(Int32Ty, storeCount)
+   };
+   CallInst::Create(SettingFn, SettingArgs, "", MainFn->getEntryBlock().getFirstInsertionPt());
 
    return true;
 }

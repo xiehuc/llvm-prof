@@ -6,11 +6,12 @@ set(CMAKE_MODULE_PATH
 	${CMAKE_SOURCE_DIR}/cmake
 	)
 
-option(OUTPUT_HASPID "Output name contain pid to support mpi program" OFF)
+option(OUTPUT_HASPID "Output name contain pid to support mpi program" ON)
 option(ENABLE_COMPRESS "Enable Run Length Compress to decrease memory footprint" ON)
 
 set(LLVM_RECOMMAND_VERSION "" CACHE STRING "Switch the llvm version")
 find_package(LLVM)
+find_package(GTest)
 
 option(DYNAMIC_LINK "Link Dynamic LLVM Libraries" ${LLVM_DYNAMIC_LIBRARY_FOUND})
 
@@ -23,3 +24,6 @@ add_subdirectory(include)
 add_subdirectory(lib)
 add_subdirectory(src)
 add_subdirectory(libprofile)
+if(GTEST_FOUND)
+   add_subdirectory(unit)
+endif()

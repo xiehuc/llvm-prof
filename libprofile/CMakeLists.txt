@@ -5,6 +5,7 @@ set(SOURCES
   EdgeProfiling.c
   OptimalEdgeProfiling.c
   ValueProfiling.c
+  SLGlobalProfiling.c
   )
 
 include_directories(../include ${LLVM_INCLUDE_DIRS})
