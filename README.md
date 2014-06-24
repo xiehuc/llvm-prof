@@ -32,6 +32,13 @@ argument
 * `-diff`          : compare two output file and report whether they are different
                      example: ``llvm-prof -diff a.out b.out``
 
+extra profilings
+-----------------
+
+* *ValueProfiling*    : provide value profiling, could trap some value.
+* *SLGlobalProfiling* : provide store load profiling on global variables, could
+                        find dynamic data denpendencies.
+
 note
 -----
 
