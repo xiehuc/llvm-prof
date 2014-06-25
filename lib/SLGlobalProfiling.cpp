@@ -30,30 +30,6 @@ public:
 char SLGlobalProfiling::ID = 0;
 static RegisterPass<SLGlobalProfiling> X("insert-slg-profiling", "Insert StoreLoadGlobalVariable Profiling into Module", false, true);
 
-/**
- * access whether a Instruction is reference global variable. 
- * if is, return the global variable
- * else return NULL
- */
-static Value* access_global_variable(Instruction *I)
-{
-   Value* U = NULL;
-   if(StoreInst* SI = dyn_cast<StoreInst>(I)){
-      U = SI->getPointerOperand();
-   } else if(LoadInst* LI = dyn_cast<LoadInst>(I)){
-      U = LI->getPointerOperand();
-   } else return NULL;
-	while(ConstantExpr* CE = dyn_cast<ConstantExpr>(U)){
-      Instruction*I = CE->getAsInstruction();
-		if(isa<CastInst>(I))
-         U = I->getOperand(0);
-		else break;
-	}
-	if(GetElementPtrInst* GEP = dyn_cast<GetElementPtrInst>(U))
-      U = GEP->getOperand(GEP->getPointerOperandIndex());
-	if(isa<GlobalVariable>(U)) return U;
-	return NULL;
-}
 
 bool SLGlobalProfiling::runOnModule(Module &M)
 {

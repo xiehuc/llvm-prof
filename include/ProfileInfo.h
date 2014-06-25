@@ -67,6 +67,8 @@ namespace llvm {
        enum ProfilingFlags flags;
        std::vector<int> Contents;
     };
+    typedef std::pair<unsigned, const Instruction*> 
+       SLGCounts;
 
   protected:
     // EdgeInformation - Count the number of times a transition between two
@@ -83,7 +85,7 @@ namespace llvm {
 
     std::map<const CallInst*, ValueCounts> ValueInformation;
 
-    std::map<const Instruction*, const Instruction*> SLGInformation;
+    std::map<const Instruction*, SLGCounts> SLGInformation;
 
     ProfileInfoT<MachineFunction, MachineBasicBlock> *MachineProfile;
   public:
@@ -130,7 +132,7 @@ namespace llvm {
      * if Instruction is LoadInst, it would find the prev instruction and
      * assume it is a CallInst
      */
-    static unsigned getTrapedIndex(const Instruction*);
+    unsigned getTrapedIndex(const Instruction*);
     /** return traped target with Instruction.
      * if Instruction is CallInst, it would directly return traped value
      * if Instruction is LoadInst, it would directly return related store inst

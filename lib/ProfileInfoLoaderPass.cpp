@@ -311,32 +311,32 @@ bool LoaderPass::runOnModule(Module &M) {
      unsigned MaxStore = std::accumulate(Counters.begin(), Counters.end(), 0, sig_max);
      std::vector<const Instruction*> Cache(MaxStore+1);
      ReadCount = 0; 
+     unsigned load_idx = 0, store_idx = 1;
      for(Module::iterator F = M.begin(), E = M.end(); F!=E; ++F){
         for(inst_iterator I = inst_begin(F), IE = inst_end(F); I!=IE; ++I){
-           CallInst* Call = dyn_cast<CallInst>(&*I);
-           if(!Call) continue;
-           if(Call->getCalledValue()->getName() != "llvm_profiling_trap_store" 
-                 && Call->getCalledValue()->getName() != "llvm_profiling_trap_load")
-              continue;
-           unsigned index = getTrapedIndex(Call);
-           Instruction* SLI = Call->getNextNode();
-           assert(SLI && (isa<LoadInst>(SLI) || isa<StoreInst>(SLI)) );
-           if(isa<LoadInst>(SLI)){
-              index = Counters[index];
-              if(index == 0 || index == ~0U/*unsigned -1*/){ 
-                 SLGInformation[SLI] = NULL;
-                 continue;
+
+           if(access_global_variable(&*I)){
+              unsigned index;
+              Instruction* SLI = &*I;
+              if(isa<StoreInst>(&*I)){
+                 index = store_idx++;
+              }else if(LoadInst* LI = dyn_cast<LoadInst>(&*I)){
+                 SLGInformation[LI] = std::make_pair(load_idx, (Instruction*)NULL);
+                 index = Counters[load_idx++];
+                 if(index == 0 || index == ~0U/*unsigned -1*/){ 
+                    continue;
+                 }
               }
+              if(index >= Cache.size()) continue;
+              if(Cache[index]){
+                 const Instruction* SLJ = Cache[index];
+                 if(isa<StoreInst>(SLJ) && isa<LoadInst>(SLI)) SLGInformation[SLI].second = SLJ;
+                 else if(isa<StoreInst>(SLI) && isa<LoadInst>(SLJ)) SLGInformation[SLJ].second = SLI;
+                 else
+                    assert(0 && "It shouldn't happen");
+              }else
+                 Cache[index] = &*I;
            }
-           if(index >= Cache.size()) continue;
-           if(Cache[index]){
-              const Instruction* SLJ = Cache[index];
-              if(isa<StoreInst>(SLJ) && isa<LoadInst>(SLI)) SLGInformation.insert(std::make_pair(SLI,SLJ));
-              else if(isa<StoreInst>(SLI) && isa<LoadInst>(SLJ)) SLGInformation.insert(std::make_pair(SLJ,SLI));
-              else
-                 assert(0 && "It shouldn't happen");
-           }else
-              Cache[index] = SLI;
         }
      }
   }

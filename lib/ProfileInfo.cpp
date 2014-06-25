@@ -75,7 +75,7 @@ ProfileInfoT<Function,BasicBlock>::getTrapedTarget(const Instruction* V)
    if(isa<CallInst>(V))
       return castoff(V->getOperand(1));
    else if(isa<LoadInst>(V)){
-      return SLGInformation[V];
+      return SLGInformation[V].second;
    }
    return NULL;
 }
@@ -114,21 +114,26 @@ ProfileInfoT<Function,BasicBlock>::getValueContents(const CallInst* V) {
 template<> unsigned
 ProfileInfoT<Function,BasicBlock>::getTrapedIndex(const Instruction* V) 
 {
-   const CallInst* CI = dyn_cast<CallInst>(V);
-   if(dyn_cast<LoadInst>(V)){
-      CI = dyn_cast<CallInst>(V->getPrevNode());
+   if(const CallInst* CI = dyn_cast<CallInst>(V)){
+      ConstantInt* C = dyn_cast<ConstantInt>(CI->getArgOperand(0));
+      if(!C) return -1;
+      return C->getZExtValue();
    }
-   if(!CI) return -1;
-	ConstantInt* C = dyn_cast<ConstantInt>(CI->getArgOperand(0));
-	if(!C) return -1;
-	return C->getZExtValue();
+   if(dyn_cast<LoadInst>(V)){
+      if(SLGInformation.find(V) == SLGInformation.end()) return -1;
+      return SLGInformation[V].first;
+   }
+   return -1;
 }
 
-inline 
-int SortBasedIndex(const Instruction* a,const Instruction* b)
-{
-   return ProfileInfo::getTrapedIndex(a) < ProfileInfo::getTrapedIndex(b);
-}
+struct SortBasedIndex{
+   ProfileInfo& PI;
+   SortBasedIndex(ProfileInfo& PI):PI(PI) {}
+   int operator()(const Instruction* a, const Instruction* b)
+   {
+      return PI.getTrapedIndex(a) < PI.getTrapedIndex(b);
+   }
+};
 
 template<> std::vector<const Instruction*>
 ProfileInfoT<Function,BasicBlock>::getAllTrapedValues() {
@@ -139,11 +144,11 @@ ProfileInfoT<Function,BasicBlock>::getAllTrapedValues() {
 	for(;J!=E;++J){
 		ret.push_back(J->first);
 	}
-   std::map<const Instruction*, const Instruction*>::iterator SLG_Ite =
+   std::map<const Instruction*, SLGCounts>::iterator SLG_Ite =
       SLGInformation.begin(), SLG_E = SLGInformation.end();
    for(;SLG_Ite!=SLG_E;++SLG_Ite)
       ret.push_back(SLG_Ite->first);
-	std::sort(ret.begin(), ret.end(), SortBasedIndex);
+	std::sort(ret.begin(), ret.end(), SortBasedIndex(*this));
 	return ret;
 }
 

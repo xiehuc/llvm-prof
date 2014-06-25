@@ -21,6 +21,8 @@
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
 
+using namespace llvm;
+
 void llvm::InsertProfilingInitCall(Function *MainFn, const char *FnName,
                                    GlobalValue *Array,
                                    PointerType *arrayType) {
@@ -173,4 +175,30 @@ llvm::Value* llvm::castoff(llvm::Value* v)
 	if(CastInst* CI = dyn_cast<CastInst>(v)){
 		return castoff(CI->getOperand(0));
 	}else return v;
+}
+
+
+/**
+ * access whether a Instruction is reference global variable. 
+ * if is, return the global variable
+ * else return NULL
+ */
+Value* llvm::access_global_variable(Instruction *I)
+{
+   Value* U = NULL;
+   if(StoreInst* SI = dyn_cast<StoreInst>(I)){
+      U = SI->getPointerOperand();
+   } else if(LoadInst* LI = dyn_cast<LoadInst>(I)){
+      U = LI->getPointerOperand();
+   } else return NULL;
+	while(ConstantExpr* CE = dyn_cast<ConstantExpr>(U)){
+      Instruction*I = CE->getAsInstruction();
+		if(isa<CastInst>(I))
+         U = I->getOperand(0);
+		else break;
+	}
+	if(GetElementPtrInst* GEP = dyn_cast<GetElementPtrInst>(U))
+      U = GEP->getOperand(GEP->getPointerOperandIndex());
+	if(isa<GlobalVariable>(U)) return U;
+	return NULL;
 }
