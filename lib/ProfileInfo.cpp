@@ -76,6 +76,7 @@ ProfileInfoT<Function,BasicBlock>::getTrapedTarget(const Instruction* V)
    if(isa<CallInst>(V))
       return castoff(V->getOperand(1));
    else if(isa<LoadInst>(V)){
+      if(SLGInformation.find(V) == SLGInformation.end()) return NULL;
       return SLGInformation[V].second;
    }
    return NULL;
