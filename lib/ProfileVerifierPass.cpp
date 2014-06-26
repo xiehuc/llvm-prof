@@ -62,12 +62,12 @@ namespace {
     static char ID; // Class identification, replacement for typeinfo
 
     explicit ProfileVerifierPassT () : FunctionPass(ID) {
-      initializeProfileVerifierPassPass(*PassRegistry::getPassRegistry());
+      //initializeProfileVerifierPassPass(*PassRegistry::getPassRegistry());
       DisableAssertions = ProfileVerifierDisableAssertions;
     }
     explicit ProfileVerifierPassT (bool da) : FunctionPass(ID), 
                                               DisableAssertions(da) {
-      initializeProfileVerifierPassPass(*PassRegistry::getPassRegistry());
+      //initializeProfileVerifierPassPass(*PassRegistry::getPassRegistry());
     }
 
     void getAnalysisUsage(AnalysisUsage &AU) const {
@@ -370,14 +370,16 @@ namespace {
   char ProfileVerifierPassT<FType, BType>::ID = 0;
 }
 
+/*
 INITIALIZE_PASS_BEGIN(ProfileVerifierPass, "profile-verifier",
                 "Verify profiling information", false, true)
 INITIALIZE_AG_DEPENDENCY(ProfileInfo)
 INITIALIZE_PASS_END(ProfileVerifierPass, "profile-verifier",
                 "Verify profiling information", false, true)
+*/
 
-//static RegisterPass<ProfileVerifierPass> X("profile-verifier",
-//                "Verify profiling information", false, true);
+static RegisterPass<ProfileVerifierPass> X("profile-verifier",
+                "Verify profiling information", false, true);
 
 namespace llvm {
   FunctionPass *createProfileVerifierPass() {

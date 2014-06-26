@@ -12,7 +12,6 @@
 //
 //===----------------------------------------------------------------------===//
 #define DEBUG_TYPE "profile-loader"
-#include "llvm/Analysis/Passes.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/Statistic.h"
 #include "ProfileInfo.h"
@@ -53,8 +52,7 @@ namespace {
     static char ID; // Class identification, replacement for typeinfo
     explicit LoaderPass(const std::string &filename = "")
 		: ModulePass(ID), Filename(filename) {
-			initializeLoaderPassPass(*PassRegistry::getPassRegistry());
-			initializeProfileInfoAnalysisGroup(*PassRegistry::getPassRegistry());
+			// initializeProfileInfoAnalysisGroup(*PassRegistry::getPassRegistry());
 			if (filename.empty()) Filename = ProfileInfoFilename;
     }
 
@@ -88,11 +86,12 @@ namespace {
 }  // End of anonymous namespace
 
 char LoaderPass::ID = 0;
-INITIALIZE_AG_PASS(LoaderPass, ProfileInfo, "profile-loader",
-              "Load profile information from llvmprof.out", false, true, false)
+// INITIALIZE_AG_PASS(LoaderPass, ProfileInfo, "profile-loader",
+//              "Load profile information from llvmprof.out", false, true, false)
 
-//static RegisterPass<LoaderPass> X("profile-loader",
-//              "Load profile information from llvmprof.out", false, true);
+static RegisterPass<LoaderPass> X("profile-loader",
+              "Load profile information from llvmprof.out", false, true);
+static RegisterAnalysisGroup<ProfileInfo> Y(X);
 
 char &llvm::ProfileLoaderPassID = LoaderPass::ID;
 

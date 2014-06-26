@@ -34,7 +34,8 @@ namespace llvm {
 }
 
 // Register the ProfileInfo interface, providing a nice name to refer to.
-INITIALIZE_ANALYSIS_GROUP(ProfileInfo, "Profile Information", NoProfileInfo)
+//INITIALIZE_ANALYSIS_GROUP(ProfileInfo, "Profile Information", NoProfileInfo)
+static RegisterAnalysisGroup<ProfileInfo> X("Profile Information");
 
 namespace llvm {
 
@@ -1148,7 +1149,7 @@ namespace {
   struct NoProfileInfo : public ImmutablePass, public ProfileInfo {
     static char ID; // Class identification, replacement for typeinfo
     NoProfileInfo() : ImmutablePass(ID) {
-      initializeNoProfileInfoPass(*PassRegistry::getPassRegistry());
+      //initializeNoProfileInfoPass(*PassRegistry::getPassRegistry());
     }
     
     /// getAdjustedAnalysisPointer - This method is used when a pass implements
@@ -1169,7 +1170,9 @@ namespace {
 
 char NoProfileInfo::ID = 0;
 // Register this pass...
-INITIALIZE_AG_PASS(NoProfileInfo, ProfileInfo, "no-profile",
-                   "No Profile Information", false, true, true)
+//INITIALIZE_AG_PASS(NoProfileInfo, ProfileInfo, "no-profile",
+//                   "No Profile Information", false, true, true)
+static RegisterPass<NoProfileInfo> Z("no-profile", "No Profile Information", false, true);
+static RegisterAnalysisGroup<ProfileInfo, true> Y(Z);
 
 ImmutablePass *llvm::createNoProfileInfoPass() { return new NoProfileInfo(); }

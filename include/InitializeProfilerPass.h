@@ -8,17 +8,17 @@ void initializeGCOVProfilerPass(PassRegistry&);
 void initializeProfileMetadataLoaderPassPass(PassRegistry&);
 void initializePathProfileLoaderPassPass(PassRegistry&);
 
-void initializeNoProfileInfoPass(PassRegistry&);
+// void initializeNoProfileInfoPass(PassRegistry&);
 void initializeNoPathProfileInfoPass(PassRegistry&);
 
-void initializeOptimalEdgeProfilerPass(PassRegistry&);
+// void initializeOptimalEdgeProfilerPass(PassRegistry&);
 
-void initializeProfileEstimatorPassPass(PassRegistry&);
+// void initializeProfileEstimatorPassPass(PassRegistry&);
 
-void initializeProfileInfoAnalysisGroup(PassRegistry&);
+// void initializeProfileInfoAnalysisGroup(PassRegistry&);
 void initializePathProfileInfoAnalysisGroup(PassRegistry&);
 void initializePathProfileVerifierPass(PassRegistry&);
-void initializeProfileVerifierPassPass(PassRegistry&);
+// void initializeProfileVerifierPassPass(PassRegistry&);
 
 
 }
