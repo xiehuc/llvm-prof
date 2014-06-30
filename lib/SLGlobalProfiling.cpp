@@ -74,6 +74,7 @@ bool SLGlobalProfiling::runOnModule(Module &M)
 
    for(Module::iterator F = M.begin(), ME = M.end(); F != ME; ++F){
       for(inst_iterator I = inst_begin(F), E = inst_end(F); I!=E; ++I){
+         if(!isa<StoreInst>(&*I) && !isa<LoadInst>(&*I)) continue;
          if(lle::access_global_variable(&*I)){
             if(StoreInst* SI = dyn_cast<StoreInst>(&*I)){
                callArgs[0] = Constant::getIntegerValue(Int32Ty, storeCount++);
