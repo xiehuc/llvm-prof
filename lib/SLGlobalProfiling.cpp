@@ -15,6 +15,9 @@
 #include <llvm/IR/Instructions.h>
 #include <llvm/Support/InstIterator.h>
 #include "ProfilingUtils.h"
+#include "ValueUtils.h"
+
+#include <stdio.h>
 
 using namespace std;
 using namespace llvm;
@@ -30,6 +33,29 @@ public:
 char SLGlobalProfiling::ID = 0;
 static RegisterPass<SLGlobalProfiling> X("insert-slg-profiling", "Insert StoreLoadGlobalVariable Profiling into Module", false, true);
 
+static bool isArgumentWrite(llvm::Argument *Arg)
+{
+   Function* F = Arg->getParent();
+   if(!Arg->getType()->isPointerTy()) return false;
+   if(F->hasFnAttribute("lle.arg.write")){
+      Attribute Attr = F->getFnAttribute("lle.arg.write");
+      char ArgNo[5];
+      snprintf(ArgNo, sizeof(ArgNo), "%u", Arg->getArgNo());
+      size_t ArgNoLen = strlen(ArgNo);
+      StringRef AttrStr = Attr.getValueAsString();
+      for(size_t beg = 0; beg != StringRef::npos ; beg = AttrStr.find(ArgNo, beg+1)){
+         size_t end = beg+ArgNoLen+1;
+         if(!(end < AttrStr.size() && !isdigit(AttrStr[end]))) continue;
+         if(!(beg > 0 && !isdigit(AttrStr[beg-1]))) continue;
+         return true;
+      }
+   }else{
+      for(Argument::use_iterator U = Arg->use_begin(), E = Arg->use_end(); U!=E; ++U){
+         if(isa<StoreInst>(*U)) return true;
+      }
+   }
+   return false;
+}
 
 bool SLGlobalProfiling::runOnModule(Module &M)
 {
@@ -48,7 +74,7 @@ bool SLGlobalProfiling::runOnModule(Module &M)
 
    for(Module::iterator F = M.begin(), ME = M.end(); F != ME; ++F){
       for(inst_iterator I = inst_begin(F), E = inst_end(F); I!=E; ++I){
-         if(access_global_variable(&*I)){
+         if(lle::access_global_variable(&*I)){
             if(StoreInst* SI = dyn_cast<StoreInst>(&*I)){
                callArgs[0] = Constant::getIntegerValue(Int32Ty, storeCount++);
                callArgs[1] = CastInst::CreatePointerCast(SI->getPointerOperand(), VoidPtrTy, "", SI);

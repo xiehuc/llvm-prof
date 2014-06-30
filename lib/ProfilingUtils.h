@@ -25,6 +25,7 @@ namespace llvm {
   class PointerType;
   class Value;
   class Instruction;
+  class GlobalVariable;
 
   void InsertProfilingInitCall(Function *MainFn, const char *FnName,
                                GlobalValue *Arr = 0,
@@ -34,8 +35,6 @@ namespace llvm {
                                bool beginning = true);
   void InsertProfilingShutdownCall(Function *Callee, Module *Mod);
 
-  Value* castoff(Value*);
-  Value* access_global_variable(Instruction *I);
 }
 
 #endif

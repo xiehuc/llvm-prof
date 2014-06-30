@@ -1,4 +1,5 @@
 set(SOURCES
+   ValueUtils.cpp
 	ValueProfiling.cpp
    SLGlobalProfiling.cpp
 	EdgeProfiling.cpp

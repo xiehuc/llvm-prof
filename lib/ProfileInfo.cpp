@@ -22,6 +22,7 @@
 #include "InitializeProfilerPass.h"
 #include "ProfileInstrumentations.h"
 #include "ProfilingUtils.h"
+#include "ValueUtils.h"
 #include <llvm/IR/Constants.h>
 #include <functional>
 #include <limits>
@@ -74,7 +75,7 @@ template<> const Value*
 ProfileInfoT<Function,BasicBlock>::getTrapedTarget(const Instruction* V)
 {
    if(isa<CallInst>(V))
-      return castoff(V->getOperand(1));
+      return lle::castoff(V->getOperand(1));
    else if(isa<LoadInst>(V)){
       if(SLGInformation.find(V) == SLGInformation.end()) return NULL;
       return SLGInformation[V].second;

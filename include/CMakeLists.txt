@@ -1,4 +1,5 @@
 set(INCLUDES
+   ValueUtils.h
 	ValueProfiling.h
 	InitializeProfilerPass.h
 	PathNumbering.h

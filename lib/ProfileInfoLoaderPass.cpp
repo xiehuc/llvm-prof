@@ -28,6 +28,7 @@
 #include "InitializeProfilerPass.h"
 #include "ProfileInstrumentations.h"
 #include "ProfilingUtils.h"
+#include "ValueUtils.h"
 #include <llvm/Support/InstIterator.h>
 #include <llvm/IR/Constants.h>
 #include <set>
@@ -314,7 +315,7 @@ bool LoaderPass::runOnModule(Module &M) {
      for(Module::iterator F = M.begin(), E = M.end(); F!=E; ++F){
         for(inst_iterator I = inst_begin(F), IE = inst_end(F); I!=IE; ++I){
 
-           if(access_global_variable(&*I)){
+           if(lle::access_global_variable(&*I)){
               unsigned index;
               Instruction* SLI = &*I;
               if(isa<StoreInst>(&*I)){
