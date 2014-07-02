@@ -9,7 +9,7 @@ include_directories(
 
 link_directories(${LLVM_LIBRARY_DIRS})
 
-if(DYNAMIC_LINK)
+if(LLVM_DYNAMIC_LIBRARY)
 	set(LLVM_PROF_LIBRARY ${LLVM_DYNAMIC_LIBRARY})
 else()
 	llvm_map_components_to_libraries(LLVM_PROF_LIBRARY bitreader analysis )
@@ -22,7 +22,6 @@ add_executable(llvm-prof
 target_link_libraries(llvm-prof
 	${LLVM_LIBRARIES}
 	LLVMProfiling-shared
-	#${LLVM_PROF_LIBRARY}
 	)
 
 install(TARGETS llvm-prof
