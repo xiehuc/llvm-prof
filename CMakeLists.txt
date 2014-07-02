@@ -8,10 +8,15 @@ set(CMAKE_MODULE_PATH
 
 option(OUTPUT_HASPID "Output name contain pid to support mpi program" ON)
 option(ENABLE_COMPRESS "Enable Run Length Compress to decrease memory footprint" ON)
+option(USE_LIB64_PATH "Trying to use lib64 on some platform" OFF)
+set(FIND_LIBRARY_USE_LIB64_PATHS ${USE_LIB64_PATH})
 
 set(LLVM_RECOMMAND_VERSION "" CACHE STRING "Switch the llvm version")
-find_package(LLVM)
+find_package(LLVM REQUIRED)
 find_package(GTest)
+if(LLVM_VERSION VERSION_LESS "3.4")
+   message(FATAL_ERROR "Need LLVM version greater than 3.4")
+endif()
 
 option(DYNAMIC_LINK "Link Dynamic LLVM Libraries" ${LLVM_DYNAMIC_LIBRARY_FOUND})
 
