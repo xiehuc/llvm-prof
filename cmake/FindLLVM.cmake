@@ -70,8 +70,6 @@ macro(_llvm_config _var_name)
 endmacro()
 
 set(LLVM_INSTALL_PREFIX  ${LLVM_ROOT})
-set(LLVM_INCLUDE_DIRS ${LLVM_INSTALL_PREFIX}/include)
-set(LLVM_LIBRARY_DIRS ${LLVM_INSTALL_PREFIX}/lib)
 set(LLVM_DEFINITIONS "-D__STDC_LIMIT_MACROS" "-D__STDC_CONSTANT_MACROS")
 
 _llvm_config(LLVM_VERSION --version)
@@ -81,11 +79,13 @@ _llvm_config(LLVM_C_FLAGS --cflags)
 _llvm_config(LLVM_CPP_FLAGS --cppflags)
 _llvm_config(LLVM_CXX_FLAGS --cxxflags)
 _llvm_config(LLVM_LD_FLAGS --ldflags)
+_llvm_config(LLVM_LIBRARY_DIRS --libdir)
+_llvm_config(LLVM_INCLUDE_DIRS --includedir)
 string(REGEX MATCH "-l.*" LLVM_LIBRARIES ${LLVM_LD_FLAGS})
 
 find_library(LLVM_DYNAMIC_LIBRARY 
 	NAMES "LLVM" "LLVM-${LLVM_VERSION}"
-   PATHS ${LLVM_INSTALL_PREFIX}/lib
+   PATHS ${LLVM_LIBRARY_DIRS}
    )
 
 if(NOT LLVM_DYNAMIC_LIBRARY)
