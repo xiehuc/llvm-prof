@@ -314,7 +314,7 @@ bool LoaderPass::runOnModule(Module &M) {
      unsigned load_idx = 0, store_idx = 1;
      for(Module::iterator F = M.begin(), E = M.end(); F!=E; ++F){
         for(inst_iterator I = inst_begin(F), IE = inst_end(F); I!=IE; ++I){
-           if(!isa<StoreInst>(&*I) || !isa<LoadInst>(&*I)) continue;
+           if(!isa<StoreInst>(&*I) && !isa<LoadInst>(&*I)) continue;
            if(lle::access_global_variable(&*I)){
               unsigned index;
               Instruction* SLI = &*I;
