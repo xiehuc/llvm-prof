@@ -32,6 +32,11 @@ argument
 * `-diff`          : compare two output file and report whether they are different
                      example: ``llvm-prof -diff a.out b.out``
 
+environment variable
+---------------------
+
+* `PROFILING_OUTDIR` : put all llvmprof.out.\* to the dir
+
 extra profilings
 -----------------
 

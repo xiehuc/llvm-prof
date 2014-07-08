@@ -117,18 +117,27 @@ int save_arguments(int argc, const char **argv) {
  */
 int getOutFile() {
   static int OutFile = -1;
+  char OutputFilenameRuntime[1024] = {0};
 
   /* If this is the first time this function is called, open the output file
    * for appending, creating it if it does not already exist.
    */
   if (OutFile == -1) {
+     char* OutDir = getenv("PROFILING_OUTDIR");
 #ifdef OUTPUT_HASPID
-	 char OutputFilenameRuntime[1024] = {0};
 	 pid_t pid = getpid();
-	 snprintf(OutputFilenameRuntime,sizeof(OutputFilenameRuntime),"%s.%lu",OutputFilename, (unsigned long)pid);
+    snprintf(OutputFilenameRuntime,sizeof(OutputFilenameRuntime),"%s%s%s.%lu",
+          (OutDir?:""),
+          (OutDir?"/":""),
+          OutputFilename,
+          (unsigned long)pid);
     OutFile = open(OutputFilenameRuntime, O_CREAT | O_WRONLY, 0666);
 #else
-    OutFile = open(OutputFilename, O_CREAT | O_WRONLY, 0666);
+    snprintf(OutputFilenameRuntime,sizeof(OutputFilenameRuntime),"%s%s%s",
+          (OutDir?:""),
+          (OutDir?"/":""),
+          OutputFilename);
+    OutFile = open(OutputFilenameRuntime, O_CREAT | O_WRONLY, 0666);
 #endif
     lseek(OutFile, 0, SEEK_END); /* O_APPEND prevents seeking */
     if (OutFile == -1) {
