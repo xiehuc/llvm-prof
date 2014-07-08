@@ -316,7 +316,7 @@ bool LoaderPass::runOnModule(Module &M) {
         for(inst_iterator I = inst_begin(F), IE = inst_end(F); I!=IE; ++I){
            if(!isa<StoreInst>(&*I) && !isa<LoadInst>(&*I)) continue;
            if(lle::access_global_variable(&*I)){
-              unsigned index;
+              unsigned index = 0;
               Instruction* SLI = &*I;
               if(isa<StoreInst>(&*I)){
                  index = store_idx++;

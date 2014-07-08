@@ -124,32 +124,35 @@ int getOutFile() {
    */
   if (OutFile == -1) {
      char* OutDir = getenv("PROFILING_OUTDIR");
+     if(access(OutDir,F_OK)){
+        mkdir(OutDir, 0755);
+     }
 #ifdef OUTPUT_HASPID
-	 pid_t pid = getpid();
-    snprintf(OutputFilenameRuntime,sizeof(OutputFilenameRuntime),"%s%s%s.%lu",
-          (OutDir?:""),
-          (OutDir?"/":""),
-          OutputFilename,
-          (unsigned long)pid);
-    OutFile = open(OutputFilenameRuntime, O_CREAT | O_WRONLY, 0666);
+     pid_t pid = getpid();
+     snprintf(OutputFilenameRuntime,sizeof(OutputFilenameRuntime),"%s%s%s.%lu",
+           (OutDir?:""),
+           (OutDir?"/":""),
+           OutputFilename,
+           (unsigned long)pid);
+     OutFile = open(OutputFilenameRuntime, O_CREAT | O_WRONLY, 0666);
 #else
-    snprintf(OutputFilenameRuntime,sizeof(OutputFilenameRuntime),"%s%s%s",
-          (OutDir?:""),
-          (OutDir?"/":""),
-          OutputFilename);
-    OutFile = open(OutputFilenameRuntime, O_CREAT | O_WRONLY, 0666);
+     snprintf(OutputFilenameRuntime,sizeof(OutputFilenameRuntime),"%s%s%s",
+           (OutDir?:""),
+           (OutDir?"/":""),
+           OutputFilename);
+     OutFile = open(OutputFilenameRuntime, O_CREAT | O_WRONLY, 0666);
 #endif
-    lseek(OutFile, 0, SEEK_END); /* O_APPEND prevents seeking */
-    if (OutFile == -1) {
-      fprintf(stderr, "LLVM profiling runtime: while opening '%s': ",
+     lseek(OutFile, 0, SEEK_END); /* O_APPEND prevents seeking */
+     if (OutFile == -1) {
+        fprintf(stderr, "LLVM profiling runtime: while opening '%s': ",
               OutputFilename);
-      perror("");
-      return(OutFile);
-    }
+        perror("");
+        return(OutFile);
+     }
 
-    /* Output the command line arguments to the file. */
-    {
-      int PTy = ArgumentInfo;
+     /* Output the command line arguments to the file. */
+     {
+        int PTy = ArgumentInfo;
       int Zeros = 0;
       if (write(OutFile, &PTy, sizeof(int)) < 0 ||
           write(OutFile, &SavedArgsLength, sizeof(unsigned)) < 0 ||
