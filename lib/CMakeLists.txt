@@ -14,6 +14,7 @@ set(SOURCES
 	ProfileEstimatorPass.cpp
 	ProfileInfo.cpp
 	ProfileInfoLoader.cpp
+   ProfileInfoWriter.cpp
 	ProfileInfoLoaderPass.cpp
 	ProfileVerifierPass.cpp
 	ProfilingUtils.cpp
