@@ -60,6 +60,11 @@ namespace {
         cl::desc("Print detailed value content in value profiling"));
   cl::opt<bool> PrintAllCode("print-all-code", 
         cl::desc("Print annotated code for the entire program"));
+  ///////////////////
+  cl::opt<bool> Merge("merge",cl::desc("Merge the Profile info"));
+  //cl::opt<std::string> TotleFile(cl::Positional,cl::desc("<Totle file>"),cl::Optional,cl::init("llvmprof_Totle.out"));
+  cl::list<std::string> MergeFile(cl::Positional,cl::desc("<Merge file list>"),cl::ZeroOrMore);
+  /////////////////////
 }
 
 // PairSecondSort - A sorting predicate to sort by the second element of a pair.
@@ -169,6 +174,20 @@ namespace {
         :Lhs(LHS), Rhs(RHS) {}
      bool run();
   };
+
+  //==================================
+  //coded by haomeng
+  //Merge the info
+  //==================================
+  class ProfileInfoMerge
+  {
+     ProfileInfoLoader& Ahs;//totle file
+     public:
+     explicit ProfileInfoMerge(ProfileInfoLoader& AHS)
+        :Ahs(AHS){}
+     void  addProfileInfo(ProfileInfoLoader& THS); 
+  };
+  ////////////////////////////////////
 }
 
 char ProfileInfoPrinterPass::ID = 0;
@@ -447,6 +466,46 @@ bool ProfileInfoCompare::run()
 #undef CRITICAL_EQUAL
 }
 
+void MergeVector(std::vector<unsigned>& Ahstmp, std::vector<unsigned>& Thstmp){
+   for(int i = 0;i < Ahstmp.size(); i++){
+      Ahstmp[i]=Ahstmp[i]+Thstmp[i];
+   }
+}
+
+void ProfileInfoMerge::addProfileInfo(llvm::ProfileInfoLoader &THS){
+   errs()<<THS.getFileName()<<"\n";
+   errs()<<THS.getNumExecutions()<<"\n";
+
+   std::vector<unsigned>& Ahstmp = Ahs.getRawBlockCounts();
+   std::vector<unsigned>& Thstmp = THS.getRawBlockCounts();
+   MergeVector(Ahstmp,Thstmp);
+
+   Ahstmp = Ahs.getRawOptimalEdgeCounts();
+   Thstmp = THS.getRawOptimalEdgeCounts();
+   MergeVector(Ahstmp,Thstmp);
+
+   Ahstmp = Ahs.getRawEdgeCounts();
+   Thstmp = THS.getRawEdgeCounts();
+   MergeVector(Ahstmp,Thstmp);
+
+   Ahstmp = Ahs.getRawFunctionCounts();
+   Thstmp = THS.getRawFunctionCounts();
+   MergeVecotr(Ahstmp,Thstmp);
+
+   Ahstmp = Ahs.getRawValueCounts();
+   Thstmp = THS.getRawValueCounts();
+   MergeVector(Ahstmp,Thstmp);
+
+   Ahstmp = Ahs.getRawSLGCounts();
+   Thstmp = THS.getRawSLGCounts();
+   MergeVector(Ahstmp,Thstmp);
+
+
+   return;
+}
+
+
+
 int main(int argc, char **argv) {
   // Print a stack trace if we signal out.
   sys::PrintStackTraceOnErrorSignal();
@@ -465,10 +524,35 @@ int main(int argc, char **argv) {
   if(DiffMode) {
      ProfileInfoLoader PIL1(argv[0], BitcodeFile);
      ProfileInfoLoader PIL2(argv[0], ProfileDataFile);
-
+     
      ProfileInfoCompare Compare(PIL1,PIL2);
      Compare.run();
      return 0;
+  }
+  if(Merge) {
+
+
+     MergeFile.push_back(std::string(ProfileDataFile.getValue()));
+     if(MergeFile.size()==0){
+        errs()<<"No merge file!";
+        return 0;
+     }
+     ProfileInfoLoader AHS(argv[0], *(MergeFile.begin()));
+     ProfileInfoMerge MergeClass(AHS);
+
+     for(std::vector<std::string>::iterator merIt = MergeFile.begin()+1,END = MergeFile.end();merIt!=END;++merIt){
+        //errs()<<*merIt<<"\n";
+        ProfileInfoLoader THS(argv[0], *merIt);
+        MergeClass.addProfileInfo(THS);
+     }
+
+     //ProfileInfoLoader AHS(totlefile.c_str(), ProfileDataFile);
+     //ProfileInfoLoader THS(dirfile.c_str(), ProfileDataFile);
+ 
+     //SmallVector<StringRef,50> dirname;
+     //getDirFileName(dirname, dirfile);
+     //ProfileInfoMerge Merge(AHS);
+    // Merge.addProfileInfo(THS);
   }
   if (!(ec = MemoryBuffer::getFileOrSTDIN(BitcodeFile, Buffer))) {
      M = ParseBitcodeFile(Buffer.get(), Context, &ErrorMessage);
