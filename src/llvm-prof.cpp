@@ -181,10 +181,18 @@ namespace {
   //==================================
   class ProfileInfoMerge
   {
-     ProfileInfoLoader& Ahs;//totle file
+     std::string Filename;
+     std::vector<std::string> CommandLines;
+     std::vector<unsigned> FunctionCounts;
+     std::vector<unsigned> BlockCounts;
+     std::vector<unsigned> EdgeCounts;
+     std::vector<unsigned> OptimalEdgeCounts;
+     std::vector<unsigned> BBTrace;
+     std::vector<unsigned> ValueCounts;
+     std::vector<unsigned> SLGCounts;
+     std::vector<std::vector<int> > ValueContents; 
      public:
-     explicit ProfileInfoMerge(ProfileInfoLoader& AHS)
-        :Ahs(AHS){}
+     explicit ProfileInfoMerge(ProfileInfoLoader& AHS);
      void  addProfileInfo(ProfileInfoLoader& THS); 
   };
   ////////////////////////////////////
@@ -472,33 +480,49 @@ void MergeVector(std::vector<unsigned>& Ahstmp, std::vector<unsigned>& Thstmp){
    }
 }
 
+ProfileInfoMerge::ProfileInfoMerge(llvm::ProfileInfoLoader& AHS){
+   this->Filename = AHS.getFileName();
+   this->FunctionCounts = AHS.getRawFunctionCounts();
+   this->OptimalEdgeCounts = AHS.getRawOptimalEdgeCounts();
+   this->SLGCounts = AHS.getRawSLGCounts();
+   this->EdgeCounts = AHS.getRawEdgeCounts();
+   this->BlockCounts = AHS.getRawBlockCounts();
+   this->ValueCounts = AHS.getRawValueCounts();
+   for(unsigned i = 0;i < AHS.getNumExecutions();i++){
+      std::string tmp = AHS.getExecution(i);
+      this->CommandLines.push_back(tmp);
+   }
+   errs()<<this->Filename<<"\n";
+   errs()<<this->FunctionCounts.size()<<"\n";
+   errs()<<this->OptimalEdgeCounts.size()<<"\n";
+   errs()<<this->SLGCounts.size()<<"\n";
+   errs()<<this->EdgeCounts.size()<<"\n";
+   errs()<<this->BlockCounts.size()<<"\n";
+   errs()<<this->ValueCounts.size()<<"\n";
+   errs()<<this->CommandLines.size()<<"\n";
+
+}
 void ProfileInfoMerge::addProfileInfo(llvm::ProfileInfoLoader &THS){
-   errs()<<THS.getFileName()<<"\n";
-   errs()<<THS.getNumExecutions()<<"\n";
+   //errs()<<THS.getFileName()<<"\n";
+   //errs()<<THS.getNumExecutions()<<"\n";
 
-   std::vector<unsigned>& Ahstmp = Ahs.getRawBlockCounts();
-   std::vector<unsigned>& Thstmp = THS.getRawBlockCounts();
-   MergeVector(Ahstmp,Thstmp);
+   std::vector<unsigned> Thstmp = THS.getRawBlockCounts();
+   MergeVector(this->BlockCounts,Thstmp);
 
-   Ahstmp = Ahs.getRawOptimalEdgeCounts();
    Thstmp = THS.getRawOptimalEdgeCounts();
-   MergeVector(Ahstmp,Thstmp);
+   MergeVector(this->OptimalEdgeCounts,Thstmp);
 
-   Ahstmp = Ahs.getRawEdgeCounts();
    Thstmp = THS.getRawEdgeCounts();
-   MergeVector(Ahstmp,Thstmp);
+   MergeVector(this->EdgeCounts,Thstmp);
 
-   Ahstmp = Ahs.getRawFunctionCounts();
    Thstmp = THS.getRawFunctionCounts();
-   MergeVecotr(Ahstmp,Thstmp);
+   MergeVector(this->FunctionCounts,Thstmp);
 
-   Ahstmp = Ahs.getRawValueCounts();
    Thstmp = THS.getRawValueCounts();
-   MergeVector(Ahstmp,Thstmp);
+   MergeVector(this->ValueCounts,Thstmp);
 
-   Ahstmp = Ahs.getRawSLGCounts();
    Thstmp = THS.getRawSLGCounts();
-   MergeVector(Ahstmp,Thstmp);
+   MergeVector(this->SLGCounts,Thstmp);
 
 
    return;
@@ -537,22 +561,15 @@ int main(int argc, char **argv) {
         errs()<<"No merge file!";
         return 0;
      }
-     ProfileInfoLoader AHS(argv[0], *(MergeFile.begin()));
+     ProfileInfoLoader AHS(argv[0], *(MergeFile.end()-1));
      ProfileInfoMerge MergeClass(AHS);
 
-     for(std::vector<std::string>::iterator merIt = MergeFile.begin()+1,END = MergeFile.end();merIt!=END;++merIt){
+     for(std::vector<std::string>::iterator merIt = MergeFile.begin(),END = MergeFile.end()-1;merIt!=END;++merIt){
         //errs()<<*merIt<<"\n";
         ProfileInfoLoader THS(argv[0], *merIt);
         MergeClass.addProfileInfo(THS);
      }
 
-     //ProfileInfoLoader AHS(totlefile.c_str(), ProfileDataFile);
-     //ProfileInfoLoader THS(dirfile.c_str(), ProfileDataFile);
- 
-     //SmallVector<StringRef,50> dirname;
-     //getDirFileName(dirname, dirfile);
-     //ProfileInfoMerge Merge(AHS);
-    // Merge.addProfileInfo(THS);
   }
   if (!(ec = MemoryBuffer::getFileOrSTDIN(BitcodeFile, Buffer))) {
      M = ParseBitcodeFile(Buffer.get(), Context, &ErrorMessage);
