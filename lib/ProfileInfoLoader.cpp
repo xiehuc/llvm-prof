@@ -178,13 +178,13 @@ ProfileInfoLoader::ProfileInfoLoader(const char *ToolName,
       break;
 
 	case ValueInfo:
-	  ReadProfilingBlock(ToolName, F, ShouldByteSwap, ValueCounts);
-	  ReadValueProfilingContents(ToolName, F, ShouldByteSwap, ValueCounts.size(), ValueContents);
-	  break;
+      ReadProfilingBlock(ToolName, F, ShouldByteSwap, ValueCounts);
+      ReadValueProfilingContents(ToolName, F, ShouldByteSwap, ValueCounts.size(), ValueContents);
+      break;
 
    case SLGInfo:
-     ReadProfilingBlock(ToolName, F, ShouldByteSwap, SLGCounts);
-     break;
+      ReadProfilingBlock(ToolName, F, ShouldByteSwap, SLGCounts);
+      break;
 
     default:
       errs() << ToolName << ": Unknown packet type #" << PacketType << "!\n";
