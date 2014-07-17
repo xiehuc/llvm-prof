@@ -2,8 +2,8 @@
 
 
 using namespace llvm;
-
-void MergeVector(std::vector<unsigned>& Ahstmp, std::vector<unsigned>& Thstmp){
+template <typename ty>
+void MergeVector(std::vector<ty>& Ahstmp, std::vector<ty>& Thstmp){
    for(int i = 0;i < Ahstmp.size(); i++){
       Ahstmp[i]=Ahstmp[i]+Thstmp[i];
    }
@@ -20,6 +20,10 @@ ProfileInfoMerge::ProfileInfoMerge(llvm::ProfileInfoLoader& AHS){
    for(unsigned i = 0;i < AHS.getNumExecutions();i++){
       std::string tmp = AHS.getExecution(i);
       this->CommandLines.push_back(tmp);
+   }
+   for(unsigned i = 0;i < AHS.getRawValueCounts().size();i++){
+      std::vector<int> tmp = AHS.getRawValueContent(i);
+      this->ValueContents.push_back(tmp);
    }
    errs()<<this->Filename<<"\n";
    errs()<<this->FunctionCounts.size()<<"\n";
@@ -53,6 +57,10 @@ void ProfileInfoMerge::addProfileInfo(llvm::ProfileInfoLoader &THS){
    Thstmp = THS.getRawSLGCounts();
    MergeVector(this->SLGCounts,Thstmp);
 
+   for(unsigned i = 0; i < THS.getRawValueCounts().size(); i++){
+      std::vector<int> tmp = THS.getRawValueContent(i);
+      MergeVector(this->ValueContents[i],tmp);
+   }
 
    return;
 }
