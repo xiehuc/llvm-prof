@@ -488,13 +488,14 @@ int main(int argc, char **argv) {
         return 0;
      }
      ProfileInfoLoader AHS(argv[0], *(MergeFile.end()-1));
-     ProfileInfoMerge MergeClass(AHS);
+     ProfileInfoMerge MergeClass(std::string(argv[0]),BitcodeFile,AHS);
 
      for(std::vector<std::string>::iterator merIt = MergeFile.begin(),END = MergeFile.end()-1;merIt!=END;++merIt){
         //errs()<<*merIt<<"\n";
         ProfileInfoLoader THS(argv[0], *merIt);
         MergeClass.addProfileInfo(THS);
      }
+     MergeClass.writeTotleFile();
 
   }
   if (!(ec = MemoryBuffer::getFileOrSTDIN(BitcodeFile, Buffer))) {

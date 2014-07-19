@@ -3,7 +3,6 @@
 
 #include "ProfileInfoLoader.h"
 #include "ProfileInfoTypes.h"
-#include "ProfileInfoWriter.h"
 #include <llvm/Support/raw_ostream.h>
 
 namespace llvm {
@@ -12,7 +11,6 @@ namespace llvm {
 class ProfileInfoMerge
 {
    std::string Filename;
-   std::string Toolname;
    std::vector<std::string> CommandLines;
    std::vector<unsigned> FunctionCounts;
    std::vector<unsigned> BlockCounts;
@@ -24,11 +22,9 @@ class ProfileInfoMerge
    std::vector<std::vector<int> > ValueContents; 
    public:
    /*Create a initial total data*/
-   explicit ProfileInfoMerge(std::string toolName,std::string fileName,ProfileInfoLoader& AHS);
+   explicit ProfileInfoMerge(ProfileInfoLoader& AHS);
    /*Merge the file*/
    void  addProfileInfo(ProfileInfoLoader& THS); 
-   /*write totle merging file*/
-   void writeTotleFile();
 };
 
 }

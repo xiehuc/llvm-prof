@@ -9,8 +9,9 @@ void MergeVector(std::vector<ty>& Ahstmp, std::vector<ty>& Thstmp){
    }
 }
 
-ProfileInfoMerge::ProfileInfoMerge(llvm::ProfileInfoLoader& AHS){
-   this->Filename = AHS.getFileName();
+ProfileInfoMerge::ProfileInfoMerge(std::string toolName,std::string fileName,llvm::ProfileInfoLoader& AHS){
+   this->Toolname = toolName;
+   this->Filename = fileName;
    this->FunctionCounts = AHS.getRawFunctionCounts();
    this->OptimalEdgeCounts = AHS.getRawOptimalEdgeCounts();
    this->SLGCounts = AHS.getRawSLGCounts();
@@ -25,14 +26,15 @@ ProfileInfoMerge::ProfileInfoMerge(llvm::ProfileInfoLoader& AHS){
       std::vector<int> tmp = AHS.getRawValueContent(i);
       this->ValueContents.push_back(tmp);
    }
-   errs()<<this->Filename<<"\n";
-   errs()<<this->FunctionCounts.size()<<"\n";
-   errs()<<this->OptimalEdgeCounts.size()<<"\n";
-   errs()<<this->SLGCounts.size()<<"\n";
-   errs()<<this->EdgeCounts.size()<<"\n";
-   errs()<<this->BlockCounts.size()<<"\n";
-   errs()<<this->ValueCounts.size()<<"\n";
-   errs()<<this->CommandLines.size()<<"\n";
+  // errs()<<this->Toolname<<"\n";
+  // errs()<<this->Filename<<"\n";
+  // errs()<<this->FunctionCounts.size()<<"\n";
+  // errs()<<this->OptimalEdgeCounts.size()<<"\n";
+  // errs()<<this->SLGCounts.size()<<"\n";
+  // errs()<<this->EdgeCounts.size()<<"\n";
+  // errs()<<this->BlockCounts.size()<<"\n";
+  // errs()<<this->ValueCounts.size()<<"\n";
+  // errs()<<this->CommandLines.size()<<"\n";
 
 }
 void ProfileInfoMerge::addProfileInfo(llvm::ProfileInfoLoader &THS){
@@ -65,3 +67,13 @@ void ProfileInfoMerge::addProfileInfo(llvm::ProfileInfoLoader &THS){
    return;
 }
 
+void ProfileInfoMerge::writeTotleFile(){
+
+   ProfileInfoWriter totleFile((this->Toolname.c_str()),this->Filename);
+   //errs()<<"hello world!\n";
+   totleFile.write(FunctionInfo, this->FunctionCounts);
+   totleFile.write(BlockInfo, this->BlockCounts);
+   totleFile.write(EdgeInfo, this->EdgeCounts);
+   totleFile.write(OptEdgeInfo, this->OptimalEdgeCounts);
+   totleFile.write(SLGInfo, this->SLGCounts);
+}
