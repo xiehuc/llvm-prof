@@ -481,12 +481,14 @@ int main(int argc, char **argv) {
   }
   if(Merge) {
 
-
+     // Add the ProfileDataFile arg to MergeFile, it blongs to the MergeFile
      MergeFile.push_back(std::string(ProfileDataFile.getValue()));
      if(MergeFile.size()==0){
         errs()<<"No merge file!";
         return 0;
      }
+
+     //Initialize the ProfileInfoMerge class using one of merge files
      ProfileInfoLoader AHS(argv[0], *(MergeFile.end()-1));
      ProfileInfoMerge MergeClass(std::string(argv[0]),BitcodeFile,AHS);
 
@@ -495,7 +497,7 @@ int main(int argc, char **argv) {
         ProfileInfoLoader THS(argv[0], *merIt);
         MergeClass.addProfileInfo(THS);
      }
-     MergeClass.writeTotleFile();
+     MergeClass.writeTotalFile();
 
   }
   if (!(ec = MemoryBuffer::getFileOrSTDIN(BitcodeFile, Buffer))) {

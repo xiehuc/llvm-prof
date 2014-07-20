@@ -27,6 +27,12 @@ ProfileInfoWriter::~ProfileInfoWriter()
 
 void ProfileInfoWriter::write(const std::string &cmd)
 {
+   unsigned ArgLength = cmd.length();
+   ProfilingType Type = ArgumentInfo;
+   if(ArgLength <= 0) return;
+   fwrite(&Type,sizeof(unsigned), 1, this->File);
+   fwrite(&ArgLength, sizeof(unsigned), 1, this->File);
+   fwrite(&cmd[0], (ArgLength+3) & ~3, 1, this->File);
 }
 
 void ProfileInfoWriter::write(ProfilingType Type, const std::vector<unsigned int> &Counter)
@@ -35,11 +41,10 @@ void ProfileInfoWriter::write(ProfilingType Type, const std::vector<unsigned int
    //errs()<<"store counter\n";
 
    unsigned NumEntries = Counter.size();
-   if(NumEntries > 0){
-      fwrite(&Type, sizeof(unsigned), 1, this->File);
-      fwrite(&NumEntries, sizeof(unsigned), 1, this->File);
-      fwrite(&Counter[0], sizeof(unsigned)*NumEntries, 1, this->File);
+   if(NumEntries <= 0) return;
+   fwrite(&Type, sizeof(unsigned), 1, this->File);
+   fwrite(&NumEntries, sizeof(unsigned), 1, this->File);
+   fwrite(&Counter[0], sizeof(unsigned)*NumEntries, 1, this->File);
      // errs()<<"store over!\n";
-   }
 }
 

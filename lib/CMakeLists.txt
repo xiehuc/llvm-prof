@@ -18,6 +18,7 @@ set(SOURCES
 	ProfileInfoLoaderPass.cpp
 	ProfileVerifierPass.cpp
 	ProfilingUtils.cpp
+   ProfileInfoMerge.cpp
 	)
 #some platform need disable rtti to void 
 #undefined reference `typeinfo for xxx`

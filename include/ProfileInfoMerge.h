@@ -28,7 +28,7 @@ class ProfileInfoMerge
    /*Merge the file*/
    void  addProfileInfo(ProfileInfoLoader& THS); 
    /*write totle merging file*/
-   void writeTotleFile();
+   void writeTotalFile();
 };
 
 }
