@@ -11,6 +11,8 @@ set(INCLUDES
 	ProfileInfoLoader.h
 	ProfileInfoTypes.h
 	ProfileInstrumentations.h
+	ProfileInfoWriter.h
+	ProfileInfoMerge.h
 	)
 
 install(FILES ${INCLUDES}

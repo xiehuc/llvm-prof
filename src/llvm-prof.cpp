@@ -17,6 +17,7 @@
 #include "llvm/Analysis/Passes.h"
 #include "ProfileInfo.h"
 #include "ProfileInfoLoader.h"
+#include "ProfileInfoMerge.h"
 #include "llvm/Assembly/AssemblyAnnotationWriter.h"
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/IR/InstrTypes.h"
@@ -60,6 +61,11 @@ namespace {
         cl::desc("Print detailed value content in value profiling"));
   cl::opt<bool> PrintAllCode("print-all-code", 
         cl::desc("Print annotated code for the entire program"));
+  ///////////////////
+  cl::opt<bool> Merge("merge",cl::desc("Merge the Profile info"));
+  //cl::opt<std::string> TotleFile(cl::Positional,cl::desc("<Totle file>"),cl::Optional,cl::init("llvmprof_Totle.out"));
+  cl::list<std::string> MergeFile(cl::Positional,cl::desc("<Merge file list>"),cl::ZeroOrMore);
+  /////////////////////
 }
 
 // PairSecondSort - A sorting predicate to sort by the second element of a pair.
@@ -169,6 +175,8 @@ namespace {
         :Lhs(LHS), Rhs(RHS) {}
      bool run();
   };
+
+ 
 }
 
 char ProfileInfoPrinterPass::ID = 0;
@@ -447,6 +455,7 @@ bool ProfileInfoCompare::run()
 #undef CRITICAL_EQUAL
 }
 
+
 int main(int argc, char **argv) {
   // Print a stack trace if we signal out.
   sys::PrintStackTraceOnErrorSignal();
@@ -465,10 +474,31 @@ int main(int argc, char **argv) {
   if(DiffMode) {
      ProfileInfoLoader PIL1(argv[0], BitcodeFile);
      ProfileInfoLoader PIL2(argv[0], ProfileDataFile);
-
+     
      ProfileInfoCompare Compare(PIL1,PIL2);
      Compare.run();
      return 0;
+  }
+  if(Merge) {
+
+     // Add the ProfileDataFile arg to MergeFile, it blongs to the MergeFile
+     MergeFile.push_back(std::string(ProfileDataFile.getValue()));
+     if(MergeFile.size()==0){
+        errs()<<"No merge file!";
+        return 0;
+     }
+
+     //Initialize the ProfileInfoMerge class using one of merge files
+     ProfileInfoLoader AHS(argv[0], *(MergeFile.end()-1));
+     ProfileInfoMerge MergeClass(std::string(argv[0]),BitcodeFile,AHS);
+
+     for(std::vector<std::string>::iterator merIt = MergeFile.begin(),END = MergeFile.end()-1;merIt!=END;++merIt){
+        //errs()<<*merIt<<"\n";
+        ProfileInfoLoader THS(argv[0], *merIt);
+        MergeClass.addProfileInfo(THS);
+     }
+     MergeClass.writeTotalFile();
+
   }
   if (!(ec = MemoryBuffer::getFileOrSTDIN(BitcodeFile, Buffer))) {
      M = ParseBitcodeFile(Buffer.get(), Context, &ErrorMessage);
