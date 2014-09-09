@@ -13,30 +13,35 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/IR/LLVMContext.h"
-#include "llvm/Analysis/Passes.h"
-#include "ProfileInfo.h"
-#include "ProfileInfoLoader.h"
-#include "ProfileInfoMerge.h"
-#include "llvm/Assembly/AssemblyAnnotationWriter.h"
-#include "llvm/Bitcode/ReaderWriter.h"
-#include "llvm/IR/InstrTypes.h"
-#include "llvm/IR/Module.h"
-#include "llvm/PassManager.h"
-#include "llvm/Support/CommandLine.h"
-#include "llvm/Support/Format.h"
-#include "llvm/Support/FormattedStream.h"
-#include "llvm/Support/ManagedStatic.h"
-#include "llvm/Support/MemoryBuffer.h"
-#include "llvm/Support/PrettyStackTrace.h"
-#include "llvm/Support/Signals.h"
-#include "llvm/Support/raw_ostream.h"
-#include "llvm/Support/system_error.h"
+#include <llvm/IR/LLVMContext.h>
+#include <llvm/Analysis/Passes.h>
+#include <ProfileInfo.h>
+#include <ProfileInfoLoader.h>
+#include <ProfileInfoMerge.h>
+#include <llvm/Bitcode/ReaderWriter.h>
+#include <llvm/IR/InstrTypes.h>
+#include <llvm/IR/Module.h>
+#include <llvm/PassManager.h>
+#include <llvm/Support/CommandLine.h>
+#include <llvm/Support/Format.h>
+#include <llvm/Support/FormattedStream.h>
+#include <llvm/Support/ManagedStatic.h>
+#include <llvm/Support/MemoryBuffer.h>
+#include <llvm/Support/PrettyStackTrace.h>
+#include <llvm/Support/Signals.h>
+#include <llvm/Support/raw_ostream.h>
+#include <llvm/Support/system_error.h>
 #include <llvm/IR/Instructions.h>
 #include <algorithm>
 #include <iterator>
 #include <iostream>
 #include <vector>
+
+#if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR == 4
+#include <llvm/Assembly/AssemblyAnnotationWriter.h>
+#else
+#include <llvm/IR/AssemblyAnnotationWriter.h>
+#endif
 
 using namespace llvm;
 
@@ -501,7 +506,15 @@ int main(int argc, char **argv) {
 
   }
   if (!(ec = MemoryBuffer::getFileOrSTDIN(BitcodeFile, Buffer))) {
+#if LLVM_VERSION_MAJOR==3 && LLVM_VERSION_MINOR==4
      M = ParseBitcodeFile(Buffer.get(), Context, &ErrorMessage);
+#else
+     auto R = parseBitcodeFile(Buffer.get(), Context);
+     if(R.getError()){
+	M = NULL;
+	ErrorMessage = R.getError().message();
+     }
+#endif
   } else
      ErrorMessage = ec.message();
   if (M == 0) {

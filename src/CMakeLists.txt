@@ -2,6 +2,9 @@
 #undefined reference `typeinfo for xxx`
 add_definitions(-fno-rtti)
 add_definitions(${LLVM_DEFINITIONS} -Wall)
+if(LLVM_VERSION VERSION_GREATER "3.4")
+add_definitions(-std=c++11)
+endif()
 include_directories(
     ${LLVM_INCLUDE_DIRS}
     ../include 
