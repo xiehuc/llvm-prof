@@ -12,6 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 #define DEBUG_TYPE "profile-estimator"
+#include "preheader.h"
 #include "llvm/Analysis/Passes.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "ProfileInfo.h"

@@ -14,6 +14,7 @@
 //===----------------------------------------------------------------------===//
 #define DEBUG_TYPE "insert-optimal-edge-profiling"
 using namespace std;
+#include "preheader.h"
 #include <llvm/Transforms/Instrumentation.h>
 #include <llvm/ADT/DenseSet.h>
 #include <llvm/ADT/Statistic.h>

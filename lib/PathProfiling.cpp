@@ -45,6 +45,7 @@
 //===----------------------------------------------------------------------===//
 #define DEBUG_TYPE "insert-path-profiling"
 
+#include "preheader.h"
 #include <llvm/Transforms/Instrumentation.h>
 #include <llvm/IR/Constants.h>
 #include <llvm/IR/DerivedTypes.h>
@@ -64,7 +65,6 @@
 #include "PathNumbering.h"
 #include "InitializeProfilerPass.h"
 #include "ProfileInstrumentations.h"
-#include "preheader.h"
 #include <vector>
 
 #define HASH_THRESHHOLD 100000

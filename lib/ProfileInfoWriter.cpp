@@ -1,5 +1,6 @@
-#include "ProfileInfoWriter.h"
+#include "preheader.h"
 #include <llvm/Support/raw_ostream.h>
+#include "ProfileInfoWriter.h"
 
 #include <stdio.h>
 #include <stdlib.h>

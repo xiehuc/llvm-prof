@@ -15,6 +15,8 @@
 //
 //===----------------------------------------------------------------------===//
 #define DEBUG_TYPE "profile-metadata-loader"
+
+#include "preheader.h"
 #include <llvm/Analysis/Passes.h>
 #include <llvm/ADT/ArrayRef.h>
 #include <llvm/ADT/Statistic.h>
@@ -30,7 +32,6 @@
 #include <llvm/Support/Format.h>
 #include <llvm/Support/raw_ostream.h>
 #include "ProfileDataLoader.h"
-#include "preheader.h"
 #include "InitializeProfilerPass.h"
 #include "ProfileInstrumentations.h"
 using namespace llvm;

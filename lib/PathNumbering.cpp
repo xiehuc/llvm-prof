@@ -24,6 +24,7 @@
 //===----------------------------------------------------------------------===//
 #define DEBUG_TYPE "ball-larus-numbering"
 
+#include "preheader.h"
 #include <llvm/IR/Constants.h>
 #include <llvm/IR/DerivedTypes.h>
 #include <llvm/IR/InstrTypes.h>
@@ -36,7 +37,6 @@
 #include <llvm/Support/Debug.h>
 #include <llvm/Support/raw_ostream.h>
 #include "PathNumbering.h"
-#include "preheader.h"
 #include <queue>
 #include <sstream>
 #include <stack>

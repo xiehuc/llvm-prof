@@ -8,6 +8,7 @@
  * address, can find which stored instruction before.
  */
 
+#include "preheader.h"
 #include <llvm/Pass.h>
 #include <llvm/IR/Module.h>
 #include <llvm/IR/Function.h>
@@ -15,7 +16,6 @@
 #include <llvm/IR/Instructions.h>
 #include "ProfilingUtils.h"
 #include "ValueUtils.h"
-#include "preheader.h"
 
 #include <stdio.h>
 

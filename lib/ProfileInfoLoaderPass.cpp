@@ -12,6 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 #define DEBUG_TYPE "profile-loader"
+#include "preheader.h"
 #include <llvm/ADT/SmallSet.h>
 #include <llvm/ADT/Statistic.h>
 #include <llvm/IR/BasicBlock.h>
@@ -25,7 +26,6 @@
 #include <llvm/IR/Constants.h>
 #include "ProfileInfo.h"
 #include "ProfileInfoLoader.h"
-#include "preheader.h"
 #include "InitializeProfilerPass.h"
 #include "ProfileInstrumentations.h"
 #include "ProfilingUtils.h"

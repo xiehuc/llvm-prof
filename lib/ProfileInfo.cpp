@@ -12,6 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 #define DEBUG_TYPE "profile-info"
+#include "preheader.h"
 #include <llvm/ADT/SmallSet.h>
 #include <llvm/Analysis/Passes.h>
 #include <llvm/CodeGen/MachineBasicBlock.h>
@@ -23,7 +24,6 @@
 #include "ProfileInstrumentations.h"
 #include "ProfilingUtils.h"
 #include "ValueUtils.h"
-#include "preheader.h"
 #include <functional>
 #include <limits>
 #include <queue>

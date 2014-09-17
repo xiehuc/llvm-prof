@@ -12,6 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 #define DEBUG_TYPE "profile-verifier"
+#include "preheader.h"
 #include <llvm/Analysis/Passes.h>
 #include <llvm/IR/Instructions.h>
 #include <llvm/IR/Module.h>

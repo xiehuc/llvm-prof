@@ -12,11 +12,12 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "preheader.h"
+#include <llvm/IR/InstrTypes.h>
+#include <llvm/IR/Module.h>
+#include <llvm/Support/raw_ostream.h>
 #include "ProfileInfoLoader.h"
 #include "ProfileInfoTypes.h"
-#include "llvm/IR/InstrTypes.h"
-#include "llvm/IR/Module.h"
-#include "llvm/Support/raw_ostream.h"
 #include <cstdio>
 #include <cstdlib>
 #include <assert.h>

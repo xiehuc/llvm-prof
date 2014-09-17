@@ -22,9 +22,7 @@ set(SOURCES
 	)
 #some platform need disable rtti to void 
 #undefined reference `typeinfo for xxx`
-add_definitions(-fno-rtti -std=c++11)
-#disable debug ability
-add_definitions(${LLVM_DEFINITIONS} -DNDEBUG -Wall)
+add_definitions(-Wall -fno-rtti -std=c++11)
 include_directories(
 	${LLVM_INCLUDE_DIRS}
 	../include
