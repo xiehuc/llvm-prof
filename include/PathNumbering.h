@@ -26,14 +26,13 @@
 #ifndef LLVM_ANALYSIS_PATHNUMBERING_H
 #define LLVM_ANALYSIS_PATHNUMBERING_H
 
-#include "ProfileInfoTypes.h"
-#include "llvm/IR/BasicBlock.h"
-#include "llvm/IR/Instructions.h"
-#include "llvm/Pass.h"
-#include "llvm/Support/CFG.h"
+#include <llvm/IR/BasicBlock.h>
+#include <llvm/IR/Instructions.h>
+#include <llvm/Pass.h>
 #include <map>
 #include <stack>
 #include <vector>
+#include "ProfileInfoTypes.h"
 
 namespace llvm {
 class BallLarusNode;

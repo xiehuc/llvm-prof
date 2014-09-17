@@ -30,7 +30,6 @@
 #include <llvm/Support/PrettyStackTrace.h>
 #include <llvm/Support/Signals.h>
 #include <llvm/Support/raw_ostream.h>
-#include <llvm/Support/system_error.h>
 #include <llvm/IR/Instructions.h>
 #include <algorithm>
 #include <iterator>
@@ -39,11 +38,17 @@
 
 #if LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR == 4
 #include <llvm/Assembly/AssemblyAnnotationWriter.h>
+#include <llvm/Support/system_error.h>
+#include <llvm/ADT/OwningPtr.h>
 #else
 #include <llvm/IR/AssemblyAnnotationWriter.h>
+#include <system_error>
+#include <memory>
+#define OwningPtr unique_ptr
 #endif
 
 using namespace llvm;
+using namespace std;
 
 namespace {
   cl::opt<std::string>
@@ -390,6 +395,7 @@ void ProfileInfoPrinterPass::printAnnotatedCode(
 		outs() << "Annotated LLVM code for the module:\n\n";
 
 		ProfileAnnotator PA(PI);
+      formatted_raw_ostream f_outs(outs());
 
 		if (FunctionsToPrint.empty() || PrintAllCode)
 			M.print(outs(), &PA);
@@ -397,7 +403,7 @@ void ProfileInfoPrinterPass::printAnnotatedCode(
 			// Print just a subset of the functions.
 			for (std::set<Function*>::iterator I = FunctionsToPrint.begin(),
 					E = FunctionsToPrint.end(); I != E; ++I)
-				(*I)->print(outs(), &PA);
+            PA.emitFunctionAnnot(*I, f_outs);
 	}
 }
 
@@ -473,7 +479,6 @@ int main(int argc, char **argv) {
 
   // Read in the bitcode file...
   std::string ErrorMessage;
-  OwningPtr<MemoryBuffer> Buffer;
   error_code ec;
   Module *M = 0;
   if(DiffMode) {
@@ -505,18 +510,25 @@ int main(int argc, char **argv) {
      MergeClass.writeTotalFile();
 
   }
-  if (!(ec = MemoryBuffer::getFileOrSTDIN(BitcodeFile, Buffer))) {
 #if LLVM_VERSION_MAJOR==3 && LLVM_VERSION_MINOR==4
+  OwningPtr<MemoryBuffer> Buffer;
+  if (!(ec = MemoryBuffer::getFileOrSTDIN(BitcodeFile, Buffer.get()))) {
      M = ParseBitcodeFile(Buffer.get(), Context, &ErrorMessage);
-#else
-     auto R = parseBitcodeFile(Buffer.get(), Context);
-     if(R.getError()){
-	M = NULL;
-	ErrorMessage = R.getError().message();
-     }
-#endif
   } else
      ErrorMessage = ec.message();
+
+#else
+
+  auto Buffer = MemoryBuffer::getFileOrSTDIN(BitcodeFile);
+  if (!(ec = Buffer.getError())){
+     auto R = parseBitcodeFile(&**Buffer, Context);
+     if(R.getError()){
+        M = NULL;
+        ErrorMessage = R.getError().message();
+     }
+  } else
+     ErrorMessage = ec.message();
+#endif
   if (M == 0) {
      errs() << argv[0] << ": " << BitcodeFile << ": "
         << ErrorMessage << "\n";

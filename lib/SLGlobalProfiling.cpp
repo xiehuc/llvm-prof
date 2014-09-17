@@ -13,9 +13,9 @@
 #include <llvm/IR/Function.h>
 #include <llvm/IR/Constants.h>
 #include <llvm/IR/Instructions.h>
-#include <llvm/Support/InstIterator.h>
 #include "ProfilingUtils.h"
 #include "ValueUtils.h"
+#include "preheader.h"
 
 #include <stdio.h>
 

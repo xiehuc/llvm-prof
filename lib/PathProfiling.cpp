@@ -45,25 +45,26 @@
 //===----------------------------------------------------------------------===//
 #define DEBUG_TYPE "insert-path-profiling"
 
-#include "llvm/Transforms/Instrumentation.h"
+#include <llvm/Transforms/Instrumentation.h>
+#include <llvm/IR/Constants.h>
+#include <llvm/IR/DerivedTypes.h>
+#include <llvm/IR/InstrTypes.h>
+#include <llvm/IR/Instructions.h>
+#include <llvm/IR/LLVMContext.h>
+#include <llvm/IR/Module.h>
+#include <llvm/IR/TypeBuilder.h>
+#include <llvm/Pass.h>
+#include <llvm/Support/CommandLine.h>
+#include <llvm/Support/Compiler.h>
+#include <llvm/Support/Debug.h>
+#include <llvm/Support/raw_ostream.h>
+#include <llvm/Transforms/Utils/BasicBlockUtils.h>
+#include <llvm/Support/FileSystem.h>
 #include "ProfilingUtils.h"
 #include "PathNumbering.h"
-#include "llvm/IR/Constants.h"
-#include "llvm/IR/DerivedTypes.h"
-#include "llvm/IR/InstrTypes.h"
-#include "llvm/IR/Instructions.h"
-#include "llvm/IR/LLVMContext.h"
-#include "llvm/IR/Module.h"
-#include "llvm/IR/TypeBuilder.h"
-#include "llvm/Pass.h"
-#include "llvm/Support/CFG.h"
-#include "llvm/Support/CommandLine.h"
-#include "llvm/Support/Compiler.h"
-#include "llvm/Support/Debug.h"
-#include "llvm/Support/raw_ostream.h"
-#include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "InitializeProfilerPass.h"
 #include "ProfileInstrumentations.h"
+#include "preheader.h"
 #include <vector>
 
 #define HASH_THRESHHOLD 100000
@@ -674,7 +675,12 @@ void BLInstrumentationDag::generateDotGraph() {
   std::string filename = "pathdag." + functionName + ".dot";
 
   DEBUG (dbgs() << "Writing '" << filename << "'...\n");
+#if LLVM_VERSION_MAJOR==3 && LLVM_VERSION_MINOR==4
   raw_fd_ostream dotFile(filename.c_str(), errorInfo);
+#else
+  using llvm::sys::fs::F_Text;
+  raw_fd_ostream dotFile(filename.c_str(), errorInfo, F_Text);
+#endif
 
   if (!errorInfo.empty()) {
     errs() << "Error opening '" << filename.c_str() <<"' for writing!";
