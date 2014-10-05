@@ -525,7 +525,8 @@ int main(int argc, char **argv) {
      if(R.getError()){
         M = NULL;
         ErrorMessage = R.getError().message();
-     }
+     }else
+        M = R.get();
   } else
      ErrorMessage = ec.message();
 #endif
