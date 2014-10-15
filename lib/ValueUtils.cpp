@@ -24,7 +24,7 @@ static GlobalVariable* parameter_access_global_variable(Argument* Arg)
 {
    Function* F = Arg->getParent();
    for(Function::use_iterator U = F->use_begin(), E = F->use_end(); U!=E;++U){
-      CallInst* CI = dyn_cast<CallInst>(*U);
+      CallInst* CI = dyn_cast<CallInst>(U->getUser());
       if(!CI) continue;
       Value* T = CI->getArgOperand(Arg->getArgNo());
       GlobalVariable* G = NULL;
