@@ -78,7 +78,8 @@ namespace {
   cl::opt<Algorithm> Algo("algo", cl::desc("Merge algorithm"), cl::values(
            clEnumValN(ALGO_SUM, "sum", "cacluate sum of total"),
            clEnumValN(ALGO_AVG, "avg", "caculate averange of total"),
-           clEnumValEnd));
+           clEnumValEnd), 
+        cl::init(ALGO_SUM));
   ///////////////////
   cl::opt<bool> Merge("merge",cl::desc("Merge the Profile info"));
   //cl::opt<std::string> TotleFile(cl::Positional,cl::desc("<Totle file>"),cl::Optional,cl::init("llvmprof_Totle.out"));
@@ -477,6 +478,13 @@ bool ProfileInfoCompare::run()
 #undef CRITICAL_EQUAL
 }
 
+struct AvgAcc{
+   size_t N;
+   unsigned operator()(unsigned Lhs, unsigned Rhs){ 
+      ++N;
+      return Lhs+Rhs;
+   }
+};
 
 int main(int argc, char **argv) {
   // Print a stack trace if we signal out.
@@ -501,6 +509,10 @@ int main(int argc, char **argv) {
      return 0;
   }
   if(Merge) {
+     /** argument alignment: 
+      *  BitcodeFile ProfileDataFile MergeFile 
+      *  output.out  input1.out      other-input.out 
+      **/
 
      // Add the ProfileDataFile arg to MergeFile, it blongs to the MergeFile
      MergeFile.push_back(std::string(ProfileDataFile.getValue()));
@@ -518,7 +530,12 @@ int main(int argc, char **argv) {
         ProfileInfoLoader THS(argv[0], *merIt);
         MergeClass.addProfileInfo(THS);
      }
-     MergeClass.writeTotalFile();
+     if(Algo == ALGO_SUM){
+        MergeClass.writeTotalFile();
+     }else if(Algo == ALGO_AVG){
+        /** avg = sum/N **/
+        MergeClass.writeTotalFile(std::bind2nd(std::divides<unsigned>(), MergeFile.size()));
+     }
      return 0;
   }
 #if LLVM_VERSION_MAJOR==3 && LLVM_VERSION_MINOR==4
