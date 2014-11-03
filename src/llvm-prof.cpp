@@ -71,6 +71,14 @@ namespace {
         cl::desc("Print detailed value content in value profiling"));
   cl::opt<bool> PrintAllCode("print-all-code", 
         cl::desc("Print annotated code for the entire program"));
+  enum Algorithm {
+     ALGO_SUM,
+     ALGO_AVG
+  };
+  cl::opt<Algorithm> Algo("algo", cl::desc("Merge algorithm"), cl::values(
+           clEnumValN(ALGO_SUM, "sum", "cacluate sum of total"),
+           clEnumValN(ALGO_AVG, "avg", "caculate averange of total"),
+           clEnumValEnd));
   ///////////////////
   cl::opt<bool> Merge("merge",cl::desc("Merge the Profile info"));
   //cl::opt<std::string> TotleFile(cl::Positional,cl::desc("<Totle file>"),cl::Optional,cl::init("llvmprof_Totle.out"));
@@ -511,7 +519,7 @@ int main(int argc, char **argv) {
         MergeClass.addProfileInfo(THS);
      }
      MergeClass.writeTotalFile();
-
+     return 0;
   }
 #if LLVM_VERSION_MAJOR==3 && LLVM_VERSION_MINOR==4
   OwningPtr<MemoryBuffer> Buffer;
