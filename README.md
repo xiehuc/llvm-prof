@@ -36,6 +36,8 @@ argument
                      example: ``llvm-prof -merge -algo=sum generate.out *input.out``
 * `-algo`          : use with -merge, select a algorithm to caculate accumulate:
                      option: -algo=sum -algo=avg
+* `-to-block`      : convert edge profiling output to basicblock info format
+                     example: ``llvm-prof -to-block bitcode input.out output.out``
 
 environment variable
 ---------------------

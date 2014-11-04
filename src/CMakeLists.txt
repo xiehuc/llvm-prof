@@ -20,6 +20,8 @@ endif()
 
 add_executable(llvm-prof
 	llvm-prof.cpp
+   printer.cpp
+   passes.cpp
 	)
 
 target_link_libraries(llvm-prof
