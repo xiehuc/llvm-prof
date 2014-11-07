@@ -31,11 +31,9 @@ argument
 * `-unsort`        : print out outputs without sort
 * `-diff`          : compare two output file and report whether they are different
                      example: ``llvm-prof -diff a.out b.out``
-* `-merge`         : merge a list of output file into one. using -algo method to 
-                     caculate accumulate.
-                     example: ``llvm-prof -merge -algo=sum generate.out *input.out``
-* `-algo`          : use with -merge, select a algorithm to caculate accumulate:
-                     option: -algo=sum -algo=avg
+* `-merge`         : merge a list of output file into one.
+                     example: ``llvm-prof -merge=sum generate.out *input.out``
+                     option: -merge=none -merge=sum -merge=avg
 * `-to-block`      : convert edge profiling output to basicblock info format
                      example: ``llvm-prof -to-block bitcode input.out output.out``
 

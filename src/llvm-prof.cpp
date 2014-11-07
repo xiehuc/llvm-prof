@@ -53,16 +53,18 @@ namespace {
 
   cl::opt<bool> DiffMode("diff",cl::desc("Compare two out file"));
   ///////////////////
-  enum Algorithm {
-     ALGO_SUM,
-     ALGO_AVG
+  enum MergeAlgo {
+     MERGE_NONE,
+     MERGE_SUM,
+     MERGE_AVG
   };
-  cl::opt<Algorithm> Algo("algo", cl::desc("Merge algorithm"), cl::values(
-           clEnumValN(ALGO_SUM, "sum", "cacluate sum of total"),
-           clEnumValN(ALGO_AVG, "avg", "caculate averange of total"),
-           clEnumValEnd), 
-        cl::init(ALGO_SUM));
-  cl::opt<bool> Merge("merge",cl::desc("Merge the Profile info"));
+  cl::opt<MergeAlgo> Merge("merge",cl::desc("Merge the Profile info"), cl::values(
+        clEnumValN(MERGE_NONE, "none", "do not merge"),
+        clEnumValN(MERGE_SUM, "sum", "cacluate sum of total"),
+        clEnumValN(MERGE_AVG, "avg", "caculate averange of total"),
+        clEnumValEnd), 
+     cl::init(MERGE_NONE));
+
   cl::list<std::string> MergeFile(cl::Positional,cl::desc("<Merge file list>"),cl::ZeroOrMore);
   /////////////////////
   cl::opt<bool> Convert("to-block", cl::desc("Convert Profiling Types to BasicBlockInfo Type"));
@@ -98,7 +100,7 @@ int main(int argc, char **argv) {
      Compare.run();
      return 0;
   }
-  if(Merge) {
+  if(Merge != MERGE_NONE) {
      /** argument alignment: 
       *  BitcodeFile ProfileDataFile MergeFile 
       *  output.out  input1.out      other-input.out 
@@ -120,9 +122,9 @@ int main(int argc, char **argv) {
         ProfileInfoLoader THS(argv[0], *merIt);
         MergeClass.addProfileInfo(THS);
      }
-     if(Algo == ALGO_SUM){
+     if(Merge == MERGE_SUM){
         MergeClass.writeTotalFile();
-     }else if(Algo == ALGO_AVG){
+     }else if(Merge == MERGE_AVG){
         /** avg = sum/N **/
         MergeClass.writeTotalFile(std::bind2nd(std::divides<unsigned>(), MergeFile.size()));
      }
