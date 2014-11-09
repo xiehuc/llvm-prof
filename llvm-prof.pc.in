@@ -4,6 +4,9 @@ exec_prefix=${prefix}
 libdir=${exec_prefix}/lib
 includedir=${exec_prefix}/include/llvm-prof
 
+profiling_so=${libdir}/libLLVMProfiling.so
+profile_rt_lib=-L${libdir} -lprofile_rt
+
 Name: llvm-prof
 URL: http://llvm.org/releases/download.html#3.3
 Description: llvm prof tools from llvm-release-3.3 include llvm-prof libLLVMProfiling.so libprofile_rt.so
