@@ -39,6 +39,11 @@
 #define OwningPtr unique_ptr
 #endif
 
+#define Require3rdArg(errstr) if(MergeFile.size()==0){\
+        errs()<<errstr<<"\n";\
+        return 1;\
+}
+
 using namespace llvm;
 using namespace std;
 
@@ -52,7 +57,11 @@ namespace {
                   cl::Optional, cl::init("llvmprof.out"));
 
   cl::opt<bool> DiffMode("diff",cl::desc("Compare two out file"));
-  ///////////////////
+  cl::opt<TimingMode> Timing("timing", cl::desc("get execute timing from llvmprof.out"), cl::values(
+           clEnumValN(TIMING_NONE, "none", "do not use timing mode"),
+           clEnumValN(TIMING_LMBENCH, "lmbench", "timing source is lmbench"),
+           clEnumValEnd),
+        cl::init(TIMING_NONE));
   enum MergeAlgo {
      MERGE_NONE,
      MERGE_SUM,
@@ -66,7 +75,7 @@ namespace {
      cl::init(MERGE_NONE));
 
   cl::list<std::string> MergeFile(cl::Positional,cl::desc("<Merge file list>"),cl::ZeroOrMore);
-  /////////////////////
+
   cl::opt<bool> Convert("to-block", cl::desc("Convert Profiling Types to BasicBlockInfo Type"));
 }
 
@@ -155,30 +164,25 @@ int main(int argc, char **argv) {
         << ErrorMessage << "\n";
      return 1;
   }
-  if(Convert){
-     if(MergeFile.size() == 0){
-        errs()<< "no output file\n";
-        return 1;
-     }
-     ProfileInfoWriter PIW(argv[0], MergeFile.front());
-
-     PassManager PassMgr;
-     PassMgr.add(createProfileLoaderPass(ProfileDataFile));
-     PassMgr.add(new ProfileInfoConverter(PIW));
-     PassMgr.run(*M);
-     return 0;
-  }
-
-  // Read the profiling information. This is redundant since we load it again
-  // using the standard profile info provider pass, but for now this gives us
-  // access to additional information not exposed via the ProfileInfo
-  // interface.
-  ProfileInfoLoader PIL(argv[0], ProfileDataFile);
 
   // Run the printer pass.
   PassManager PassMgr;
   PassMgr.add(createProfileLoaderPass(ProfileDataFile));
-  PassMgr.add(new ProfileInfoPrinterPass(PIL));
+  if(Convert){
+     Require3rdArg("no output file");
+     ProfileInfoWriter PIW(argv[0], MergeFile.front());
+     PassMgr.add(new ProfileInfoConverter(PIW));
+  }else if(Timing != TIMING_NONE){
+     Require3rdArg("no timing source file");
+     PassMgr.add(new ProfileTimingPrint(Timing, MergeFile.front()));
+  }else{
+     // Read the profiling information. This is redundant since we load it again
+     // using the standard profile info provider pass, but for now this gives us
+     // access to additional information not exposed via the ProfileInfo
+     // interface.
+     ProfileInfoLoader PIL(argv[0], ProfileDataFile);
+     PassMgr.add(new ProfileInfoPrinterPass(PIL));
+  }
   PassMgr.run(*M);
 
   return 0;

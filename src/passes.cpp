@@ -54,3 +54,38 @@ bool ProfileInfoCompare::run()
    return 0;
 #undef CRITICAL_EQUAL
 }
+
+
+char ProfileTimingPrint::ID = 0;
+void ProfileTimingPrint::getAnalysisUsage(AnalysisUsage &AU) const
+{
+   AU.setPreservesAll();
+   AU.addRequired<ProfileInfo>();
+}
+
+bool ProfileTimingPrint::runOnModule(Module &M)
+{
+   ProfileInfo& PI = getAnalysis<ProfileInfo>();
+   double AbsoluteTiming = 0.0;
+   for(Module::iterator F = M.begin(), FE = M.end(); F != FE; ++F){
+      for(Function::iterator BB = F->begin(), BBE = F->end(); BB != BBE; ++BB){
+         size_t exec_times = PI.getExecutionCount(BB);
+         AbsoluteTiming += exec_times * Source.count(*BB);
+         //errs()<<BB->getName()<<":"<<"exec:"<<exec_times<<","<<Source.count(*BB)<<"\n";
+      }
+   }
+   outs()<<"Timing: "<<AbsoluteTiming<<"\n";
+   return false;
+}
+
+static void (*timing_loaders[])(const char* file, double* data) = {
+   0,
+   TimingSource::load_lmbench 
+};
+
+ProfileTimingPrint::ProfileTimingPrint(TimingMode T, std::string File):ModulePass(ID)
+{
+   Source.init([T,File](double* Data){
+         timing_loaders[T](File.c_str(), Data);
+         });
+}

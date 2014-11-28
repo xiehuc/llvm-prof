@@ -1,9 +1,14 @@
 #ifndef LLVM_PROF_PASSES_H_H
 #define LLVM_PROF_PASSES_H_H
 #include <llvm/Pass.h>
+#include <TimingSource.h>
 #include <ProfileInfoWriter.h>
 #include <set>
 namespace llvm{
+   enum TimingMode {
+      TIMING_NONE,
+      TIMING_LMBENCH
+   };
    /// ProfileInfoPrinterPass - Helper pass to dump the profile information for
    /// a module.
    //
@@ -40,14 +45,23 @@ namespace llvm{
       void getAnalysisUsage(AnalysisUsage& AU) const;
       bool runOnModule(Module& M);
    };
-  class ProfileInfoCompare
-  {
-     ProfileInfoLoader& Lhs;
-     ProfileInfoLoader& Rhs;
-     public:
-     explicit ProfileInfoCompare(ProfileInfoLoader& LHS,ProfileInfoLoader& RHS)
-        :Lhs(LHS), Rhs(RHS) {}
-     bool run();
-  };
+   class ProfileInfoCompare
+   {
+      ProfileInfoLoader& Lhs;
+      ProfileInfoLoader& Rhs;
+      public:
+      explicit ProfileInfoCompare(ProfileInfoLoader& LHS,ProfileInfoLoader& RHS)
+         :Lhs(LHS), Rhs(RHS) {}
+      bool run();
+   };
+   class ProfileTimingPrint: public ModulePass
+   {
+      TimingSource Source;
+      public:
+      static char ID;
+      ProfileTimingPrint(TimingMode T, std::string File);
+      void getAnalysisUsage(AnalysisUsage& AU) const override;
+      bool runOnModule(Module& M) override;
+   };
 }
 #endif
