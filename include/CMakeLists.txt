@@ -13,6 +13,7 @@ set(INCLUDES
 	ProfileInstrumentations.h
 	ProfileInfoWriter.h
 	ProfileInfoMerge.h
+   TimingSource.h
 	)
 
 install(FILES ${INCLUDES}
