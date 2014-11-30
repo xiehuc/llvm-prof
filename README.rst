@@ -10,18 +10,20 @@ this project would help you get the function back.
 build
 ------
 
+::
+
 	$ mkdir build
 	$ cd build
 	$ cmake .. 
 	$ make 
 	$ sudo make install
 
-option
--------
+compile option
+~~~~~~~~~~~~~~~
 
-*  `LLVM_RECOMMAND_VERSION` : select which llvm version to build
-*  `OUTPUT_HASPID`          : does llvmprof.out contain a pid for mpi program
-*  `DYNAMIC_LINK`           : dynamic link LLVM single big shared object
+*  ``LLVM_RECOMMAND_VERSION`` : select which llvm version to build
+*  ``OUTPUT_HASPID``          : does llvmprof.out contain a pid for mpi program
+*  ``DYNAMIC_LINK``           : dynamic link LLVM single big shared object
 
 argument
 ---------
@@ -36,6 +38,9 @@ argument
                      option: -merge=none -merge=sum -merge=avg
 * `-to-block`      : convert edge profiling output to basicblock info format
                      example: ``llvm-prof -to-block bitcode input.out output.out``
+* `-timing`        : cacluating prog's execute timing from llvmprof.out and timing source
+                     example: ``llvm-prof -timing=lmbench bitcode prof.out lmbench.log``
+                     option: -timing=none -timing=lmbench
 
 environment variable
 ---------------------

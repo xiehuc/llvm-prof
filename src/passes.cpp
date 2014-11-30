@@ -74,7 +74,7 @@ bool ProfileTimingPrint::runOnModule(Module &M)
          //errs()<<BB->getName()<<":"<<"exec:"<<exec_times<<","<<Source.count(*BB)<<"\n";
       }
    }
-   outs()<<"Timing: "<<AbsoluteTiming<<"\n";
+   outs()<<"Timing: "<<AbsoluteTiming<<" ns\n";
    return false;
 }
 

@@ -1,3 +1,5 @@
+#ifndef LLVM_VALUE_UTILS_H_H
+#define LLVM_VALUE_UTILS_H_H
 /* 
  * the file provides some useful value helper functions
  * author: xiehuc@gmail.com 
@@ -21,3 +23,4 @@ namespace lle{
     * to check Argument is a global variable */
    llvm::GlobalVariable* access_global_variable(llvm::Instruction *I);
 }
+#endif

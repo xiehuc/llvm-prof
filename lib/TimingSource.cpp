@@ -33,7 +33,7 @@ StringRef TimingSource::getName(InstGroups IG)
    return InstGroupNames[IG];
 }
 
-void TimingSource::initArray(Module* M, Type *EleTy, bool force)
+void TimingSource::init(Module* M, Type *EleTy, bool force)
 {
    if(cpu_times == NULL || force){
       this->EleTy = EleTy;
@@ -42,7 +42,7 @@ void TimingSource::initArray(Module* M, Type *EleTy, bool force)
    }
 }
 
-InstGroups TimingSource::instGroup(Instruction* I) const throw(std::out_of_range)
+InstGroups TimingSource::instGroup(Instruction* I)
 {
    Type* T = I->getType();
    unsigned Op = I->getOpcode();
@@ -53,7 +53,7 @@ InstGroups TimingSource::instGroup(Instruction* I) const throw(std::out_of_range
    else if(T->isIntegerTy(64)) bit = I64;
    else if(T->isFloatTy()) bit = Float;
    else if(T->isDoubleTy()) bit = Double;
-   else throw e;
+   else return Last;
 
    switch(Op){
       case Instruction::FAdd:
@@ -68,7 +68,7 @@ InstGroups TimingSource::instGroup(Instruction* I) const throw(std::out_of_range
       case Instruction::FRem:
       case Instruction::SRem:
       case Instruction::URem: op = Mod;break;
-      default: throw e;
+      default: return Last;
    }
 
    return static_cast<InstGroups>(bit|op);
