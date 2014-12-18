@@ -15,7 +15,7 @@ using namespace std;
 char PredBlockProfiler::ID = 0;
 PredBlockProfiler* PredBlockProfiler::ins = NULL;
 
-static RegisterPass<PredBlockProfiler> X("insert-pred-profiling", "Insert Value Profiling into Module", false, true);
+static RegisterPass<PredBlockProfiler> X("insert-pred-profiling", "Insert Block Predicate Profiling into Module", false, true);
 
 PredBlockProfiler::PredBlockProfiler():ModulePass(ID)
 {
@@ -52,7 +52,7 @@ bool PredBlockProfiler::runOnModule(Module& M)
 	Type*ATy = ArrayType::get(Type::getInt32Ty(M.getContext()),NumBlocks);
 	GlobalVariable* Counters = new GlobalVariable(M, ATy, false,
 			GlobalVariable::InternalLinkage, Constant::getNullValue(ATy),
-			"ValueProfCounters");
+			"BlockPredCounters");
 
    for(auto F = M.begin(), FE = M.end(); F != FE; ++F){
       for(auto BB = F->begin(), BBE = F->end(); BB != BBE; ++BB){
