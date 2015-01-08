@@ -54,13 +54,12 @@ void ProfileInfoPrinterPass::printValueContent()
 {
 	ProfileInfo &PI = getAnalysis<ProfileInfo>();
 	std::vector<const Instruction*> Calls = PI.getAllTrapedValues();
-   size_t No = 0;
    outs()<<"No.\t\tType\t\tContent\n";
 	for(std::vector<const Instruction*>::const_iterator I = Calls.begin(), E = Calls.end(); I!=E; ++I){
       const CallInst* CI = dyn_cast<CallInst>(*I);
 		std::vector<int> Contents = PI.getValueContents(CI);
 		const Value* traped = PI.getTrapedTarget(CI);
-      outs()<<No++<<". \t";
+      outs()<<PI.getTrapedIndex(CI)<<". \t";
 		if(isa<Constant>(traped))outs()<<"Constant";
 		else outs()<<"Variable";
 		outs()<<"("<<(unsigned)PI.getExecutionCount(CI)<<"):\t";
@@ -340,7 +339,8 @@ bool ProfileInfoPrinterPass::runOnModule(Module &M) {
 		}
 	}
 
-	printExecutionCommands();
+   // disable print execution commands, beacuse it is buggy.
+	//printExecutionCommands();
 	// Emit the most frequent function table...
 	printFunctionCounts(FunctionCounts);
 	FunctionToPrint = printBasicBlockCounts(Counts);
