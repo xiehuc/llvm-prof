@@ -48,11 +48,6 @@ static Instruction* insertValueTrap(Value* v,Module* M,int numTrapedValues,Inser
 Value* ValueProfiler::insertValueTrap(Value* v, BasicBlock* InsertTail)
 {
    if(!avaliable) return v;
-	/*if(isa<Constant>(v)){
-		pair<int,BasicBlock*> Store(numTrapedValues++,InsertTail);
-		ConstantTraps.push_back(Store);
-		return NULL;
-	}else*/
 	return ::insertValueTrap(v, InsertTail->getParent()->getParent(),
 			numTrapedValues++,InsertTail);
 }
@@ -60,12 +55,6 @@ Value* ValueProfiler::insertValueTrap(Value* v, BasicBlock* InsertTail)
 Value* ValueProfiler::insertValueTrap(Value* v,Instruction* InsertBefore)
 {
    if(!avaliable) return v;
-	//ignore constant value to reduce memory pressure
-	/*if(isa<Constant>(v)){
-		pair<int,BasicBlock*> Store(numTrapedValues++,InsertBefore->getParent());
-		ConstantTraps.push_back(Store);
-		return NULL;
-	}else*/
 	return ::insertValueTrap(v,
 			InsertBefore->getParent()->getParent()->getParent(),
 			numTrapedValues++, InsertBefore);
@@ -73,6 +62,19 @@ Value* ValueProfiler::insertValueTrap(Value* v,Instruction* InsertBefore)
 
 bool ValueProfiler::runOnModule(Module& M)
 {
+   // empty traps, this is mannual insertion, we search in module
+   if(numTrapedValues==0){
+      for(Function& F : M)
+         for(auto I = inst_begin(F), E = inst_end(F); I!=E; ++I){
+            CallInst* CI = dyn_cast<CallInst>(&*I);
+            if(CI == NULL) continue;
+            Function* Called = CI->getCalledFunction();
+            if(Called == NULL) continue;
+            if(Called->getName() != "llvm_profiling_trap_value") continue;
+            int idx = cast<ConstantInt>(CI->getArgOperand(0))->getSExtValue();
+            numTrapedValues = max(numTrapedValues, idx+1);
+         }
+   }
 	Function* Main = M.getFunction("main");
 	Type*ATy = ArrayType::get(Type::getInt32Ty(M.getContext()),numTrapedValues);
 	Counters = new GlobalVariable(M, ATy, false,
