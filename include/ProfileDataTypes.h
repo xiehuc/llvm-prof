@@ -32,6 +32,7 @@ enum ProfilingType {
 	OptEdgeInfo  = 7,   /* Edge profiling information, optimal version */
 	ValueInfo    = 100, /* Value profiling information     */
    SLGInfo      = 101, /* StoreLoadGlobal profiling info  */
+   MPInfo       = 102, /* MPI Inst profiling info         */
 };
 
 // special flags used in value profiling
