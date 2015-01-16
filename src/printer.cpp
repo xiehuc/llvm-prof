@@ -246,6 +246,11 @@ void ProfileInfoPrinterPass::printSLGCounts()
    }
 }
 
+void ProfileInfoPrinterPass::printMPICounts()
+{
+   ProfileInfo& PI = getAnalysis<ProfileInfo>();
+}
+
 namespace {
    class ProfileAnnotator : public AssemblyAnnotationWriter {
       ProfileInfo &PI;

@@ -69,6 +69,7 @@ namespace llvm {
     };
     typedef std::pair<unsigned, const Instruction*> 
        SLGCounts;
+    typedef std::pair<unsigned, unsigned> MPICounts; // index, count
 
   protected:
     // EdgeInformation - Count the number of times a transition between two
@@ -86,6 +87,8 @@ namespace llvm {
     std::map<const CallInst*, ValueCounts> ValueInformation;
 
     std::map<const Instruction*, SLGCounts> SLGInformation;
+
+    std::map<const CallInst*, MPICounts> MPInformation;
 
     ProfileInfoT<MachineFunction, MachineBasicBlock> *MachineProfile;
   public:

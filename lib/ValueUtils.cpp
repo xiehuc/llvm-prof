@@ -6,6 +6,8 @@
 #include <llvm/IR/Constants.h>
 #include <llvm/IR/Instructions.h>
 
+#include <unordered_map>
+
 using namespace lle;
 using namespace llvm;
 
@@ -66,4 +68,26 @@ GlobalVariable* lle::access_global_variable(Instruction *I)
       return parameter_access_global_variable(Arg);
    else 
       return dyn_cast<GlobalVariable>(U);
+}
+
+
+unsigned lle::get_mpi_count_idx(const llvm::CallInst* CI)
+{
+   static std::unordered_map<std::string, unsigned> CountPos = {
+      {"mpi_reduce_"    , 2} , 
+      {"mpi_allreduce_" , 2} , 
+      {"mpi_send_"      , 1} , 
+      {"mpi_recv_"      , 1} , 
+      {"mpi_isend_"     , 1} , 
+      {"mpi_irecv_"     , 1} , 
+      {"mpi_bcast_"     , 1}
+   };
+
+
+   Value* CV = const_cast<CallInst*>(CI);
+   Function* Called = dyn_cast<Function>(castoff(CV));
+   if(Called == NULL) return 0;
+   auto Found = CountPos.find(Called->getName());
+   if(Found == CountPos.end()) return 0;
+   return Found->second;
 }

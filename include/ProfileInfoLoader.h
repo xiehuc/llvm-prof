@@ -37,6 +37,7 @@ class ProfileInfoLoader {
   std::vector<unsigned>	   ValueCounts;
   std::vector<std::vector<int> > ValueContents;
   std::vector<unsigned>    SLGCounts;
+  std::vector<unsigned>    MPICounts;
 public:
   // ProfileInfoLoader ctor - Read the specified profiling data file, exiting
   // the program if the file is invalid or broken.
@@ -87,6 +88,10 @@ public:
 
   const std::vector<unsigned> &getRawSLGCounts() const {
      return SLGCounts;
+  }
+
+  const std::vector<unsigned> &getRawMPICounts() const {
+     return MPICounts;
   }
 
 };

@@ -187,7 +187,11 @@ ProfileInfoLoader::ProfileInfoLoader(const char *ToolName,
       ReadProfilingBlock(ToolName, F, ShouldByteSwap, SLGCounts);
       break;
 
-    default:
+   case MPInfo:
+      ReadProfilingBlock(ToolName, F, ShouldByteSwap, MPICounts);
+      break;
+
+   default:
       errs() << ToolName << ": Unknown packet type #" << PacketType << "!\n";
       errs() << "at position "<<ftell(F) <<"/";
       fseek(F,0,SEEK_END);

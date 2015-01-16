@@ -19,6 +19,7 @@ set(SOURCES
 	ProfileVerifierPass.cpp
 	ProfilingUtils.cpp
    TimingSource.cpp
+   MPIProfiling.cpp
 	)
 #some platform need disable rtti to void 
 #undefined reference `typeinfo for xxx`

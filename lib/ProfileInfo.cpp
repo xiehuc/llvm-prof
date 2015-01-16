@@ -68,15 +68,18 @@ ProfileInfoT<Function,BasicBlock>::getExecutionCount(const CallInst* V) {
 	std::map<const CallInst*,ValueCounts>::iterator J = 
 		ValueInformation.find(V);
 	if(J != ValueInformation.end()) return (double)J->second.Nums;
+   auto K = MPInformation.find(V);
+   if(K != MPInformation.end()) return (double) K->second.second;
 	return MissingValue;
 }
 
 template<> const Value*
 ProfileInfoT<Function,BasicBlock>::getTrapedTarget(const Instruction* V)
 {
-   if(isa<CallInst>(V))
-      return lle::castoff(V->getOperand(1));
-   else if(isa<LoadInst>(V)){
+   if(const CallInst* CI = dyn_cast<CallInst>(V)){
+      if(unsigned idx = lle::get_mpi_count_idx(CI)) return CI->getArgOperand(idx);
+      else return lle::castoff(V->getOperand(1));
+   }else if(isa<LoadInst>(V)){
       if(SLGInformation.find(V) == SLGInformation.end()) return NULL;
       return SLGInformation[V].second;
    }
@@ -118,6 +121,9 @@ template<> unsigned
 ProfileInfoT<Function,BasicBlock>::getTrapedIndex(const Instruction* V) 
 {
    if(const CallInst* CI = dyn_cast<CallInst>(V)){
+      auto Found = MPInformation.find(CI);
+      if(Found != MPInformation.end()) return Found->second.first;
+
       ConstantInt* C = dyn_cast<ConstantInt>(CI->getArgOperand(0));
       if(!C) return -1;
       return C->getZExtValue();
@@ -141,16 +147,23 @@ struct SortBasedIndex{
 template<> std::vector<const Instruction*>
 ProfileInfoT<Function,BasicBlock>::getAllTrapedValues() {
 	std::vector<const Instruction*> ret;
-	ret.reserve(ValueInformation.size());
+	ret.reserve(ValueInformation.size() + SLGInformation.size() + MPInformation.size());
+
 	std::map<const CallInst*,ValueCounts>::iterator J = ValueInformation.begin(),
 		E = ValueInformation.end();
 	for(;J!=E;++J){
 		ret.push_back(J->first);
 	}
+
    std::map<const Instruction*, SLGCounts>::iterator SLG_Ite =
       SLGInformation.begin(), SLG_E = SLGInformation.end();
    for(;SLG_Ite!=SLG_E;++SLG_Ite)
       ret.push_back(SLG_Ite->first);
+
+   auto MPI_Ite = MPInformation.begin(), MPI_E = MPInformation.end();
+   for(;MPI_Ite !=MPI_E; ++MPI_Ite)
+      ret.push_back(MPI_Ite->first);
+
 	std::sort(ret.begin(), ret.end(), SortBasedIndex(*this));
 	return ret;
 }

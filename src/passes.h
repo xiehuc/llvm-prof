@@ -32,6 +32,7 @@ namespace llvm{
       void printValueCounts();
       void printValueContent();
       void printSLGCounts();
+      void printMPICounts();
       virtual const char* getPassName() const {
          return "Print Profile Info";
       }
