@@ -53,7 +53,7 @@ void ProfileInfoPrinterPass::getAnalysisUsage(AnalysisUsage& AU) const
 void ProfileInfoPrinterPass::printValueContent() 
 {
 	ProfileInfo &PI = getAnalysis<ProfileInfo>();
-	std::vector<const Instruction*> Calls = PI.getAllTrapedValues();
+	std::vector<const Instruction*> Calls = PI.getAllTrapedValues(ValueInfo);
    outs()<<"No.\t\tType\t\tContent\n";
 	for(std::vector<const Instruction*>::const_iterator I = Calls.begin(), E = Calls.end(); I!=E; ++I){
       const CallInst* CI = dyn_cast<CallInst>(*I);
@@ -171,7 +171,7 @@ ProfileInfoPrinterPass::printBasicBlockCounts(
 void ProfileInfoPrinterPass::printValueCounts()
 {
 	ProfileInfo& PI = getAnalysis<ProfileInfo>();
-	std::vector<const Instruction*> trapes = PI.getAllTrapedValues();
+	std::vector<const Instruction*> trapes = PI.getAllTrapedValues(ValueInfo);
 	if(trapes.empty()) return;
 
 	std::vector<std::pair<const CallInst*,double> > ValueCounts;
@@ -213,19 +213,16 @@ void ProfileInfoPrinterPass::printValueCounts()
 void ProfileInfoPrinterPass::printSLGCounts()
 {
 	ProfileInfo& PI = getAnalysis<ProfileInfo>();
-	std::vector<const Instruction*> trapes = PI.getAllTrapedValues();
-   bool first = true;
+	std::vector<const Instruction*> trapes = PI.getAllTrapedValues(SLGInfo);
+   if(trapes.empty()) return;
+
+   outs() << "\n===" << std::string(73, '-') << "===\n";
+   outs() << "store load global profiling information:\n\n";
+   outs() <<" ##      Load\t\tStore\t\t\tStore Position\n";
 
    for(unsigned i=0;i<trapes.size();i++){
       const LoadInst* LI = dyn_cast<LoadInst>(trapes[i]);
       if(!LI) continue;
-
-      if(first){
-         outs() << "\n===" << std::string(73, '-') << "===\n";
-         outs() << "store load global profiling information:\n\n";
-         outs() <<" ##      Load\t\tStore\t\t\tStore Position\n";
-         first = false;
-      }
 
       unsigned idx = PI.getTrapedIndex(LI);
       const Value* T = PI.getTrapedTarget(LI);
@@ -249,6 +246,23 @@ void ProfileInfoPrinterPass::printSLGCounts()
 void ProfileInfoPrinterPass::printMPICounts()
 {
    ProfileInfo& PI = getAnalysis<ProfileInfo>();
+   auto trapes = PI.getAllTrapedValues(MPInfo);
+   if(trapes.empty()) return;
+
+   outs() << "\n===" << std::string(73, '-') << "===\n";
+   outs() << "mpi profiling information:\n\n";
+   outs() <<" ##      Count\t\tWhat\n";
+
+   for(unsigned i=0;i<trapes.size(); i++){
+      const CallInst* CI = cast<CallInst>(trapes[i]);
+      const BasicBlock* BB = CI->getParent();
+      const Function* F = BB->getParent();
+      outs() << format("%3d", i+1) << ". " 
+         << format("%5.0f", PI.getExecutionCount(CI)) <<"\t" 
+         << *PI.getTrapedTarget(CI) <<"\t"
+         << F->getName() <<":\""
+         << BB->getName() <<"\"\t\n";
+   }
 }
 
 namespace {

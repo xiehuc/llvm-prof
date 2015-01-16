@@ -145,26 +145,21 @@ struct SortBasedIndex{
 };
 
 template<> std::vector<const Instruction*>
-ProfileInfoT<Function,BasicBlock>::getAllTrapedValues() {
+ProfileInfoT<Function,BasicBlock>::getAllTrapedValues(ProfilingType PT) {
 	std::vector<const Instruction*> ret;
-	ret.reserve(ValueInformation.size() + SLGInformation.size() + MPInformation.size());
-
-	std::map<const CallInst*,ValueCounts>::iterator J = ValueInformation.begin(),
-		E = ValueInformation.end();
-	for(;J!=E;++J){
-		ret.push_back(J->first);
-	}
-
-   std::map<const Instruction*, SLGCounts>::iterator SLG_Ite =
-      SLGInformation.begin(), SLG_E = SLGInformation.end();
-   for(;SLG_Ite!=SLG_E;++SLG_Ite)
-      ret.push_back(SLG_Ite->first);
-
-   auto MPI_Ite = MPInformation.begin(), MPI_E = MPInformation.end();
-   for(;MPI_Ite !=MPI_E; ++MPI_Ite)
-      ret.push_back(MPI_Ite->first);
+#define SELECT(what) \
+   if(PT == what##Info){\
+      ret.reserve(what##Information.size());\
+      auto J = what##Information.begin(),\
+      E = what##Information.end();\
+      for(;J!=E;++J) ret.push_back(J->first);\
+   }
+   SELECT(Value);
+   SELECT(SLG);
+   SELECT(MP);
 
 	std::sort(ret.begin(), ret.end(), SortBasedIndex(*this));
+#undef SELECT
 	return ret;
 }
 

@@ -127,7 +127,7 @@ namespace llvm {
      * if Instruction is CallInst it is ValueProfiling
      * if Instruction is LoadInst it is SLGProfiling
      */
-    std::vector<const Instruction*> getAllTrapedValues();
+    std::vector<const Instruction*> getAllTrapedValues(ProfilingType T);
 
     /** return traped index with Instruction.
      * if Instruction is CallInst, it would directly return first arguments as
