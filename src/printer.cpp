@@ -251,7 +251,7 @@ void ProfileInfoPrinterPass::printMPICounts()
 
    outs() << "\n===" << std::string(73, '-') << "===\n";
    outs() << "mpi profiling information:\n\n";
-   outs() <<" ##      Count\t\tWhat\n";
+   outs() <<" ##      Count\t\tWhat\t\tWhere\n";
 
    for(unsigned i=0;i<trapes.size(); i++){
       const CallInst* CI = cast<CallInst>(trapes[i]);
@@ -365,6 +365,7 @@ bool ProfileInfoPrinterPass::runOnModule(Module &M) {
 	FunctionToPrint = printBasicBlockCounts(Counts);
 	printValueCounts();
    printSLGCounts();
+   printMPICounts();
 	printAnnotatedCode(FunctionToPrint,M);
 
 	return false;
