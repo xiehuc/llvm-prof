@@ -14,8 +14,7 @@ set(INCLUDES
 	ProfileInfoWriter.h
 	ProfileInfoMerge.h
    TimingSource.h
-   ProfilingUtils.h
-   Profiling.h # for libprofile
+   PredBlockProfiling.h
 	)
 
 install(FILES ${INCLUDES}

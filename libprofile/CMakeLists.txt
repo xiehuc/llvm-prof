@@ -7,6 +7,7 @@ set(SOURCES
   ValueProfiling.c
   SLGlobalProfiling.c
   MPIProfiling.c
+  PredBlockProfiling.c
   )
 
 include_directories(../include ${LLVM_INCLUDE_DIRS})

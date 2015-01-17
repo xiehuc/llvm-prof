@@ -20,6 +20,7 @@ set(SOURCES
 	ProfilingUtils.cpp
    TimingSource.cpp
    MPIProfiling.cpp
+   PredBlockProfiling.cpp
 	)
 #some platform need disable rtti to void 
 #undefined reference `typeinfo for xxx`
