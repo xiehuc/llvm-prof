@@ -84,10 +84,11 @@ unsigned lle::get_mpi_count_idx(const llvm::CallInst* CI)
    };
 
 
-   Value* CV = const_cast<CallInst*>(CI);
+   Value* CV = const_cast<CallInst*>(CI)->getCalledValue();
    Function* Called = dyn_cast<Function>(castoff(CV));
    if(Called == NULL) return 0;
    auto Found = CountPos.find(Called->getName());
    if(Found == CountPos.end()) return 0;
    return Found->second;
+
 }

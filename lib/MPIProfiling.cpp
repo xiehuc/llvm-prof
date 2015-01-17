@@ -37,6 +37,7 @@ static void IncrementMPICounter(Value* Inc, unsigned Index, GlobalVariable* Coun
       ConstantExpr::getGetElementPtr(Counters, Indices);
 
    // Load, increment and store the value back.
+   Inc = Builder.CreateLoad(Inc);
    Value* OldVal = Builder.CreateLoad(ElementPtr, "OldMPICounter");
    Value* NewVal = Builder.CreateAdd(OldVal, Inc, "NewMPICounter");
    Builder.CreateStore(NewVal, ElementPtr);
