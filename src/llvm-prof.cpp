@@ -77,10 +77,7 @@ namespace {
      }
   };
   cl::opt<std::vector<TimingSource*>, false, TimingParser > Timing("timing", cl::desc("get execute timing from llvmprof.out") ,
-        cl::value_desc("<timing>")
-        /*,cl::values(
-           clEnumValN(TimingSource::Lmbench, "lmbench", "timing source is lmbench"),
-           clEnumValEnd)*/);
+        cl::value_desc("<timing>"));
   enum MergeAlgo {
      MERGE_NONE,
      MERGE_SUM,
@@ -203,7 +200,7 @@ int main(int argc, char **argv) {
      PassMgr.add(new ProfileInfoConverter(PIW));
   }else if(Timing.size() != 0){
      Require3rdArg("no timing source file");
-     PassMgr.add(new ProfileTimingPrint(std::move(Timing.getValue()), MergeFile.front()));
+     PassMgr.add(new ProfileTimingPrint(std::move(Timing.getValue()), MergeFile));
   }else{
      // Read the profiling information. This is redundant since we load it again
      // using the standard profile info provider pass, but for now this gives us

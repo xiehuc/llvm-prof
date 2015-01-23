@@ -56,7 +56,7 @@ namespace llvm{
       std::vector<TimingSource*> Sources;
       public:
       static char ID;
-      ProfileTimingPrint(std::vector<TimingSource*>&& S, std::string File);
+      ProfileTimingPrint(std::vector<TimingSource*>&& S, std::vector<std::string>& File);
       ~ProfileTimingPrint();
       void getAnalysisUsage(AnalysisUsage& AU) const override;
       bool runOnModule(Module& M) override;

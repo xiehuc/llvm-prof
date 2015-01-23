@@ -81,10 +81,14 @@ bool ProfileTimingPrint::runOnModule(Module &M)
 }
 
 ProfileTimingPrint::ProfileTimingPrint(std::vector<TimingSource*>&& TS,
-      std::string File):ModulePass(ID), Sources(TS)
+      std::vector<std::string>& Files):ModulePass(ID), Sources(TS)
 {
-   for(auto& S : Sources)
-      S->init_with_file(File.c_str());
+   if(Sources.size() > Files.size()){
+      errs()<<"No Enough File to initialize Timing Source\n";
+      exit(-1);
+   }
+   for(unsigned i = 0; i < Sources.size(); ++i)
+      Sources[i]->init_with_file(Files[i].c_str());
 }
 
 ProfileTimingPrint::~ProfileTimingPrint()
