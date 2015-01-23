@@ -9,9 +9,6 @@
 
 namespace llvm{
 class TimingSource{
-   protected:
-   void (*file_initializer)(const char* file, double* data);
-   std::vector<double> params;
    public:
 
    enum Kind {
@@ -20,7 +17,9 @@ class TimingSource{
       MPI
    };
 
-   TimingSource(size_t NumParam){ params.resize(NumParam); }
+   TimingSource(Kind K, size_t NumParam):kindof(K){
+      params.resize(NumParam); 
+   }
    //在该模式中, 立即从文件中读取Timing数据并计算//
    /* init unit_times with nanoseconds unit.
     * @example:
@@ -35,6 +34,11 @@ class TimingSource{
    void init_with_file(const char* file) {
       init(std::bind(file_initializer, file, std::placeholders::_1));
    }
+   Kind getKind() const { return kindof;}
+   protected:
+   Kind kindof;
+   void (*file_initializer)(const char* file, double* data);
+   std::vector<double> params;
 };
 
 namespace _timing_source{
@@ -65,8 +69,11 @@ class LmbenchTiming:
    static llvm::StringRef getName(EnumTy);
    static EnumTy classify(llvm::Instruction* I);
    static void load_lmbench(const char* file, double* cpu_times);
+   static bool classof(const TimingSource* S) {
+      return S->getKind() == Lmbench;
+   }
 
-   LmbenchTiming():TimingSource(NumGroups), T(params) {
+   LmbenchTiming():TimingSource(Lmbench, NumGroups), T(params) {
       file_initializer = load_lmbench;
    }
 
