@@ -8,42 +8,74 @@
 /* a timing source is used to count inst types in a basicblock */
 
 namespace llvm{
-enum InstGroups {
-   Integer = 0, I64 = 1, Float = 2, Double = 3, // Ntype
-   Add = 0<<2, Mul = 1<<2, Div = 2<<2, Mod = 3<<2, // Method
-   Last = Double|Mod, // Method | Ntype
-   NumGroups
-};
 class TimingSource{
-   llvm::SmallVector<double, NumGroups> unit_times;
+   void (*file_initializer)(const char* file, double* data);
+   protected:
+   std::vector<double> params;
    public:
-   /* return the IG's text representation */
-   static llvm::StringRef getName(InstGroups IG);
-   /* return what group of I belongs to.
-    * if unknow , return InstGroups::Last
-    */
-   static InstGroups instGroup(llvm::Instruction* I);
 
-   static void load_lmbench(const char* File, double* Data);
-
-   TimingSource(){ unit_times.resize(NumGroups); }
+   TimingSource(size_t NumParam){ params.resize(NumParam); }
    //在该模式中, 立即从文件中读取Timing数据并计算//
    /* init unit_times with nanoseconds unit.
     * @example:
     *    init(std::bind(TimingSource::load_lmbench, "lmbench.log", _1));
     */
-   void init(std::function<void(double* Input)> func){
-      func(unit_times.data());
+   void init(std::function<void(double*)> func){
+      func(params.data());
    }
    void init(std::initializer_list<double> list) {
-      unit_times.insert(unit_times.begin(), list.begin(), list.end());
+      params = decltype(params)(list.begin(), list.end());
    }
-   double get(InstGroups G){
-      return unit_times[G];
+   void init_with_file(const char* file) {
+      init(std::bind(file_initializer, file, std::placeholders::_1));
    }
-   /* return BB's inst timing count using unit_times */
+};
+
+namespace _timing_source{
+template<class EnumType>
+class T
+{
+   std::vector<double>& address;
+   public:
+   T(std::vector<double>& P):address(P) {}
+   double get(EnumType E){
+      return address[E];
+   }
+};
+}
+
+enum LmbenchInstGroups {
+   Integer = 0, I64 = 1, Float = 2, Double = 3, // Ntype
+   Add = 0<<2, Mul = 1<<2, Div = 2<<2, Mod = 3<<2, // Method
+   Last = Double|Mod, // Method | Ntype
+   NumGroups
+};
+
+class LmbenchTiming: 
+   public TimingSource, public _timing_source::T<LmbenchInstGroups>
+{
+   public:
+   LmbenchTiming():TimingSource(NumGroups), T(params) {}
+   typedef LmbenchInstGroups EnumTy;
+   static llvm::StringRef getName(EnumTy);
+   static EnumTy classify(llvm::Instruction* I);
+   static void load_lmbench(const char* file, double* cpu_times);
+
+   double count(llvm::Instruction& I);
    double count(llvm::BasicBlock& BB);
 };
+
+enum CommSpeed {
+   MemRead, MemWrite, NetRead, NetWrite, NumCommSpeed
+};
+
+/*
+class MPITiming:
+   public TimingSource<CommSpeed, NumCommSpeed>
+{
+   double count(llvm::CallInst* MPI, size_t Count);
+};
+*/
 }
 
 #endif

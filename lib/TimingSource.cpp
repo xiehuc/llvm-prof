@@ -15,14 +15,14 @@
 
 using namespace llvm;
 
-static SmallVector<std::string,NumGroups> InstGroupNames;
 
-StringRef TimingSource::getName(InstGroups IG)
+StringRef LmbenchTiming::getName(EnumTy IG)
 {
+   static SmallVector<std::string,NumGroups> InstGroupNames;
    if(InstGroupNames.size() == 0){
       InstGroupNames.resize(NumGroups);
       auto& n = InstGroupNames;
-      std::vector<std::pair<InstGroups,StringRef>> bits = {
+      std::vector<std::pair<EnumTy,StringRef>> bits = {
          {Integer, "I"}, {I64, "I64"}, {Float,"F"}, {Double,"D"}
       }, ops = {{Add,"Add"},{Mul, "Mul"}, {Div, "Div"}, {Mod, "Mod"}};
       for(auto bit : bits){
@@ -33,7 +33,7 @@ StringRef TimingSource::getName(InstGroups IG)
    return InstGroupNames[IG];
 }
 
-InstGroups TimingSource::instGroup(Instruction* I)
+LmbenchTiming::EnumTy LmbenchTiming::classify(Instruction* I)
 {
    Type* T = I->getType();
    unsigned Op = I->getOpcode();
@@ -62,16 +62,21 @@ InstGroups TimingSource::instGroup(Instruction* I)
       default: return Last;
    }
 
-   return static_cast<InstGroups>(bit|op);
+   return static_cast<EnumTy>(bit|op);
 }
 
-double TimingSource::count(BasicBlock& BB)
+double LmbenchTiming::count(Instruction& I)
+{
+   return params[classify(&I)];
+}
+
+double LmbenchTiming::count(BasicBlock& BB)
 {
    double counts = 0.0;
 
    for(auto& I : BB){
       try{
-         counts += unit_times[instGroup(&I)];
+         counts += params[classify(&I)];
       }catch(std::out_of_range e){
          //ignore exception
       }
@@ -80,7 +85,7 @@ double TimingSource::count(BasicBlock& BB)
 }
 
 #define eq(a,b) (strcmp(a,b)==0)
-void TimingSource::load_lmbench(const char* file, double* cpu_times)
+void LmbenchTiming::load_lmbench(const char* file, double* cpu_times)
 {
    FILE* f = fopen(file,"r");
    if(f == NULL){

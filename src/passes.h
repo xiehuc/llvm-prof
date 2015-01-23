@@ -57,10 +57,11 @@ namespace llvm{
    };
    class ProfileTimingPrint: public ModulePass
    {
-      TimingSource Source;
+      TimingSource* Source;
       public:
       static char ID;
       ProfileTimingPrint(TimingMode T, std::string File);
+      ~ProfileTimingPrint();
       void getAnalysisUsage(AnalysisUsage& AU) const override;
       bool runOnModule(Module& M) override;
    };
