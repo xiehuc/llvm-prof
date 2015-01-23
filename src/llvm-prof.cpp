@@ -59,6 +59,15 @@ namespace {
 
   cl::opt<bool> DiffMode("diff",cl::desc("Compare two out file"));
 
+  static void printHelpStr(StringRef HelpStr, size_t Indent,
+        size_t FirstLineIndentedBy) {
+     std::pair<StringRef, StringRef> Split = HelpStr.split('\n');
+     outs().indent(Indent - FirstLineIndentedBy) << " - " << Split.first << "\n";
+     while (!Split.second.empty()) {
+        Split = Split.second.split('\n');
+        outs().indent(Indent) << Split.first << "\n";
+     }
+  }
 
   typedef std::vector<TimingSource*> TimingSourceList;
   struct TimingParser: public cl::basic_parser<TimingSourceList> {
@@ -75,9 +84,28 @@ namespace {
         }while(end!=TimingValue.npos && (TimingValue = TimingValue.substr(end+1))!="");
         return false;
      }
+     void printOptionInfo(const cl::Option& O, size_t GlobalWidth) const {
+        static const char* getOption[] = {
+           "lmbench"
+        };
+        static const char* getDescription[] = {
+           "loading lmbench timing source"
+        };
+        static_assert(sizeof(getOption)==sizeof(getDescription), "Option should equal to Description");
+        static size_t getNumOptions = sizeof(getOption)/sizeof(const char*);
+        if (O.hasArgStr()) {
+           outs() << "  -" << O.ArgStr << "=source:source:...";
+           printHelpStr(O.HelpStr, GlobalWidth, std::strlen(O.ArgStr) + 6);
+
+           for (unsigned i = 0, e = getNumOptions; i != e; ++i) {
+              size_t NumSpaces = GlobalWidth-strlen(getOption[i])-8;
+              outs() << "    =" << getOption[i];
+              outs().indent(NumSpaces) << " -   " << getDescription[i] << '\n';
+           }
+        } 
+     }
   };
-  cl::opt<std::vector<TimingSource*>, false, TimingParser > Timing("timing", cl::desc("get execute timing from llvmprof.out") ,
-        cl::value_desc("<timing>"));
+  cl::opt<std::vector<TimingSource*>, false, TimingParser > Timing("timing", cl::desc("get execute timing from llvmprof.out"));
   enum MergeAlgo {
      MERGE_NONE,
      MERGE_SUM,
@@ -100,8 +128,7 @@ namespace cl{
   template<>
   void printOptionDiff<TimingParser, TimingSourceList>(const Option& O, const basic_parser<TimingSourceList>&
         P, const TimingSourceList& V, const OptionValue<TimingSourceList>&
-        Default, size_t GlobalWidth) {
-  }
+        Default, size_t GlobalWidth) { }
 }
 }
 
