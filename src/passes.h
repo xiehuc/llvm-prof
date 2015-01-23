@@ -5,10 +5,6 @@
 #include <ProfileInfoWriter.h>
 #include <set>
 namespace llvm{
-   enum TimingMode {
-      TIMING_NONE,
-      TIMING_LMBENCH
-   };
    /// ProfileInfoPrinterPass - Helper pass to dump the profile information for
    /// a module.
    //
@@ -57,10 +53,10 @@ namespace llvm{
    };
    class ProfileTimingPrint: public ModulePass
    {
-      TimingSource* Source;
+      std::vector<TimingSource*> Sources;
       public:
       static char ID;
-      ProfileTimingPrint(TimingMode T, std::string File);
+      ProfileTimingPrint(std::vector<TimingSource*>&& S, std::string File);
       ~ProfileTimingPrint();
       void getAnalysisUsage(AnalysisUsage& AU) const override;
       bool runOnModule(Module& M) override;

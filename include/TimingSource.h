@@ -9,10 +9,16 @@
 
 namespace llvm{
 class TimingSource{
-   void (*file_initializer)(const char* file, double* data);
    protected:
+   void (*file_initializer)(const char* file, double* data);
    std::vector<double> params;
    public:
+
+   enum Kind {
+      Base,
+      Lmbench,
+      MPI
+   };
 
    TimingSource(size_t NumParam){ params.resize(NumParam); }
    //在该模式中, 立即从文件中读取Timing数据并计算//
@@ -55,11 +61,14 @@ class LmbenchTiming:
    public TimingSource, public _timing_source::T<LmbenchInstGroups>
 {
    public:
-   LmbenchTiming():TimingSource(NumGroups), T(params) {}
    typedef LmbenchInstGroups EnumTy;
    static llvm::StringRef getName(EnumTy);
    static EnumTy classify(llvm::Instruction* I);
    static void load_lmbench(const char* file, double* cpu_times);
+
+   LmbenchTiming():TimingSource(NumGroups), T(params) {
+      file_initializer = load_lmbench;
+   }
 
    double count(llvm::Instruction& I);
    double count(llvm::BasicBlock& BB);

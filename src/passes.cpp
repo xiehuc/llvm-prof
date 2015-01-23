@@ -67,24 +67,28 @@ bool ProfileTimingPrint::runOnModule(Module &M)
 {
    ProfileInfo& PI = getAnalysis<ProfileInfo>();
    double AbsoluteTiming = 0.0;
-   LmbenchTiming& LT = *static_cast<LmbenchTiming*>(Source);
-   for(Module::iterator F = M.begin(), FE = M.end(); F != FE; ++F){
-      for(Function::iterator BB = F->begin(), BBE = F->end(); BB != BBE; ++BB){
-         size_t exec_times = PI.getExecutionCount(BB);
-         AbsoluteTiming += exec_times * LT.count(*BB);
+   for(auto S : Sources){
+      LmbenchTiming& LT = *static_cast<LmbenchTiming*>(S);
+      for(Module::iterator F = M.begin(), FE = M.end(); F != FE; ++F){
+         for(Function::iterator BB = F->begin(), BBE = F->end(); BB != BBE; ++BB){
+            size_t exec_times = PI.getExecutionCount(BB);
+            AbsoluteTiming += exec_times * LT.count(*BB);
+         }
       }
    }
    outs()<<"Timing: "<<AbsoluteTiming<<" ns\n";
    return false;
 }
 
-ProfileTimingPrint::ProfileTimingPrint(TimingMode T, std::string File):ModulePass(ID)
+ProfileTimingPrint::ProfileTimingPrint(std::vector<TimingSource*>&& TS,
+      std::string File):ModulePass(ID), Sources(TS)
 {
-   Source = new LmbenchTiming();
-   Source->init_with_file(File.c_str());
+   for(auto& S : Sources)
+      S->init_with_file(File.c_str());
 }
 
 ProfileTimingPrint::~ProfileTimingPrint()
 {
-   delete Source;
+   for(auto S : Sources)
+      delete S;
 }

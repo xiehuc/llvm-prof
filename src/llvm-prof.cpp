@@ -47,6 +47,7 @@
 using namespace llvm;
 using namespace std;
 
+
 namespace {
   cl::opt<std::string>
   BitcodeFile(cl::Positional, cl::desc("<program bitcode file>"),
@@ -57,11 +58,29 @@ namespace {
                   cl::Optional, cl::init("llvmprof.out"));
 
   cl::opt<bool> DiffMode("diff",cl::desc("Compare two out file"));
-  cl::opt<TimingMode> Timing("timing", cl::desc("get execute timing from llvmprof.out"), cl::values(
-           clEnumValN(TIMING_NONE, "none", "do not use timing mode"),
-           clEnumValN(TIMING_LMBENCH, "lmbench", "timing source is lmbench"),
-           clEnumValEnd),
-        cl::init(TIMING_NONE));
+
+
+  typedef std::vector<TimingSource*> TimingSourceList;
+  struct TimingParser: public cl::basic_parser<TimingSourceList> {
+     bool parse(cl::Option& O, StringRef ArgName, const std::string& ArgValue,
+           TimingSourceList& Val) {
+        size_t end;
+        StringRef TimingValue = ArgValue;
+        do {
+           end = TimingValue.find(':');
+           StringRef TimingKind = TimingValue.substr(0, end);
+
+           if(TimingKind == "lmbench")
+              Val.push_back(new LmbenchTiming());
+        }while(end!=TimingValue.npos && (TimingValue = TimingValue.substr(end+1))!="");
+        return false;
+     }
+  };
+  cl::opt<std::vector<TimingSource*>, false, TimingParser > Timing("timing", cl::desc("get execute timing from llvmprof.out") ,
+        cl::value_desc("<timing>")
+        /*,cl::values(
+           clEnumValN(TimingSource::Lmbench, "lmbench", "timing source is lmbench"),
+           clEnumValEnd)*/);
   enum MergeAlgo {
      MERGE_NONE,
      MERGE_SUM,
@@ -77,6 +96,16 @@ namespace {
   cl::list<std::string> MergeFile(cl::Positional,cl::desc("<Merge file list>"),cl::ZeroOrMore);
 
   cl::opt<bool> Convert("to-block", cl::desc("Convert Profiling Types to BasicBlockInfo Type"));
+}
+
+namespace llvm {
+namespace cl{
+  template<>
+  void printOptionDiff<TimingParser, TimingSourceList>(const Option& O, const basic_parser<TimingSourceList>&
+        P, const TimingSourceList& V, const OptionValue<TimingSourceList>&
+        Default, size_t GlobalWidth) {
+  }
+}
 }
 
 struct AvgAcc{
@@ -172,9 +201,9 @@ int main(int argc, char **argv) {
      Require3rdArg("no output file");
      ProfileInfoWriter PIW(argv[0], MergeFile.front());
      PassMgr.add(new ProfileInfoConverter(PIW));
-  }else if(Timing != TIMING_NONE){
+  }else if(Timing.size() != 0){
      Require3rdArg("no timing source file");
-     PassMgr.add(new ProfileTimingPrint(Timing, MergeFile.front()));
+     PassMgr.add(new ProfileTimingPrint(std::move(Timing.getValue()), MergeFile.front()));
   }else{
      // Read the profiling information. This is redundant since we load it again
      // using the standard profile info provider pass, but for now this gives us
