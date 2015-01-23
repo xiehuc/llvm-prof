@@ -33,15 +33,6 @@ StringRef TimingSource::getName(InstGroups IG)
    return InstGroupNames[IG];
 }
 
-void TimingSource::init(Module* M, Type *EleTy, bool force)
-{
-   if(cpu_times == NULL || force){
-      this->EleTy = EleTy;
-      Type* ATy = ArrayType::get(EleTy, NumGroups);
-      cpu_times = new GlobalVariable(*M, ATy, false, GlobalValue::InternalLinkage, Constant::getNullValue(ATy), "cpuTime");
-   }
-}
-
 InstGroups TimingSource::instGroup(Instruction* I)
 {
    Type* T = I->getType();
@@ -72,27 +63,6 @@ InstGroups TimingSource::instGroup(Instruction* I)
    }
 
    return static_cast<InstGroups>(bit|op);
-}
-
-llvm::Value* TimingSource::createLoad(IRBuilder<> &Builder, InstGroups IG)
-{
-   LLVMContext& C = EleTy->getContext();
-   Type* I32Ty = Type::getInt32Ty(C);
-   Value* Arg[2] = {ConstantInt::get(I32Ty,0), ConstantInt::get(I32Ty, IG)};
-   Value* P = Builder.CreateGEP(cpu_times, Arg);
-   return Builder.CreateLoad(P, getName(IG));
-}
-
-void TimingSource::insert_load_source(Function& F)
-{
-   LLVMContext& C = F.getContext();
-   Module* M = F.getParent();
-   Type* I32Ty = Type::getInt32Ty(C);
-   Constant* LoadF = M->getOrInsertFunction("load_timing_source", Type::getVoidTy(C), Type::getInt32PtrTy(C), NULL);
-   
-   llvm::Constant* idxs[] = {ConstantInt::get(I32Ty, 0), ConstantInt::get(I32Ty, 0)};
-   llvm::Value* args[] = {ConstantExpr::getGetElementPtr(cpu_times, idxs)};
-   CallInst::Create(LoadF, args, "", F.getEntryBlock().getFirstInsertionPt());
 }
 
 double TimingSource::count(BasicBlock& BB)

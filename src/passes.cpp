@@ -71,7 +71,6 @@ bool ProfileTimingPrint::runOnModule(Module &M)
       for(Function::iterator BB = F->begin(), BBE = F->end(); BB != BBE; ++BB){
          size_t exec_times = PI.getExecutionCount(BB);
          AbsoluteTiming += exec_times * Source.count(*BB);
-         //errs()<<BB->getName()<<":"<<"exec:"<<exec_times<<","<<Source.count(*BB)<<"\n";
       }
    }
    outs()<<"Timing: "<<AbsoluteTiming<<" ns\n";
@@ -85,7 +84,7 @@ static void (*timing_loaders[])(const char* file, double* data) = {
 
 ProfileTimingPrint::ProfileTimingPrint(TimingMode T, std::string File):ModulePass(ID)
 {
-   Source.init([T,File](double* Data){
-         timing_loaders[T](File.c_str(), Data);
-         });
+   using std::placeholders::_1;
+   auto initF = timing_loaders[T];
+   Source.init(std::bind(initF, File.c_str(), _1));
 }
