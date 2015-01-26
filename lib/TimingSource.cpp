@@ -127,6 +127,8 @@ double LmbenchTiming::count(Instruction& I, size_t bfreq, size_t count)
    Function* F = dyn_cast<Function>(lle::castoff(CI->getCalledValue()));
    if(F == NULL) return 0.0;
    StringRef FName = F->getName();
+   auto Spec = MpiSpec.find(FName);
+   if(Spec == MpiSpec.end()) return 0.0;
 }
 
 #define eq(a,b) (strcmp(a,b)==0)
