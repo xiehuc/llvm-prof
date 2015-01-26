@@ -25,23 +25,29 @@ set(SOURCES
 #some platform need disable rtti to void 
 #undefined reference `typeinfo for xxx`
 add_definitions(-Wall -fno-rtti -std=c++11)
+set(SELF ${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(
 	${LLVM_INCLUDE_DIRS}
 	../include
+   ${CMAKE_CURRENT_BINARY_DIR}
 	)
 link_directories(${LLVM_LIBRARY_DIRS})
 
+add_custom_target(datatype.h 
+   COMMAND ${MPIF90} ${SELF}/data.f -o datatype
+   COMMAND ./datatype > datatype.h
+   DEPENDS ${SELF}/data.f
+   )
 add_library(LLVMProfiling-static STATIC
 	${SOURCES}
 	)
-
 target_link_libraries(LLVMProfiling-static
 	${LLVM_LIBRARY}
 	)
-
 set_target_properties(LLVMProfiling-static
 	PROPERTIES
 	OUTPUT_NAME "LLVMProfiling" )
+add_dependencies(LLVMProfiling-static datatype.h)
 
 add_library(LLVMProfiling-shared SHARED
 	${SOURCES}
@@ -49,10 +55,10 @@ add_library(LLVMProfiling-shared SHARED
 target_link_libraries(LLVMProfiling-shared
 	${LLVM_LIBRARY}
 	)
-
 set_target_properties(LLVMProfiling-shared
 	PROPERTIES
 	OUTPUT_NAME "LLVMProfiling" )
+add_dependencies(LLVMProfiling-shared datatype.h)
 
 install(TARGETS LLVMProfiling-static LLVMProfiling-shared
    DESTINATION ${LIB_DIRS})

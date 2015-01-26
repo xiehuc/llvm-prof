@@ -16,6 +16,7 @@ else()
 endif()
 
 set(LLVM_RECOMMAND_VERSION "" CACHE STRING "Switch the llvm version")
+set(MPIF90 mpif90)
 find_package(LLVM REQUIRED)
 find_package(GTest)
 if(LLVM_VERSION VERSION_LESS "3.4")

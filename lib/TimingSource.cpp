@@ -1,4 +1,5 @@
 #include "TimingSource.h"
+#include <llvm/Support/raw_ostream.h>
 #include <llvm/Support/CommandLine.h>
 #include <llvm/ADT/SmallString.h>
 #include <llvm/IR/Instructions.h>
@@ -13,8 +14,32 @@
 #include <stdio.h>
 #include <unordered_map>
 
+#include "ValueUtils.h"
+
 using namespace llvm;
 
+static 
+std::unordered_map<std::string, unsigned> MpiSpec = 
+{
+   {"mpi_allreduce_" , 2} , // == 0 --- p2p
+   {"mpi_bcast_"     , 1} , // == 1 --- collect
+   {"mpi_reduce_"    , 1} , // == 2 --- full collect
+   {"mpi_send_"      , 0} , 
+   {"mpi_recv_"      , 0} , 
+   {"mpi_isend_"     , 0} , 
+   {"mpi_irecv_"     , 0}
+};
+
+static unsigned MpiType[256];
+
+int mpi_init_type(unsigned* DT)
+{
+   memset(DT, 0, sizeof(unsigned)*256);
+#include "datatype.h"
+   return 0;
+}
+
+int mpi_type_initialize = mpi_init_type(MpiType);
 
 StringRef LmbenchTiming::getName(EnumTy IG)
 {
@@ -65,6 +90,17 @@ LmbenchTiming::EnumTy LmbenchTiming::classify(Instruction* I)
    return static_cast<EnumTy>(bit|op);
 }
 
+LmbenchTiming::LmbenchTiming():
+   TimingSource(Lmbench, NumGroups), 
+   T(params) {
+   file_initializer = load_lmbench;
+   char* REnv = getenv("MPI_SIZE");
+   if(REnv == NULL){
+      errs()<<"please set environment MPI_SIZE same as when profiling\n";
+      exit(-1);
+   }
+   this->R = atoi(REnv);
+}
 double LmbenchTiming::count(Instruction& I)
 {
    return params[classify(&I)];
@@ -84,6 +120,15 @@ double LmbenchTiming::count(BasicBlock& BB)
    return counts;
 }
 
+double LmbenchTiming::count(Instruction& I, size_t bfreq, size_t count)
+{
+   CallInst* CI = dyn_cast<CallInst>(&I);
+   if(CI == NULL) return 0.0;
+   Function* F = dyn_cast<Function>(lle::castoff(CI->getCalledValue()));
+   if(F == NULL) return 0.0;
+   StringRef FName = F->getName();
+}
+
 #define eq(a,b) (strcmp(a,b)==0)
 void LmbenchTiming::load_lmbench(const char* file, double* cpu_times)
 {
@@ -93,15 +138,23 @@ void LmbenchTiming::load_lmbench(const char* file, double* cpu_times)
       exit(-1);
    }
 
-   double nanosec;
+   double nanosec, mbpsec, microsec;
    char bits[48], ops[48];
    char line[512];
    while(fgets(line,sizeof(line),f)){
       unsigned bit,op;
-      if(sscanf(line, "%s %[^:]: %lf", bits, ops, &nanosec)<3) continue;
-      bit = eq(bits,"integer")?Integer:eq(bits,"int64")?I64:eq(bits,"float")?Float:eq(bits,"double")?Double:-1U;
-      op = eq(ops,"add")?Add:eq(ops,"mul")?Mul:eq(ops,"div")?Div:eq(ops,"mod")?Mod:-1U;
-      if(bit == -1U || op == -1U) continue;
-      cpu_times[bit|op] = nanosec;
+      if(sscanf(line, "%s %[^:]: %lf", bits, ops, &nanosec)==3){
+         bit = eq(bits,"integer")?Integer:eq(bits,"int64")?I64:eq(bits,"float")?Float:eq(bits,"double")?Double:-1U;
+         op = eq(ops,"add")?Add:eq(ops,"mul")?Mul:eq(ops,"div")?Div:eq(ops,"mod")?Mod:-1U;
+         if(bit == -1U || op == -1U) continue;
+         cpu_times[bit|op] = nanosec;
+      }else if(sscanf(line, "AF_UNIX sock stream bandwidth: %lf MB/sec",
+               &mbpsec)==1) {
+         cpu_times[SOCK_BANDWIDTH] = mbpsec;
+      }else if(sscanf(line, "AF_UNIX sock stream latency: %lf microseconds",
+               &microsec)==1) {
+         cpu_times[SOCK_LATENCY] = microsec * 1000;
+      }
    }
 }
+
