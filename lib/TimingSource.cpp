@@ -164,17 +164,17 @@ void LmbenchTiming::load_lmbench(const char* file, double* cpu_times)
    char line[512];
    while(fgets(line,sizeof(line),f)){
       unsigned bit,op;
-      if(sscanf(line, "%s %[^:]: %lf", bits, ops, &nanosec)==3){
+      if(sscanf(line, "AF_UNIX sock stream latency: %lf microseconds",
+               &microsec)==1) {
+         cpu_times[SOCK_LATENCY] = microsec * 1000; // ms -> ns
+      }else if(sscanf(line, "AF_UNIX sock stream bandwidth: %lf MB/sec",
+               &mbpsec)==1) {
+         cpu_times[SOCK_BANDWIDTH] = mbpsec * 1024*1024/1000000000; // MB/sec -> B/ns
+      } else if(sscanf(line, "%s %[^:]: %lf nanoseconds", bits, ops, &nanosec)==3){
          bit = eq(bits,"integer")?Integer:eq(bits,"int64")?I64:eq(bits,"float")?Float:eq(bits,"double")?Double:-1U;
          op = eq(ops,"add")?Add:eq(ops,"mul")?Mul:eq(ops,"div")?Div:eq(ops,"mod")?Mod:-1U;
          if(bit == -1U || op == -1U) continue;
          cpu_times[bit|op] = nanosec;
-      }else if(sscanf(line, "AF_UNIX sock stream bandwidth: %lf MB/sec",
-               &mbpsec)==1) {
-         cpu_times[SOCK_BANDWIDTH] = mbpsec * 1024*1024/1000000000; // MB/sec -> B/ns
-      }else if(sscanf(line, "AF_UNIX sock stream latency: %lf microseconds",
-               &microsec)==1) {
-         cpu_times[SOCK_LATENCY] = microsec * 1000; // ms -> ns
       }
    }
 }

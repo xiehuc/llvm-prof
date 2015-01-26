@@ -78,7 +78,8 @@ bool ProfileTimingPrint::runOnModule(Module &M)
          for(auto I : PI.getAllTrapedValues(MPInfo)){
             const CallInst* CI = cast<CallInst>(I);
             const BasicBlock* BB = CI->getParent();
-            MpiTiming += LT->count(*I, PI.getExecutionCount(BB), PI.getExecutionCount(CI));
+            double timing = LT->count(*I, PI.getExecutionCount(BB), PI.getExecutionCount(CI));
+            MpiTiming += timing;
          }
       }
    }
