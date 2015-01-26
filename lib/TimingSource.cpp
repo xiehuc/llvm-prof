@@ -17,6 +17,7 @@
 #include "ValueUtils.h"
 
 using namespace llvm;
+#define IGN 3
 
 static 
 std::unordered_map<std::string, unsigned> MpiSpec = 
@@ -24,7 +25,7 @@ std::unordered_map<std::string, unsigned> MpiSpec =
    {"mpi_allreduce_" , 2} , // == 0 --- p2p
    {"mpi_bcast_"     , 1} , // == 1 --- collect
    {"mpi_reduce_"    , 1} , // == 2 --- full collect
-   {"mpi_send_"      , 0} , 
+   {"mpi_send_"      , 0} , // == Ignore --- ignore
    {"mpi_recv_"      , 0} , 
    {"mpi_isend_"     , 0} , 
    {"mpi_irecv_"     , 0}
@@ -41,7 +42,7 @@ static int mpi_init_type(unsigned* DT)
 
 int mpi_type_initialize = mpi_init_type(MpiType);
 
-static unsigned get_datatype_size(StringRef Name, const CallInst& I)
+static unsigned get_datatype_index(StringRef Name, const CallInst& I)
 {
    GlobalVariable* datatype;
    if(MpiSpec[Name] == 0)
@@ -51,7 +52,7 @@ static unsigned get_datatype_size(StringRef Name, const CallInst& I)
    if(datatype == NULL) return 0;
    auto CI = dyn_cast<ConstantInt>(datatype->getInitializer());
    if(CI == NULL) return 0;
-   return MpiType[CI->getZExtValue()]; // datatype -> sizeof
+   return CI->getZExtValue(); // datatype -> sizeof
 }
 
 StringRef LmbenchTiming::getName(EnumTy IG)
@@ -140,10 +141,17 @@ double LmbenchTiming::count(const Instruction& I, double bfreq, double count)
    Function* F = dyn_cast<Function>(lle::castoff(const_cast<Value*>(CI->getCalledValue())));
    if(F == NULL) return 0.0;
    StringRef FName = F->getName();
+   if(!FName.startswith("mpi_")) return 0.0;
    auto Spec = MpiSpec.find(FName);
-   if(Spec == MpiSpec.end()) return 0.0;
+   if(Spec == MpiSpec.end()){
+      errs()<<"WARNNING: doesn't consider "<<FName<<" mpi call\n";
+      return 0.0;
+   }
    unsigned C = Spec->second;
-   size_t D = count * get_datatype_size(FName, *CI);
+   if(C == IGN) return 0.0;
+   size_t D = get_datatype_index(FName, *CI);
+   if(D == 0) errs()<<"WARNNING: doesn't consider MPI_datatype "<<D<<"\n";
+   D = count * MpiType[D];
    if(C == 0){
       return bfreq*get(SOCK_LATENCY) + D/get(SOCK_BANDWIDTH);
    }else
