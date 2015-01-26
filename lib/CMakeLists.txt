@@ -21,6 +21,7 @@ set(SOURCES
    TimingSource.cpp
    MPIProfiling.cpp
    PredBlockProfiling.cpp
+   datatype.h
 	)
 #some platform need disable rtti to void 
 #undefined reference `typeinfo for xxx`
@@ -33,7 +34,7 @@ include_directories(
 	)
 link_directories(${LLVM_LIBRARY_DIRS})
 
-add_custom_target(datatype.h 
+add_custom_command(OUTPUT datatype.h 
    COMMAND ${MPIF90} ${SELF}/data.f -o datatype
    COMMAND ./datatype > datatype.h
    DEPENDS ${SELF}/data.f
@@ -47,7 +48,6 @@ target_link_libraries(LLVMProfiling-static
 set_target_properties(LLVMProfiling-static
 	PROPERTIES
 	OUTPUT_NAME "LLVMProfiling" )
-add_dependencies(LLVMProfiling-static datatype.h)
 
 add_library(LLVMProfiling-shared SHARED
 	${SOURCES}
@@ -58,7 +58,6 @@ target_link_libraries(LLVMProfiling-shared
 set_target_properties(LLVMProfiling-shared
 	PROPERTIES
 	OUTPUT_NAME "LLVMProfiling" )
-add_dependencies(LLVMProfiling-shared datatype.h)
 
 install(TARGETS LLVMProfiling-static LLVMProfiling-shared
    DESTINATION ${LIB_DIRS})

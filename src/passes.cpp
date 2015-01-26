@@ -66,22 +66,25 @@ void ProfileTimingPrint::getAnalysisUsage(AnalysisUsage &AU) const
 bool ProfileTimingPrint::runOnModule(Module &M)
 {
    ProfileInfo& PI = getAnalysis<ProfileInfo>();
-   double AbsoluteTiming = 0.0;
+   double AbsoluteTiming = 0.0, BlockTiming = 0.0, MpiTiming = 0.0;
    for(auto S : Sources){
       if(LmbenchTiming* LT = dyn_cast<LmbenchTiming>(S)){
          for(Module::iterator F = M.begin(), FE = M.end(); F != FE; ++F){
             for(Function::iterator BB = F->begin(), BBE = F->end(); BB != BBE; ++BB){
                size_t exec_times = PI.getExecutionCount(BB);
-               AbsoluteTiming += exec_times * LT->count(*BB);
+               BlockTiming += exec_times * LT->count(*BB);
             }
          }
          for(auto I : PI.getAllTrapedValues(MPInfo)){
             const CallInst* CI = cast<CallInst>(I);
             const BasicBlock* BB = CI->getParent();
-            AbsoluteTiming += LT->count(*I, PI.getExecutionCount(BB), PI.getExecutionCount(CI));
+            MpiTiming += LT->count(*I, PI.getExecutionCount(BB), PI.getExecutionCount(CI));
          }
       }
    }
+   AbsoluteTiming = BlockTiming + MpiTiming;
+   outs()<<"Block Timing: "<<BlockTiming<<" ns\n";
+   outs()<<"MPI Timing: "<<MpiTiming<<" ns\n";
    outs()<<"Timing: "<<AbsoluteTiming<<" ns\n";
    return false;
 }
