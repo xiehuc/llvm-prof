@@ -81,7 +81,7 @@ class LmbenchTiming:
    double count(llvm::Instruction& I); // caculation part
    double count(llvm::BasicBlock& BB); // caculation part
    
-   double count(llvm::Instruction& I, size_t bfreq, size_t count);
+   double count(const llvm::Instruction& I, double bfreq, double count);
 };
 
 enum CommSpeed {

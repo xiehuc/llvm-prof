@@ -30,16 +30,29 @@ std::unordered_map<std::string, unsigned> MpiSpec =
    {"mpi_irecv_"     , 0}
 };
 
-static unsigned MpiType[256];
+static unsigned MpiType[128];
 
-int mpi_init_type(unsigned* DT)
+static int mpi_init_type(unsigned* DT)
 {
-   memset(DT, 0, sizeof(unsigned)*256);
+   memset(DT, 0, sizeof(MpiType));
 #include "datatype.h"
    return 0;
 }
 
 int mpi_type_initialize = mpi_init_type(MpiType);
+
+static unsigned get_datatype_size(StringRef Name, const CallInst& I)
+{
+   GlobalVariable* datatype;
+   if(MpiSpec[Name] == 0)
+      datatype = dyn_cast<GlobalVariable>(I.getArgOperand(2)); // this is p2p communication
+   else 
+      datatype = dyn_cast<GlobalVariable>(I.getArgOperand(3)); // this is collect communication
+   if(datatype == NULL) return 0;
+   auto CI = dyn_cast<ConstantInt>(datatype->getInitializer());
+   if(CI == NULL) return 0;
+   return MpiType[CI->getZExtValue()]; // datatype -> sizeof
+}
 
 StringRef LmbenchTiming::getName(EnumTy IG)
 {
@@ -120,15 +133,21 @@ double LmbenchTiming::count(BasicBlock& BB)
    return counts;
 }
 
-double LmbenchTiming::count(Instruction& I, size_t bfreq, size_t count)
+double LmbenchTiming::count(const Instruction& I, double bfreq, double count)
 {
-   CallInst* CI = dyn_cast<CallInst>(&I);
+   const CallInst* CI = dyn_cast<CallInst>(&I);
    if(CI == NULL) return 0.0;
-   Function* F = dyn_cast<Function>(lle::castoff(CI->getCalledValue()));
+   Function* F = dyn_cast<Function>(lle::castoff(const_cast<Value*>(CI->getCalledValue())));
    if(F == NULL) return 0.0;
    StringRef FName = F->getName();
    auto Spec = MpiSpec.find(FName);
    if(Spec == MpiSpec.end()) return 0.0;
+   unsigned C = Spec->second;
+   size_t D = count * get_datatype_size(FName, *CI);
+   if(C == 0){
+      return bfreq*get(SOCK_LATENCY) + D/get(SOCK_BANDWIDTH);
+   }else
+      return bfreq*get(SOCK_LATENCY) + C*D*log(R)/get(SOCK_BANDWIDTH);
 }
 
 #define eq(a,b) (strcmp(a,b)==0)
@@ -152,10 +171,10 @@ void LmbenchTiming::load_lmbench(const char* file, double* cpu_times)
          cpu_times[bit|op] = nanosec;
       }else if(sscanf(line, "AF_UNIX sock stream bandwidth: %lf MB/sec",
                &mbpsec)==1) {
-         cpu_times[SOCK_BANDWIDTH] = mbpsec;
+         cpu_times[SOCK_BANDWIDTH] = mbpsec * 1024*1024/1000000000; // MB/sec -> B/ns
       }else if(sscanf(line, "AF_UNIX sock stream latency: %lf microseconds",
                &microsec)==1) {
-         cpu_times[SOCK_LATENCY] = microsec * 1000;
+         cpu_times[SOCK_LATENCY] = microsec * 1000; // ms -> ns
       }
    }
 }

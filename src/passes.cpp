@@ -75,6 +75,11 @@ bool ProfileTimingPrint::runOnModule(Module &M)
                AbsoluteTiming += exec_times * LT->count(*BB);
             }
          }
+         for(auto I : PI.getAllTrapedValues(MPInfo)){
+            const CallInst* CI = cast<CallInst>(I);
+            const BasicBlock* BB = CI->getParent();
+            AbsoluteTiming += LT->count(*I, PI.getExecutionCount(BB), PI.getExecutionCount(CI));
+         }
       }
    }
    outs()<<"Timing: "<<AbsoluteTiming<<" ns\n";
