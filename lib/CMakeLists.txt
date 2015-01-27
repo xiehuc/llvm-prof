@@ -22,6 +22,7 @@ set(SOURCES
    MPIProfiling.cpp
    PredBlockProfiling.cpp
    datatype.h
+   InstTemplate.cpp
 	)
 #some platform need disable rtti to void 
 #undefined reference `typeinfo for xxx`
