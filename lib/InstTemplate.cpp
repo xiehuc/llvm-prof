@@ -351,7 +351,7 @@ static Value* convert_op(Instruction* InsPoint){
          s->setVolatile(true);
       }
    }
-   return Lhs;
+   return ConstantInt::get(I32Ty, 0);
 }
 
 static Value* cmp_op(Instruction* InsPoint){
