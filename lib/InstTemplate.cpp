@@ -26,16 +26,7 @@ namespace lle{
 using namespace llvm;
 char lle::InstTemplate::ID = 0;
 static RegisterPass<lle::InstTemplate> X("InstTemplate", "InstTemplate");
-
-#if 0
-void lle::InstTemplate::getAnalysisUsage(AnalysisUsage &AU) const
-{
-   AU.addRequired<Lock>();
-}
-#endif
-
 static std::string FunctyStr = "";
-
 
 bool lle::InstTemplate::runOnModule(Module &M)
 {
@@ -82,14 +73,11 @@ Value* lle::InstTemplate::implyTemplate(CallInst *Template) const
 #define REPEAT 2000
 static Value* fix_add(Instruction *InsPoint)
 {
-   //Lock& L = getAnalysis<Lock>();
-
    Type* I32Ty = Type::getInt32Ty(InsPoint->getContext());
    Value* One = ConstantInt::get(I32Ty, 1);
    Value* Lhs = One;
    for(int i=0;i<REPEAT;++i){
       Lhs = BinaryOperator::CreateAdd(Lhs, One, "", InsPoint);
-      //Lhs = L.lock_inst(cast<Instruction>(Lhs));
    }
    return Lhs;
 }
@@ -101,7 +89,6 @@ static Value* float_add(Instruction* InsPoint)
    Value* Lhs = One;
    for(int i=0;i<REPEAT;++i){
       Lhs = BinaryOperator::Create(Instruction::FAdd, Lhs, One, "", InsPoint);
-      //Lhs = L.lock_inst(cast<Instruction>(Lhs));
    }
    return CastInst::Create(CastInst::FPToSI, Lhs,
          Type::getInt32Ty(InsPoint->getContext()), "", InsPoint);
@@ -234,12 +221,8 @@ static Value* getelementptr_op(Instruction* InsPoint){
    BasicBlock* BB = InsPoint->getParent();
    StoreInst* s;
    for(int i = 0;i < REPEAT;++i){
-      std::vector<Value*> vec;
-      vec.push_back(Zero);
-      vec.push_back(ConstantInt::get(I32Ty,i));
-      vec.push_back(ConstantInt::get(I32Ty,1));
-      ArrayRef<Value*> tmpArr(vec);
-      Lhs = GetElementPtrInst::Create(var, tmpArr,"",InsPoint);
+      Value* Arg[] = { Zero, ConstantInt::get(I32Ty, i), ConstantInt::get(I32Ty, 1) };
+      Lhs = GetElementPtrInst::Create(var, Arg, "", InsPoint);
       Cast = CastInst::Create(CastInst::PtrToInt,Lhs,I32Ty,"",BB->getTerminator());
       s = new StoreInst(Cast, stovar,"",BB->getTerminator());
       s->setVolatile(true);
@@ -256,9 +239,9 @@ static Value* convert_op(Instruction* InsPoint){
    Type* I64PtrTy = Type::getInt64PtrTy(InsPoint->getContext());
 
 
-   Value* Lhs = ConstantInt::get(I64Ty,33333333);
+   Value* Lhs = ConstantInt::get(I64Ty, 33333333);
    Value* Con64 = Lhs;
-   Value* Con32 = ConstantInt::get(I32Ty,3333333);
+   Value* Con32 = ConstantInt::get(I32Ty, 3333333);
    Value* Con32sign = ConstantInt::get(I32Ty,-333333);
 
    Value* ConDouble = ConstantFP::get(DoubleTy,-33.3333);
