@@ -12,6 +12,7 @@
 # LLVM_LIBRARIES             - A list of libraries which should be linked
 # LLVM_DYNAMIC_LIBRARY       - A single dynamic llvm shared library
 # LLVM_DYNAMIC_LIBRARY_FOUND - Whether found the dynamic llvm shared library
+# LLVM_OPT                   - opt program in llvm
 # 
 # Using Following macros to set library:
 # llvm_map_components_to_libraries(OUTPUT_VARIABLE ${llvm components})
@@ -49,6 +50,7 @@ if(NOT(DEFINED LLVM_ROOT) )
 	endif()
 	# find llvm-config. perfers to the one with version suffix, Ex:llvm-config-3.2
 	find_program(LLVM_CONFIG_EXE NAMES "llvm-config-${LLVM_RECOMMAND_VERSION}" "llvm-config")
+   find_program(LLVM_OPT NAMES "opt-${LLVM_RECOMMAND_VERSION}" "opt")
 
 	if(NOT LLVM_CONFIG_EXE)
 		set(LLVM_FOUND False)
