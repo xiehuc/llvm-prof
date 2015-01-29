@@ -14,18 +14,38 @@
    }\
    sum /= REP;\
    ref /= REP;\
-   printf(TEMPLATE": %lf cycles\n",(double)sum/INSNUM);\
+   double ins_cycles = (double)sum/INSNUM;\
+   printf(TEMPLATE":\t%lf cycles,\t%lf ns\n",ins_cycles,ins_cycles*cycle_time);\
 }
 #define REPEAT_INST(TEMPLATE, VAR...) REPEAT(TEMPLATE, REPNUM, ##VAR)
 #define REPEAT_ALLOCA_INST(TEMPLATE, VAR...) REPEAT(TEMPLATE, ALLOCA_NUM, ##VAR)
 #define REPEAT_GETELE_INST(TEMPLATE, VAR...) REPEAT(TEMPLATE, REPNUM, element, ##VAR)
 
 static int element[1][INSNUM][2];
-         
+static double cycle_time;         
 /* use a template to generate instruction */
 int inst_template(const char* templ, ...);
+double calcu_cycle_time(){
+   uint64_t t_res = timing_res();
+   uint64_t t_err = timing_err();
+   unsigned long beg = 0, end = 0, sum = 0, ref = 0;
+   beg = timing();
+   sleep(1);
+   end = timing();
+   sum += (end-beg-t_err);
+   beg = timing();
+   sleep(0);
+   end = timing();
+   unsigned long sleep_err = end - beg - t_err;
+   sum = sum-sleep_err;
+   double cyc_tim = (1/(double)sum)*1E9;
+   printf("CPU freq: %lf GHz\n",(double)sum/1E9);
+   return cyc_tim;
+}
 int main()
 {
+   //Here we can also read system file to obtain the hightest CPU frequency  
+   cycle_time = calcu_cycle_time();
    volatile int* var = malloc(sizeof(int));
    uint64_t beg, end, sum = 0;
    int ref = 0;
