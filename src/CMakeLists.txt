@@ -34,7 +34,7 @@ set(SELF ${CMAKE_CURRENT_SOURCE_DIR})
 
 add_custom_command(OUTPUT inst-timing
    COMMAND clang -O0 -DTIMING_${TIMING} ${SELF}/inst-timing.c -emit-llvm -c -o inst-timing.bc
-   COMMAND opt -load ${PROJECT_BINARY_DIR}/lib/libLLVMProfiling.so -InstTemplate inst-timing.bc -o inst-timing2.bc
+   COMMAND ${LLVM_OPT} -load ${PROJECT_BINARY_DIR}/lib/libLLVMProfiling.so -InstTemplate inst-timing.bc -o inst-timing2.bc
    COMMAND clang -O0 inst-timing2.bc -o inst-timing -lm
    DEPENDS ${SELF}/inst-timing.c ${SELF}/libtiming.c ${SELF}/../lib/InstTemplate.cpp
    )
