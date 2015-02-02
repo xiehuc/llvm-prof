@@ -15,7 +15,7 @@
    sum /= REP;\
    ref /= REP;\
    double ins_cycles = (double)sum/INSNUM;\
-   printf(TEMPLATE":\t%lf cycles,\t%lf ns\n",ins_cycles,ins_cycles*cycle_time);\
+   printf(TEMPLATE":\t%lf nanoseconds,\t%lf cycles\n",ins_cycles*cycle_time,ins_cycles);\
 }
 #define REPEAT_INST(TEMPLATE, VAR...) REPEAT(TEMPLATE, REPNUM, ##VAR)
 #define REPEAT_ALLOCA_INST(TEMPLATE, VAR...) REPEAT(TEMPLATE, ALLOCA_NUM, ##VAR)

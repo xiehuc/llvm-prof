@@ -81,15 +81,19 @@ namespace {
 
            if(TimingKind == "lmbench")
               Val.push_back(new LmbenchTiming());
+           if(TimingKind == "MyInstTim")
+              Val.push_back(new MyInstTiming());
         }while(end!=TimingValue.npos && (TimingValue = TimingValue.substr(end+1))!="");
         return false;
      }
      void printOptionInfo(const cl::Option& O, size_t GlobalWidth) const {
         static const char* getOption[] = {
-           "lmbench"
+           "lmbench",
+           "MyInstTim"
         };
         static const char* getDescription[] = {
-           "loading lmbench timing source"
+           "loading lmbench timing source",
+           "loading myInst timing source"
         };
         static_assert(sizeof(getOption)==sizeof(getDescription), "Option should equal to Description");
         static size_t getNumOptions = sizeof(getOption)/sizeof(const char*);
