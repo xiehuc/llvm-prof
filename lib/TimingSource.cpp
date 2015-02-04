@@ -98,7 +98,7 @@ LmbenchTiming::EnumTy LmbenchTiming::classify(Instruction* I)
       case Instruction::FRem:
       case Instruction::SRem:
       case Instruction::URem: op = Mod;break;
-      default: return Last;
+      default: return Last;//这儿好像有点问题，学长你再看一下
    }
 
    return static_cast<EnumTy>(bit|op);
@@ -187,3 +187,152 @@ void LmbenchTiming::load_lmbench(const char* file, double* cpu_times)
    }
 }
 
+
+//////////////MyInstTim////////////
+MyInstTiming::EnumTy MyInstTiming::classify(Instruction* I)
+{
+   unsigned Op = I->getOpcode();
+   unsigned op;
+   auto e = std::out_of_range("no group for this instruction");
+
+   switch(Op){
+      case Instruction::FAdd:          op = FLOAT_ADD;      break;
+      case Instruction::FSub:          op = FLOAT_SUB;      break;
+      case Instruction::Sub :          op = FIX_SUB;        break;
+      case Instruction::Add :          op = FIX_ADD;        break;
+      case Instruction::FMul:          op = FLOAT_MUL;      break;
+      case Instruction::Mul :          op = FIX_MUL;        break;
+      case Instruction::FDiv:          op = FLOAT_DIV;      break;
+      case Instruction::UDiv:          op = U_DIV;          break;
+      case Instruction::SDiv:          op = S_DIV;          break;
+      case Instruction::FRem:          op = FLOAT_REM;      break;
+      case Instruction::SRem:          op = S_REM;          break;
+      case Instruction::URem:          op = U_REM;          break;
+      case Instruction::And :          op = AND;            break;
+      case Instruction::Or  :          op = OR;             break;
+      case Instruction::Xor :          op = XOR;            break;
+      case Instruction::Alloca:        op = ALLOCA;         break;
+      case Instruction::Load:          op = LOAD;           break;
+      case Instruction::Store:         op = STORE;          break;
+      case Instruction::GetElementPtr: op = GETELEMENTPTR;  break;
+      case Instruction::Trunc:         op = TRUNC;          break;
+      case Instruction::FPTrunc:       op = FPTRUNC;        break;
+      case Instruction::ZExt:          op = ZEXT;           break;
+      case Instruction::SExt:          op = SEXT;           break;
+      case Instruction::FPToUI:        op = FPTOUI;         break;
+      case Instruction::UIToFP:        op = UITOFP;         break;
+      case Instruction::SIToFP:        op = SITOFP;         break;
+      case Instruction::FPToSI:        op = FPTOSI;         break;
+      case Instruction::IntToPtr:      op = INTTOPTR;       break;
+      case Instruction::PtrToInt:      op = PTRTOINT;       break;
+      case Instruction::BitCast:       op = BITCAST;        break;
+      case Instruction::ICmp:          op = ICMP;           break;
+      case Instruction::FCmp:          op = FCMP;           break;
+      case Instruction::Select:        op = SELECT;         break;
+      case Instruction::Shl:           op = SHL;            break;
+      case Instruction::LShr:          op = LSHR;           break;
+      case Instruction::AShr:          op = ASHR;           break;
+      default: op = MyInstNumGroups ;
+   }
+
+   return static_cast<EnumTy>(op);
+}
+MyInstTiming::MyInstTiming():
+   TimingSource(MyInstTim,MyInstNumGroups), 
+   T(params) {
+   file_initializer = load_MyInstTim;
+   char* REnv = getenv("MPI_SIZE");
+   if(REnv == NULL){
+      errs()<<"please set environment MPI_SIZE same as when profiling\n";
+      exit(-1);
+   }
+   this->R = atoi(REnv);
+}
+double MyInstTiming::count(Instruction& I)
+{
+   return params[classify(&I)];
+}
+
+double MyInstTiming::count(BasicBlock& BB)
+{
+   double counts = 0.0;
+
+   for(auto& I : BB){
+      try{
+         MyInstTiming::EnumTy Ty = classify(&I);
+         if(Ty != MyInstNumGroups){
+            counts += params[Ty];
+         }
+      }catch(std::out_of_range e){
+         //ignore exception
+      }
+   }
+   return counts;
+}
+static 
+std::unordered_map<std::string, MyInstTiming::EnumTy> InstMap = 
+{
+   {"fix_add",       FIX_ADD}, 
+   {"float_add",     FLOAT_ADD},
+   {"load",          LOAD},
+   {"store",         STORE},
+   {"fix_sub",       FIX_SUB},
+   {"float_sub",     FLOAT_SUB},
+   {"fix_mul",       FIX_MUL},
+   {"float_mul",     FLOAT_MUL},
+   {"u_div",         U_DIV},
+   {"s_div",         S_DIV},
+   {"float_div",     FLOAT_DIV},
+   {"u_rem",         U_REM},
+   {"s_rem",         S_REM},
+   {"float_rem",     FLOAT_REM},
+   {"shl",           SHL},
+   {"lshr",          LSHR},
+   {"ashr",          ASHR},
+   {"and",           AND},
+   {"or",            OR},
+   {"xor",           XOR},
+   {"alloca",        ALLOCA},
+   {"getelementptr", GETELEMENTPTR},
+   {"trunc_to",      TRUNC},
+   {"zext_to",       ZEXT},
+   {"sext_to",       SEXT},
+   {"fptrunc_to",    FPTRUNC},
+   {"fpext_to",      FPEXT},
+   {"fptoui_to",     FPTOUI},
+   {"fptosi_to",     FPTOSI},
+   {"uitofp_to",     UITOFP},
+   {"sitofp_to",     SITOFP},
+   {"ptrtoint_to",   PTRTOINT},
+   {"inttoptr_to",   INTTOPTR},
+   {"bitcast_to",    BITCAST},
+   {"icmp",          ICMP},
+   {"fcmp",          FCMP},
+   {"select",        SELECT}
+};
+void MyInstTiming::load_MyInstTim(const char* file, double* cpu_times)
+{
+   FILE* f = fopen(file,"r");
+   if(f == NULL){
+      fprintf(stderr, "Could not open %s file: %s", file, strerror(errno));
+      exit(-1);
+   }
+
+   double nanosec,cycles;
+   char ops[48];
+   char line[512];
+   std::string tmp = "";
+   std::unordered_map<std::string, MyInstTiming::EnumTy>::iterator ite; 
+   while(fgets(line,sizeof(line),f)){
+      unsigned op;
+      if(sscanf(line, "%[^:]:\t%lf nanoseconds,\t%lf cycles", ops, &nanosec,&cycles)==3){
+         tmp = ops;
+         ite = InstMap.find(tmp);
+         if(ite != InstMap.end()){
+            op = ite->second;
+            cpu_times[op] = nanosec;
+         }
+         else continue;
+      }
+   }
+}

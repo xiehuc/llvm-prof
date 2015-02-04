@@ -14,6 +14,7 @@ class TimingSource{
    enum Kind {
       Base,
       Lmbench,
+      MyInstTim,
       MPI
    };
 
@@ -82,6 +83,37 @@ class LmbenchTiming:
    double count(llvm::BasicBlock& BB); // caculation part
    
    double count(const llvm::Instruction& I, double bfreq, double count);
+};
+
+enum MyInstGroups {
+   LOAD,STORE,ALLOCA,GETELEMENTPTR,
+   FIX_ADD,FLOAT_ADD,
+   FIX_MUL,FLOAT_MUL,
+   FIX_SUB,FLOAT_SUB,
+   U_DIV,S_DIV,FLOAT_DIV,
+   U_REM,S_REM,FLOAT_REM,
+   SHL,LSHR,ASHR,AND,OR,XOR,
+   TRUNC,ZEXT,SEXT,FPTRUNC,FPEXT,FPTOUI,FPTOSI,UITOFP,SITOFP,PTRTOINT,INTTOPTR,BITCAST,
+   ICMP,FCMP,SELECT,
+   MyInstNumGroups
+};
+class MyInstTiming: 
+   public TimingSource, public _timing_source::T<MyInstGroups>
+{
+   unsigned R;
+   public:
+   typedef MyInstGroups EnumTy;
+   static EnumTy classify(llvm::Instruction* I);
+   static void load_MyInstTim(const char* file, double* cpu_times);
+   static bool classof(const TimingSource* S) {
+      return S->getKind() == MyInstTim;
+   }
+
+   MyInstTiming();
+
+   double count(llvm::Instruction& I); // caculation part
+   double count(llvm::BasicBlock& BB); // caculation part
+   
 };
 
 enum CommSpeed {
