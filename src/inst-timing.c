@@ -1,30 +1,31 @@
 #include "libtiming.c"
+#include <unistd.h>
 
 #define REPNUM 10000
 #define INSNUM 2000
 #define ALLOCA_NUM 100
 
-      //ref+=inst_template(TEMPLATE,VAR);
-#define REPEAT(TEMPLATE, REP, VAR...) {\
-   for(int i=0;i<REP;++i){\
-      beg = timing();\
-      ref+=inst_template(TEMPLATE, ##VAR);\
-      end = timing();\
-      sum += end-beg-t_err;\
-   }\
-   sum /= REP;\
-   ref /= REP;\
-   double ins_cycles = (double)sum/INSNUM;\
-   printf(TEMPLATE":\t%lf nanoseconds,\t%lf cycles\n",ins_cycles*cycle_time,ins_cycles);\
-}
+//ref+=inst_template(TEMPLATE,VAR);
+#define REPEAT(TEMPLATE, REP, VAR...)                                          \
+  {                                                                            \
+    for (int i = 0; i < REP; ++i) {                                            \
+      beg = timing();                                                          \
+      ref += inst_template(TEMPLATE, ##VAR);                                   \
+      end = timing();                                                          \
+      sum += end - beg - t_err;                                                \
+    }                                                                          \
+    sum /= REP;                                                                \
+    ref /= REP;                                                                \
+    double ins_cycles = (double)sum / INSNUM;                                  \
+    printf(TEMPLATE ":\t%lf nanoseconds,\t%lf cycles\n",                       \
+           ins_cycles *cycle_time, ins_cycles);                                \
+  }
 #define REPEAT_INST(TEMPLATE, VAR...) REPEAT(TEMPLATE, REPNUM, ##VAR)
 #define REPEAT_ALLOCA_INST(TEMPLATE, VAR...) REPEAT(TEMPLATE, ALLOCA_NUM, ##VAR)
 #define REPEAT_GETELE_INST(TEMPLATE, VAR...) REPEAT(TEMPLATE, REPNUM, element, ##VAR)
 
 static int element[1][INSNUM][2];
 static double cycle_time;         
-/* use a template to generate instruction */
-int inst_template(const char* templ, ...);
 double calcu_cycle_time(){
    uint64_t t_res = timing_res();
    uint64_t t_err = timing_err();
@@ -42,6 +43,7 @@ double calcu_cycle_time(){
    printf("CPU freq: %lf GHz\n",(double)sum/1E9);
    return cyc_tim;
 }
+
 int main()
 {
    //Here we can also read system file to obtain the hightest CPU frequency  
@@ -100,4 +102,3 @@ int main()
    REPEAT_INST("select",var);
    return 0;
 }
-

@@ -19,6 +19,11 @@
 
 /* We use 64bit values for the times.  */
 typedef unsigned long long int hp_timing_t;
+/* the define for inst_template.
+ * use a template to generate instruction 
+ * Impletion in InstTemplate.cpp, a LLVM pass
+ */
+int inst_template(const char* templ, ...);
 
 #ifdef TIMING_tsc
 /** copy code from simple-pmu:cycles.h (http://halobates.de/simple-pmu) **/
