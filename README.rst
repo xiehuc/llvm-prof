@@ -1,11 +1,14 @@
 llvm-prof
 ===========
 
-this was copied form llvm release 3.3 include llvm-prof libLLVMProfiling
-libprofile\_rt.so 
+this was copied form llvm release 3.3 include ``llvm-prof`` ``libLLVMProfiling.so``
+``libprofile_rt.so``
 
 because since llvm release 3.4 they remove profiling related code totaly, so
 this project would help you get the function back.
+
+this also provide a ``inst-timing`` a simple program report all llvm ir's
+instruction's cpu timing and cycles.
 
 build
 ------
