@@ -1,4 +1,9 @@
-/**
+/*
+ * libtiming.c
+ * Copyright (C) 2015 xiehuc <xiehuc@gmail.com>
+ *
+ * Distributed under terms of the GPL license.
+ *
  * function: timing_res 
  * return once timing's resolution, nanosecond unit
  *

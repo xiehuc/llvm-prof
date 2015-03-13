@@ -1,3 +1,10 @@
+/*
+ * inst-timing.c
+ * Copyright (C) 2015 HaoMeng <835231875@qq.com>
+ *
+ * Distributed under terms of the GPL license.
+ */
+
 #include "libtiming.c"
 #include <unistd.h>
 
