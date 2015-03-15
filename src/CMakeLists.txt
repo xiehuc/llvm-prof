@@ -31,11 +31,11 @@ target_link_libraries(llvm-prof
 	)
 
 set(SELF ${CMAKE_CURRENT_SOURCE_DIR})
-
+set(CLANG "clang-${LLVM_RECOMMAND_VERSION}")
 add_custom_command(OUTPUT inst-timing
-   COMMAND clang -O0 -DTIMING_${TIMING} ${SELF}/inst-timing.c -emit-llvm -c -o inst-timing.bc
-   COMMAND ${LLVM_OPT} -load ${PROJECT_BINARY_DIR}/lib/libLLVMProfiling.so -InstTemplate inst-timing.bc -o inst-timing2.bc
-   COMMAND clang -O0 inst-timing2.bc -o inst-timing -lm
+   COMMAND ${CLANG} -O0 -DTIMING_${TIMING} ${SELF}/inst-timing.c -emit-llvm -c -o /tmp/inst-timing.bc
+   COMMAND ${LLVM_OPT} -load ${PROJECT_BINARY_DIR}/lib/libLLVMProfiling.so -InstTemplate /tmp/inst-timing.bc -o /tmp/inst-timing.1.bc
+   COMMAND ${CLANG} -O0 /tmp/inst-timing.1.bc -o inst-timing -lm
    DEPENDS ${SELF}/inst-timing.c ${SELF}/libtiming.c ${SELF}/../lib/InstTemplate.cpp
    )
 add_custom_target(InstTiming ALL DEPENDS inst-timing)
