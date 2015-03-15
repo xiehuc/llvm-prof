@@ -24,7 +24,7 @@ build
 compile option
 ~~~~~~~~~~~~~~~
 
-*  ``LLVM_RECOMMAND_VERSION`` : select which llvm version to build
+*  ``LLVM_RECOMMEND_VERSION`` : select which llvm version to build
 *  ``OUTPUT_HASPID``          : does llvmprof.out contain a pid for mpi program
 *  ``DYNAMIC_LINK``           : dynamic link LLVM single big shared object
 

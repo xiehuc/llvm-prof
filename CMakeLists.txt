@@ -17,7 +17,6 @@ else()
    set(LIB_DIRS "lib")
 endif()
 
-set(LLVM_RECOMMAND_VERSION "" CACHE STRING "Switch the llvm version")
 set(MPIF90 mpif90)
 find_package(LLVM REQUIRED)
 find_package(GTest)
