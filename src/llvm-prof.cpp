@@ -81,24 +81,24 @@ namespace {
 
            if(TimingKind == "lmbench")
               Val.push_back(new LmbenchTiming());
-           if(TimingKind == "MyInstTim")
-              Val.push_back(new MyInstTiming());
+           if(TimingKind == "irinst")
+              Val.push_back(new IrinstTiming());
         }while(end!=TimingValue.npos && (TimingValue = TimingValue.substr(end+1))!="");
         return false;
      }
      void printOptionInfo(const cl::Option& O, size_t GlobalWidth) const {
         static const char* getOption[] = {
            "lmbench",
-           "MyInstTim"
+           "irinst"
         };
         static const char* getDescription[] = {
            "loading lmbench timing source",
-           "loading myInst timing source"
+           "loading llvm ir inst timing source"
         };
         static_assert(sizeof(getOption)==sizeof(getDescription), "Option should equal to Description");
         static size_t getNumOptions = sizeof(getOption)/sizeof(const char*);
         if (O.hasArgStr()) {
-           outs() << "  -" << O.ArgStr << "=source:source:...";
+           outs() << "  -" << O.ArgStr << "=source1:source2:...";
            printHelpStr(O.HelpStr, GlobalWidth, std::strlen(O.ArgStr) + 6);
 
            for (unsigned i = 0, e = getNumOptions; i != e; ++i) {

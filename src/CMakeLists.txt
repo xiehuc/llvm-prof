@@ -31,7 +31,7 @@ target_link_libraries(llvm-prof
 	)
 
 set(SELF ${CMAKE_CURRENT_SOURCE_DIR})
-set(CLANG "clang-${LLVM_RECOMMEND_VERSION}")
+find_program(CLANG NAMES "clang-${LLVM_RECOMMEND_VERSION}" "clang")
 add_custom_command(OUTPUT inst-timing
    COMMAND ${CLANG} -O0 -DTIMING_${TIMING} ${SELF}/inst-timing.c -emit-llvm -c -o /tmp/inst-timing.bc
    COMMAND ${LLVM_OPT} -load ${PROJECT_BINARY_DIR}/lib/libLLVMProfiling.so -InstTemplate /tmp/inst-timing.bc -o /tmp/inst-timing.1.bc

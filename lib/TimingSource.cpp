@@ -188,8 +188,8 @@ void LmbenchTiming::load_lmbench(const char* file, double* cpu_times)
 }
 
 
-//////////////MyInstTim////////////
-MyInstTiming::EnumTy MyInstTiming::classify(Instruction* I)
+//////////////Irinst////////////
+IrinstTiming::EnumTy IrinstTiming::classify(Instruction* I)
 {
    unsigned Op = I->getOpcode();
    unsigned op;
@@ -232,15 +232,15 @@ MyInstTiming::EnumTy MyInstTiming::classify(Instruction* I)
       case Instruction::Shl:           op = SHL;            break;
       case Instruction::LShr:          op = LSHR;           break;
       case Instruction::AShr:          op = ASHR;           break;
-      default: op = MyInstNumGroups ;
+      default: op = IrinstNumGroups;
    }
 
    return static_cast<EnumTy>(op);
 }
-MyInstTiming::MyInstTiming():
-   TimingSource(MyInstTim,MyInstNumGroups), 
+IrinstTiming::IrinstTiming():
+   TimingSource(Irinst,IrinstNumGroups), 
    T(params) {
-   file_initializer = load_MyInstTim;
+   file_initializer = load_irinst;
    char* REnv = getenv("MPI_SIZE");
    if(REnv == NULL){
       errs()<<"please set environment MPI_SIZE same as when profiling\n";
@@ -248,19 +248,19 @@ MyInstTiming::MyInstTiming():
    }
    this->R = atoi(REnv);
 }
-double MyInstTiming::count(Instruction& I)
+double IrinstTiming::count(Instruction& I)
 {
    return params[classify(&I)];
 }
 
-double MyInstTiming::count(BasicBlock& BB)
+double IrinstTiming::count(BasicBlock& BB)
 {
    double counts = 0.0;
 
    for(auto& I : BB){
       try{
-         MyInstTiming::EnumTy Ty = classify(&I);
-         if(Ty != MyInstNumGroups){
+         IrinstTiming::EnumTy Ty = classify(&I);
+         if(Ty != IrinstNumGroups){
             counts += params[Ty];
          }
       }catch(std::out_of_range e){
@@ -270,7 +270,7 @@ double MyInstTiming::count(BasicBlock& BB)
    return counts;
 }
 static 
-std::unordered_map<std::string, MyInstTiming::EnumTy> InstMap = 
+std::unordered_map<std::string, IrinstTiming::EnumTy> InstMap = 
 {
    {"fix_add",       FIX_ADD}, 
    {"float_add",     FLOAT_ADD},
@@ -310,7 +310,7 @@ std::unordered_map<std::string, MyInstTiming::EnumTy> InstMap =
    {"fcmp",          FCMP},
    {"select",        SELECT}
 };
-void MyInstTiming::load_MyInstTim(const char* file, double* cpu_times)
+void IrinstTiming::load_irinst(const char* file, double* cpu_times)
 {
    FILE* f = fopen(file,"r");
    if(f == NULL){
@@ -322,7 +322,7 @@ void MyInstTiming::load_MyInstTim(const char* file, double* cpu_times)
    char ops[48];
    char line[512];
    std::string tmp = "";
-   std::unordered_map<std::string, MyInstTiming::EnumTy>::iterator ite; 
+   std::unordered_map<std::string, IrinstTiming::EnumTy>::iterator ite; 
    while(fgets(line,sizeof(line),f)){
       unsigned op;
       if(sscanf(line, "%[^:]:\t%lf nanoseconds,\t%lf cycles", ops, &nanosec,&cycles)==3){
