@@ -14,21 +14,64 @@
  * return a timing, mul timing_res to calc real time
  */
 
-#if (defined TIMING_tsc) || (defined TIMING_tscp)
-
 #include <stdio.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <time.h>
 
-/* We use 64bit values for the times.  */
-typedef unsigned long long int hp_timing_t;
 /* the define for inst_template.
  * use a template to generate instruction 
  * Impletion in InstTemplate.cpp, a LLVM pass
  */
 int inst_template(const char* templ, ...);
+
+/** @return Hz **/
+static unsigned long get_cpu_freq_by_sys()
+{
+   const char* file = "/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq";
+   FILE* f = fopen(file,"r");
+   if(f==NULL){
+      perror("Unable Find CPU freq sys file:");
+      fprintf(stderr, "%s\n", file);
+      return 0;
+   }
+   unsigned long freq = 0;
+   fscanf(f, "%lu", &freq);
+   if(freq==0)
+      perror("Unable Read CPU freq:");
+   fclose(f);
+   return freq;
+}
+
+static unsigned long get_cpu_freq_by_proc()
+{
+   const char* file = "/proc/cpuinfo";
+   FILE* f = fopen(file, "r");
+   if(f==NULL){
+      perror("Unable Find /proc/cpuinfo File:");
+      return 0;
+   }
+   char line[256] = {0};
+   unsigned long freq = .0L;
+   while(fgets(line, sizeof(line), f)){
+      double mhz = 0.0L;
+      if (sscanf(line, "cpu MHz\t: %lf", &mhz) == 1){
+         freq = mhz * 1E6; // convert MHz to Hz
+         break;
+      }
+   }
+   if(freq==0)
+      perror("Unable Read CPU freq:");
+   fclose(f);
+   return freq;
+}
+
+#if (defined TIMING_tsc) || (defined TIMING_tscp)
+
+
+/* We use 64bit values for the times.  */
+typedef unsigned long long int hp_timing_t;
 
 #ifdef TIMING_tsc
 /** copy code from simple-pmu:cycles.h (http://halobates.de/simple-pmu) **/
@@ -59,21 +102,13 @@ static inline hp_timing_t _timing(void)
 }
 #endif /*TIMING_TSC*/
 
+
 uint64_t timing_res() 
 {
-   const char* file = "/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq";
-   FILE* f = fopen(file,"r");
-   if(f==NULL){
-      perror("Unable Find CPU freq sys file:");
-      exit(errno);
-   }
-   unsigned long freq = 0;
-   fscanf(f, "%lu", &freq);
-   if(freq==0){
-      perror("Unable Read CPU freq:");
-      exit(errno);
-   }
-   return 1*1000*1000*1000 /*nanosecond*/ / freq;
+   unsigned long freq = get_cpu_freq_by_sys();
+   if(freq == 0) freq = get_cpu_freq_by_proc();
+   if(freq == 0) exit(-1);
+   return 1E9 /*nanosecond*/ / freq;
 }
 uint64_t timing_err()
 {
@@ -91,11 +126,6 @@ uint64_t timing()
 #endif
 
 #ifdef TIMING_clock_gettime
-#include <stdio.h>
-#include <errno.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <time.h>
 
 #define CLK_ID CLOCK_PROCESS_CPUTIME_ID
 
@@ -122,4 +152,3 @@ uint64_t timing()
    return t.tv_sec*1E9+t.tv_nsec;
 }
 #endif
-

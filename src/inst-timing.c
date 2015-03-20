@@ -33,7 +33,7 @@
 
 static int element[1][INSNUM][2];
 static double cycle_time;         
-double calcu_cycle_time(){
+static double get_cpu_freq_by_sleep(){
    uint64_t t_res = timing_res();
    uint64_t t_err = timing_err();
    unsigned long beg = 0, end = 0, sum = 0, ref = 0;
@@ -54,7 +54,7 @@ double calcu_cycle_time(){
 int main()
 {
    //Here we can also read system file to obtain the hightest CPU frequency  
-   cycle_time = calcu_cycle_time();
+   cycle_time = get_cpu_freq_by_sleep();
    volatile int* var = malloc(sizeof(int));
    uint64_t beg, end, sum = 0;
    int ref = 0;
