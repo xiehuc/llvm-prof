@@ -110,7 +110,7 @@ uint64_t timing_err()
    for(int i=0;i<100;++i){
       clock_gettime(CLK_ID, &a);
       clock_gettime(CLK_ID, &b);
-      sum += (b.tv_sec - a.tv_sec)*10E9;
+      sum += (b.tv_sec - a.tv_sec)*1E9;
       sum += b.tv_nsec - a.tv_nsec;
    }
    return sum /=100;
@@ -119,7 +119,7 @@ uint64_t timing()
 {
    struct timespec t = {0};
    clock_gettime(CLK_ID, &t);
-   return t.tv_sec*10E9+t.tv_nsec;
+   return t.tv_sec*1E9+t.tv_nsec;
 }
 #endif
 
