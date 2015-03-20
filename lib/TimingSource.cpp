@@ -123,13 +123,8 @@ double LmbenchTiming::count(BasicBlock& BB)
 {
    double counts = 0.0;
 
-   for(auto& I : BB){
-      try{
-         counts += params[classify(&I)];
-      }catch(std::out_of_range e){
-         //ignore exception
-      }
-   }
+   for(auto& I : BB)
+      counts += params[classify(&I)];
    return counts;
 }
 
@@ -256,16 +251,8 @@ double IrinstTiming::count(BasicBlock& BB)
 {
    double counts = 0.0;
 
-   for(auto& I : BB){
-      try{
-         IrinstTiming::EnumTy Ty = classify(&I);
-         if(Ty != IrinstNumGroups){
-            counts += params[Ty];
-         }
-      }catch(std::out_of_range e){
-         //ignore exception
-      }
-   }
+   for(auto& I : BB)
+      counts += params[classify(&I)];
    return counts;
 }
 static 
