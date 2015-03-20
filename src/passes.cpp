@@ -72,13 +72,13 @@ bool ProfileTimingPrint::runOnModule(Module &M)
          for(Module::iterator F = M.begin(), FE = M.end(); F != FE; ++F){
             for(Function::iterator BB = F->begin(), BBE = F->end(); BB != BBE; ++BB){
                size_t exec_times = PI.getExecutionCount(BB);
-               BlockTiming += exec_times * LT->count(*BB);
+               BlockTiming += exec_times * LT->count(*BB); // 基本块频率×基本块时间
             }
          }
          for(auto I : PI.getAllTrapedValues(MPInfo)){
             const CallInst* CI = cast<CallInst>(I);
             const BasicBlock* BB = CI->getParent();
-            double timing = LT->count(*I, PI.getExecutionCount(BB), PI.getExecutionCount(CI));
+            double timing = LT->count(*I, PI.getExecutionCount(BB), PI.getExecutionCount(CI)); // IO 模型
             MpiTiming += timing;
          }
       }

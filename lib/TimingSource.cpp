@@ -40,7 +40,7 @@ static int mpi_init_type(unsigned* DT)
    return 0;
 }
 
-int mpi_type_initialize = mpi_init_type(MpiType);
+static int mpi_type_initialize = mpi_init_type(MpiType);
 
 static unsigned get_datatype_index(StringRef Name, const CallInst& I)
 {
@@ -77,7 +77,6 @@ LmbenchTiming::EnumTy LmbenchTiming::classify(Instruction* I)
    Type* T = I->getType();
    unsigned Op = I->getOpcode();
    unsigned bit,op;
-   auto e = std::out_of_range("no group for this instruction");
 
    if(T->isIntegerTy(32)) bit = Integer;
    else if(T->isIntegerTy(64)) bit = I64;
@@ -98,7 +97,7 @@ LmbenchTiming::EnumTy LmbenchTiming::classify(Instruction* I)
       case Instruction::FRem:
       case Instruction::SRem:
       case Instruction::URem: op = Mod;break;
-      default: return Last;//这儿好像有点问题，学长你再看一下
+      default: return NumGroups;
    }
 
    return static_cast<EnumTy>(bit|op);

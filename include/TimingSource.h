@@ -19,7 +19,8 @@ class TimingSource{
    };
 
    TimingSource(Kind K, size_t NumParam):kindof(K){
-      params.resize(NumParam); 
+      // prevent return NumGroup, which out of range
+      params.resize(NumParam+1); 
    }
    //在该模式中, 立即从文件中读取Timing数据并计算//
    /* init unit_times with nanoseconds unit.
@@ -30,7 +31,8 @@ class TimingSource{
       func(params.data());
    }
    void init(std::initializer_list<double> list) {
-      params = decltype(params)(list.begin(), list.end());
+      params.clear();
+      params.assign(list);
    }
    void init_with_file(const char* file) {
       init(std::bind(file_initializer, file, std::placeholders::_1));
@@ -56,11 +58,11 @@ class T
 }
 
 enum LmbenchInstGroups {
-   Integer = 0, I64 = 1, Float = 2, Double = 3, // Ntype 
+   Integer = 0, I64 = 1, Float = 2, Double = 3,    // Ntype
    Add = 0<<2, Mul = 1<<2, Div = 2<<2, Mod = 3<<2, // Method
-   Last = Double|Mod, // Method | Ntype unit: nanosecond
-   SOCK_BANDWIDTH, // unit: MB/sec
-   SOCK_LATENCY, // unit: microsecond
+   Last = Double|Mod,                              // Method | Ntype unit: nanosecond
+   SOCK_BANDWIDTH,                                 // unit: MB/sec
+   SOCK_LATENCY,                                   // unit: microsecond
    NumGroups
 };
 
@@ -86,15 +88,13 @@ class LmbenchTiming:
 };
 
 enum IrinstGroups {
-   LOAD,STORE,ALLOCA,GETELEMENTPTR,
-   FIX_ADD,FLOAT_ADD,
-   FIX_MUL,FLOAT_MUL,
-   FIX_SUB,FLOAT_SUB,
-   U_DIV,S_DIV,FLOAT_DIV,
-   U_REM,S_REM,FLOAT_REM,
-   SHL,LSHR,ASHR,AND,OR,XOR,
-   TRUNC,ZEXT,SEXT,FPTRUNC,FPEXT,FPTOUI,FPTOSI,UITOFP,SITOFP,PTRTOINT,INTTOPTR,BITCAST,
-   ICMP,FCMP,SELECT,
+   LOAD      , STORE     , ALLOCA   , GETELEMENTPTR , FIX_ADD , FLOAT_ADD ,
+   FIX_MUL   , FLOAT_MUL , FIX_SUB  , FLOAT_SUB     , U_DIV   , S_DIV     ,
+   FLOAT_DIV , U_REM     , S_REM    , FLOAT_REM     , SHL     , LSHR      ,
+   ASHR      , AND       , OR       , XOR           , TRUNC   , ZEXT      ,
+   SEXT      , FPTRUNC   , FPEXT    , FPTOUI        , FPTOSI  , UITOFP    ,
+   SITOFP    , PTRTOINT  , INTTOPTR , BITCAST       , ICMP    , FCMP      ,
+   SELECT    ,
    IrinstNumGroups
 };
 class IrinstTiming: 
