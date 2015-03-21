@@ -198,6 +198,7 @@ static Value* binary_op(Instruction* InsPoint){
 static Value* alloca_op(Instruction* InsPoint){
    Type* I32Ty = Type::getInt32Ty(InsPoint->getContext());
    AllocaInst* a;
+   //Add the StoreInst to the End of BasicBlock,in order to prevent the optimization of target instructions. 
    StoreInst* s;
    BasicBlock* BB = InsPoint->getParent();
    for(int i = 0;i < REPEAT;++i){
@@ -219,6 +220,7 @@ static Value* getelementptr_op(Instruction* InsPoint){
    Value* Cast = Lhs;
 
    BasicBlock* BB = InsPoint->getParent();
+   //Add the StoreInst to the End of BasicBlock,in order to prevent the optimization of target instructions. 
    StoreInst* s;
    for(int i = 0;i < REPEAT;++i){
       Value* Arg[] = { Zero, ConstantInt::get(I32Ty, i), ConstantInt::get(I32Ty, 1) };
@@ -251,6 +253,7 @@ static Value* convert_op(Instruction* InsPoint){
 
    CallInst* Template = dyn_cast<CallInst>(InsPoint);
    Value* var = Template->getArgOperand(1);
+   //Add the StoreInst to the End of BasicBlock,in order to prevent the optimization of target instructions. 
    StoreInst* s;
    CastInst* Cast;
 
@@ -364,12 +367,14 @@ static Value* cmp_op(Instruction* InsPoint){
    if(FunctyStr == "icmp"){
       for(unsigned i=0;i<REPEAT;++i){
          Lhs = new ICmpInst(InsPoint, CmpInst::ICMP_SLT, Lhs, ConstantInt::get(I32Ty, i));
+         //Here we add BitCastInst after IcmpInst, to prevent the Optimization of IcmpInst.
          Lhs = CastInst::CreateSExtOrBitCast(Lhs, I32Ty, "", InsPoint);
       }
       return Lhs;
    }else if(FunctyStr == "fcmp"){
       for(unsigned i=0;i<REPEAT;++i){
          Lhs = new FCmpInst(InsPoint, CmpInst::FCMP_OLT, Lhs, ConstantFP::get(DoubleTy, i*1.1));
+         //Here we add BitCastInst after IcmpInst, to prevent the Optimization of IcmpInst.
          Lhs = new UIToFPInst(Lhs, DoubleTy, "", InsPoint);
       }
       return new FPToSIInst(Lhs, I32Ty, "", InsPoint);
