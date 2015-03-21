@@ -15,6 +15,7 @@
 //ref+=inst_template(TEMPLATE,VAR);
 #define REPEAT(TEMPLATE, REP, VAR...)                                          \
   {                                                                            \
+    sum = 0;                                                                   \
     for (int i = 0; i < REP; ++i) {                                            \
       beg = timing();                                                          \
       ref += inst_template(TEMPLATE, ##VAR);                                   \
@@ -104,8 +105,8 @@ int main()
    REPEAT_INST("ptrtoint_to",var);
    REPEAT_INST("inttoptr_to",var);
    REPEAT_INST("bitcast_to",var);
-   REPEAT_INST("icmp",var,integer);
-   REPEAT_INST("fcmp",var,real);
+   REPEAT_INST("icmp",&integer);
+   REPEAT_INST("fcmp",&real);
    REPEAT_INST("select",var);
    return 0;
 }

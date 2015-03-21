@@ -6,7 +6,8 @@
 #include <llvm/IR/Instructions.h>
 #include <llvm/Support/raw_ostream.h>
 #include <unordered_map>
-#define Assert(a,b)
+#define Assert(a,b) // an empty Assert macro , because this code is copied from
+                    // other project
 
 namespace lle{
    class InstTemplate: public llvm::ModulePass
@@ -14,7 +15,6 @@ namespace lle{
       public:
       static char ID;
       InstTemplate():ModulePass(ID) {}
-      //void getAnalysisUsage(llvm::AnalysisUsage& AU) const override;
       bool runOnModule(llvm::Module& M) override;
       private:
       typedef llvm::Value* (*TemplateFunc)(llvm::Instruction* InsPoint);
@@ -355,53 +355,42 @@ static Value* convert_op(Instruction* InsPoint){
 }
 
 static Value* cmp_op(Instruction* InsPoint){
-   BasicBlock* BB = InsPoint->getParent();
-
-   CallInst* Template = dyn_cast<CallInst>(InsPoint);
-   Value* var = Template->getArgOperand(1);
-   Value* varNum = Template->getArgOperand(2);
-
    Type* I32Ty = Type::getInt32Ty(InsPoint->getContext());
-   Type* FloatTy = Type::getFloatTy(InsPoint->getContext());
-   Type* I1Ty = Type::getInt1Ty(InsPoint->getContext());
    Type* DoubleTy = Type::getDoubleTy(InsPoint->getContext());
+   CallInst* Template = dyn_cast<CallInst>(InsPoint);
+   Value* var = Template->getArgOperand(1);
 
-   Value* Lhs = ConstantInt::get(I1Ty,0);
-   StoreInst* s;
-   CastInst* Cast;
-   unsigned short icmpcon = 35;
-   unsigned short fcmpcon = 11;
-   for(int i = 0;i < REPEAT;++i){
-      if(FunctyStr == "icmp"){
-         Lhs = CmpInst::Create(Instruction::ICmp, icmpcon, varNum, ConstantInt::get(I32Ty,i),"",InsPoint);
+   Value* Lhs = new LoadInst(var, "", InsPoint);
+   if(FunctyStr == "icmp"){
+      for(unsigned i=0;i<REPEAT;++i){
+         Lhs = new ICmpInst(InsPoint, CmpInst::ICMP_SLT, Lhs, ConstantInt::get(I32Ty, i));
+         Lhs = CastInst::CreateSExtOrBitCast(Lhs, I32Ty, "", InsPoint);
       }
-      else if(FunctyStr == "fcmp"){
-         Lhs = CmpInst::Create(Instruction::FCmp, fcmpcon, varNum, ConstantFP::get(DoubleTy,i*1.01),"",InsPoint);
+      return Lhs;
+   }else if(FunctyStr == "fcmp"){
+      for(unsigned i=0;i<REPEAT;++i){
+         Lhs = new FCmpInst(InsPoint, CmpInst::FCMP_OLT, Lhs, ConstantFP::get(DoubleTy, i*1.1));
+         Lhs = new UIToFPInst(Lhs, DoubleTy, "", InsPoint);
       }
-
-      Cast = CastInst::Create(CastInst::SIToFP,Lhs,FloatTy,"",BB->getTerminator());
-      Cast = CastInst::Create(CastInst::FPToSI,Cast,I32Ty,"",BB->getTerminator());
-      s = new StoreInst(Cast,var,"",BB->getTerminator());
-      s->setVolatile(true);
+      return new FPToSIInst(Lhs, I32Ty, "", InsPoint);
+   }else{
+      Assert(0, "unknow operate");
+      return ConstantInt::get(I32Ty, 0); 
    }
-   return CastInst::Create(CastInst::SExt,Lhs,I32Ty,"",InsPoint);
 }
+
 static Value* select_op(Instruction* InsPoint){
-   BasicBlock* BB = InsPoint->getParent();
+   Type* I1Ty = Type::getInt1Ty(InsPoint->getContext());
+   Type* I32Ty = Type::getInt32Ty(InsPoint->getContext());
 
    CallInst* Template = dyn_cast<CallInst>(InsPoint);
    Value* var = Template->getArgOperand(1);
 
-   Type* I1Ty = Type::getInt1Ty(InsPoint->getContext());
-   Type* I32Ty = Type::getInt32Ty(InsPoint->getContext());
-
-   Value* Lhs;
-   StoreInst* s;
+   Value* Lhs = new LoadInst(var, "", InsPoint);
+   bool sel = false;
    for(int i = 0;i < REPEAT;++i){
-      Lhs = SelectInst::Create(ConstantInt::get(I1Ty,1), ConstantInt::get(I32Ty,i*i), ConstantInt::get(I32Ty,i*333),"",InsPoint);
-
-      s = new StoreInst(Lhs,var,"",BB->getTerminator());
-      s->setVolatile(true);
+     Lhs = SelectInst::Create(ConstantInt::get(I1Ty, sel = !sel), Lhs,
+                              ConstantInt::get(I32Ty, i), "", InsPoint);
    }
    return Lhs;
 }
