@@ -42,7 +42,7 @@ static void IncrementBlockCounters(llvm::Value* Inc, unsigned Index, GlobalVaria
 
 bool PredBlockProfiler::runOnModule(Module& M)
 {
-   unsigned Idx;
+   unsigned Idx = 0;
    IRBuilder<> Builder(M.getContext());
 
    unsigned NumBlocks = 0;
