@@ -124,6 +124,10 @@ ProfileInfoLoader::ProfileInfoLoader(const char *ToolName,
     perror(0);
     exit(1);
   }
+  if (ftell(F) == (fseek(F, 0, SEEK_END), ftell(F))) { // XXX may lead problem
+    errs() << " Warnning '" << Filename << "' seems empty\n";
+  }
+  fseek(F, 0, SEEK_SET);
   std::vector<unsigned> WriteCount;
 
   // Keep reading packets until we run out of them.
@@ -203,4 +207,3 @@ ProfileInfoLoader::ProfileInfoLoader(const char *ToolName,
 
   fclose(F);
 }
-

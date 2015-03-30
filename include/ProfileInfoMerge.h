@@ -41,8 +41,11 @@ class ProfileInfoMerge
    /*Merge the file*/
    template<class F>
    void  addProfileInfo(ProfileInfoLoader& THS, F acc) {
-#define MERGEVECTOR(what) assert(this->what.size() == THS.getRaw##what().size());\
-      std::transform(this->what.begin(),this->what.end(),THS.getRaw##what().begin(),this->what.begin(), acc);
+#define MERGEVECTOR(what)                                                      \
+  assert(this->what.size() == THS.getRaw##what().size() && #what               \
+         " size should be equal.");                                            \
+  std::transform(this->what.begin(), this->what.end(),                         \
+                 THS.getRaw##what().begin(), this->what.begin(), acc);
       MERGEVECTOR(BlockCounts);
       MERGEVECTOR(OptimalEdgeCounts);
       MERGEVECTOR(EdgeCounts);
@@ -59,10 +62,10 @@ class ProfileInfoMerge
    void writeTotalFile(F distribution) {
       ProfileInfoWriter totalFile((this->Toolname.c_str()),this->Filename);
       std::vector<unsigned> counts;
-#define WRITEVECTOR(info, what) \
-      counts.resize(what.size()); \
-      std::transform(what.begin(), what.end(), counts.begin(), distribution); \
-      totalFile.write(info, counts);
+#define WRITEVECTOR(info, what)                                                \
+  counts.resize(what.size());                                                  \
+  std::transform(what.begin(), what.end(), counts.begin(), distribution);      \
+  totalFile.write(info, counts);
       WRITEVECTOR(FunctionInfo, FunctionCounts);
       WRITEVECTOR(BlockInfo, BlockCounts);
       WRITEVECTOR(EdgeInfo, EdgeCounts);

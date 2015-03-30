@@ -180,19 +180,22 @@ int main(int argc, char **argv) {
      }
 
      //Initialize the ProfileInfoMerge class using one of merge files
-     ProfileInfoLoader AHS(argv[0], *(MergeFile.end()-1));
-     ProfileInfoMerge MergeClass(std::string(argv[0]),BitcodeFile,AHS);
+     ProfileInfoLoader AHS(argv[0], MergeFile.back());
+     ProfileInfoMerge MergeClass(std::string(argv[0]), BitcodeFile, AHS);
 
-     for(std::vector<std::string>::iterator merIt = MergeFile.begin(),END = MergeFile.end()-1;merIt!=END;++merIt){
+     for (std::vector<std::string>::iterator merIt = MergeFile.begin(),
+                                             END = MergeFile.end() - 1;
+          merIt != END; ++merIt) {
         //errs()<<*merIt<<"\n";
-        ProfileInfoLoader THS(argv[0], *merIt);
-        MergeClass.addProfileInfo(THS);
+       ProfileInfoLoader THS(argv[0], *merIt);
+       MergeClass.addProfileInfo(THS);
      }
-     if(Merge == MERGE_SUM){
-        MergeClass.writeTotalFile();
-     }else if(Merge == MERGE_AVG){
-        /** avg = sum/N **/
-        MergeClass.writeTotalFile(std::bind2nd(std::divides<unsigned>(), MergeFile.size()));
+     if (Merge == MERGE_SUM) {
+       MergeClass.writeTotalFile();
+     } else if (Merge == MERGE_AVG) {
+       /** avg = sum/N **/
+       MergeClass.writeTotalFile(
+           std::bind2nd(std::divides<unsigned>(), MergeFile.size()));
      }
      return 0;
   }
