@@ -144,6 +144,7 @@ ProfileInfoLoader::ProfileInfoLoader(const char *ToolName,
       unsigned ArgLength;
       if (fread(&ArgLength, sizeof(unsigned), 1, F) != 1) {
         errs() << ToolName << ": arguments packet truncated!\n";
+        errs() << "  " << Filename << ": ";
         perror(0);
         exit(1);
       }
