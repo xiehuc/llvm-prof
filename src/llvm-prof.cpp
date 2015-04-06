@@ -78,33 +78,21 @@ namespace {
         do {
            end = TimingValue.find(':');
            StringRef TimingKind = TimingValue.substr(0, end);
-
-           if(TimingKind == "lmbench")
-              Val.push_back(new LmbenchTiming());
-           if(TimingKind == "irinst")
-              Val.push_back(new IrinstTiming());
+           TimingSource *TS = TimingSource::Construct(TimingKind);
+           if (TS)
+             Val.push_back(TS);
         }while(end!=TimingValue.npos && (TimingValue = TimingValue.substr(end+1))!="");
         return false;
      }
      void printOptionInfo(const cl::Option& O, size_t GlobalWidth) const {
-        static const char* getOption[] = {
-           "lmbench",
-           "irinst"
-        };
-        static const char* getDescription[] = {
-           "loading lmbench timing source",
-           "loading llvm ir inst timing source"
-        };
-        static_assert(sizeof(getOption)==sizeof(getDescription), "Option should equal to Description");
-        static size_t getNumOptions = sizeof(getOption)/sizeof(const char*);
         if (O.hasArgStr()) {
            outs() << "  -" << O.ArgStr << "=source1:source2:...";
-           printHelpStr(O.HelpStr, GlobalWidth, std::strlen(O.ArgStr) + 6);
+           printHelpStr(O.HelpStr, GlobalWidth, std::strlen(O.ArgStr) + 26);
 
-           for (unsigned i = 0, e = getNumOptions; i != e; ++i) {
-              size_t NumSpaces = GlobalWidth-strlen(getOption[i])-8;
-              outs() << "    =" << getOption[i];
-              outs().indent(NumSpaces) << " -   " << getDescription[i] << '\n';
+           for(auto& E : TimingSource::Avail()){
+              size_t NumSpaces = GlobalWidth-E.Name.size()-8;
+              outs() << "    =" << E.Name;
+              outs().indent(NumSpaces) << " -   " << E.Desc << '\n';
            }
         } 
      }

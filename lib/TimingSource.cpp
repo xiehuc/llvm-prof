@@ -31,6 +31,9 @@ std::unordered_map<std::string, unsigned> MpiSpec =
    {"mpi_irecv_"     , 0}
 };
 
+static 
+std::vector<TimingSourceInfoEntry> TSIEntries;
+
 static unsigned MpiType[128];
 
 static int mpi_init_type(unsigned* DT)
@@ -41,6 +44,18 @@ static int mpi_init_type(unsigned* DT)
 }
 
 static int mpi_type_initialize = mpi_init_type(MpiType);
+
+#define Register(Group, Cls, name, desc)                                       \
+  static Group *Cls##__creator() { return new Cls(); }                         \
+  static int Cls##__initializer() {                                            \
+    TimingSourceInfoEntry Entry;                                               \
+    Entry.Creator = Cls##__creator;                                            \
+    Entry.Name = name;                                                         \
+    Entry.Desc = desc;                                                         \
+    TSIEntries.push_back(Entry);                                               \
+    return 0;                                                                  \
+  }                                                                            \
+  static int Cls##__initialize = Cls##__initializer();
 
 static unsigned get_datatype_index(StringRef Name, const CallInst& I)
 {
@@ -53,6 +68,20 @@ static unsigned get_datatype_index(StringRef Name, const CallInst& I)
    auto CI = dyn_cast<ConstantInt>(datatype->getInitializer());
    if(CI == NULL) return 0;
    return CI->getZExtValue(); // datatype -> sizeof
+}
+
+TimingSource* TimingSource::Construct(const StringRef Name)
+{
+  auto Found = std::find_if(
+      TSIEntries.begin(), TSIEntries.end(),
+      [Name](const TimingSourceInfoEntry &E) { return E.Name == Name; });
+   if(Found == TSIEntries.end()) return NULL;
+   else return Found->Creator();
+}
+
+const std::vector<TimingSourceInfoEntry>& TimingSource::Avail()
+{
+   return TSIEntries;
 }
 
 StringRef LmbenchTiming::getName(EnumTy IG)
@@ -322,3 +351,8 @@ void IrinstTiming::load_irinst(const char* file, double* cpu_times)
       }
    }
 }
+Register(TimingSource, LmbenchTiming, "lmbench",
+         "loading lmbench timing source");
+Register(TimingSource, IrinstTiming, "irinst",
+         "loading llvm ir inst timing source");
+

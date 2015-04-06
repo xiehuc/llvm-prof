@@ -8,6 +8,7 @@
 /* a timing source is used to count inst types in a basicblock */
 
 namespace llvm{
+struct TimingSourceInfoEntry;
 class TimingSource{
    public:
 
@@ -38,10 +39,18 @@ class TimingSource{
       init(std::bind(file_initializer, file, std::placeholders::_1));
    }
    Kind getKind() const { return kindof;}
+
+   static TimingSource* Construct(const llvm::StringRef Name);
+   static const std::vector<TimingSourceInfoEntry>& Avail();
    protected:
    Kind kindof;
    void (*file_initializer)(const char* file, double* data);
    std::vector<double> params;
+};
+struct TimingSourceInfoEntry{
+   TimingSource* (*Creator)();
+   StringRef Name;
+   StringRef Desc;
 };
 
 namespace _timing_source{
