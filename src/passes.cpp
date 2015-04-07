@@ -90,6 +90,14 @@ bool ProfileTimingPrint::runOnModule(Module &M)
             }
          }
       } 
+      if(IrinstMaxTiming* LT = dyn_cast<IrinstMaxTiming>(S)){
+         for(Module::iterator F = M.begin(), FE = M.end(); F != FE; ++F){
+            for(Function::iterator BB = F->begin(), BBE = F->end(); BB != BBE; ++BB){
+               size_t exec_times = PI.getExecutionCount(BB);
+               BlockTiming += exec_times * LT->count(*BB);
+            }
+         }
+      }
    }
    AbsoluteTiming = BlockTiming + MpiTiming;
    outs()<<"Block Timing: "<<BlockTiming<<" ns\n";

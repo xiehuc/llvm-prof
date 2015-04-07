@@ -16,6 +16,7 @@ class TimingSource{
       Base,
       Lmbench,
       Irinst,
+      IrinstMax,
       MPI
    };
 
@@ -47,6 +48,7 @@ class TimingSource{
    void (*file_initializer)(const char* file, double* data);
    std::vector<double> params;
 };
+
 struct TimingSourceInfoEntry{
    TimingSource* (*Creator)();
    StringRef Name;
@@ -123,6 +125,16 @@ class IrinstTiming:
    double count(llvm::Instruction& I); // caculation part
    double count(llvm::BasicBlock& BB); // caculation part
    
+};
+
+class IrinstMaxTiming: public IrinstTiming
+{
+   public:
+   static bool classof(const TimingSource* S) {
+      return S->getKind() == IrinstMax;
+   }
+   IrinstMaxTiming();
+   double count(llvm::BasicBlock& BB);
 };
 
 enum CommSpeed {

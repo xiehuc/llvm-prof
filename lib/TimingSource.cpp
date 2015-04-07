@@ -351,8 +351,48 @@ void IrinstTiming::load_irinst(const char* file, double* cpu_times)
       }
    }
 }
+
+IrinstMaxTiming::IrinstMaxTiming() { this->kindof = IrinstMax; }
+double IrinstMaxTiming::count(BasicBlock &BB)
+{
+   double float_count = 0.0;
+   double fix_count = 0.0;
+   double non_of_them = 0.0;
+
+   for(auto& I : BB){
+      EnumTy E = classify(&I);
+      switch (E) {
+         case FIX_ADD:
+         case FIX_SUB:
+         case FIX_MUL:
+         case U_DIV:
+         case S_DIV:
+         case U_REM:
+         case S_REM:
+         case ICMP:
+            fix_count += params[E];
+            break;
+
+         case FLOAT_ADD:
+         case FLOAT_SUB:
+         case FLOAT_MUL:
+         case FLOAT_DIV:
+         case FLOAT_REM:
+         case FCMP:
+            float_count += params[E];
+            break;
+
+         default:
+            non_of_them += params[E];
+            break;
+      }
+   }
+   return non_of_them + std::max(float_count, fix_count);
+}
+
 Register(TimingSource, LmbenchTiming, "lmbench",
          "loading lmbench timing source");
 Register(TimingSource, IrinstTiming, "irinst",
          "loading llvm ir inst timing source");
-
+Register(TimingSource, IrinstMaxTiming, "irinst-max",
+         "loading llvm ir inst timing source");
