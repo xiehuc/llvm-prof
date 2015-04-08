@@ -2,6 +2,8 @@
 #include <ProfileInfo.h>
 #include <llvm/IR/Module.h>
 
+#include <float.h>
+
 using namespace llvm;
 
 char ProfileInfoConverter::ID = 0;
@@ -68,34 +70,20 @@ bool ProfileTimingPrint::runOnModule(Module &M)
    ProfileInfo& PI = getAnalysis<ProfileInfo>();
    double AbsoluteTiming = 0.0, BlockTiming = 0.0, MpiTiming = 0.0;
    for(auto S : Sources){
-      if(LmbenchTiming* LT = dyn_cast<LmbenchTiming>(S)){
+      if(BlockTiming < DBL_EPSILON){ // BlockTiming is Zero
          for(Module::iterator F = M.begin(), FE = M.end(); F != FE; ++F){
             for(Function::iterator BB = F->begin(), BBE = F->end(); BB != BBE; ++BB){
                size_t exec_times = PI.getExecutionCount(BB);
-               BlockTiming += exec_times * LT->count(*BB); // 基本块频率×基本块时间
+               BlockTiming += exec_times * S->count(*BB); // 基本块频率×基本块时间
             }
          }
+      }
+      if(MpiTiming < DBL_EPSILON){ // MpiTiming is Zero
          for(auto I : PI.getAllTrapedValues(MPInfo)){
             const CallInst* CI = cast<CallInst>(I);
             const BasicBlock* BB = CI->getParent();
-            double timing = LT->count(*I, PI.getExecutionCount(BB), PI.getExecutionCount(CI)); // IO 模型
+            double timing = S->count(*I, PI.getExecutionCount(BB), PI.getExecutionCount(CI)); // IO 模型
             MpiTiming += timing;
-         }
-      }
-      if(IrinstTiming* LT = dyn_cast<IrinstTiming>(S)){
-         for(Module::iterator F = M.begin(), FE = M.end(); F != FE; ++F){
-            for(Function::iterator BB = F->begin(), BBE = F->end(); BB != BBE; ++BB){
-               size_t exec_times = PI.getExecutionCount(BB);
-               BlockTiming += exec_times * LT->count(*BB);
-            }
-         }
-      } 
-      if(IrinstMaxTiming* LT = dyn_cast<IrinstMaxTiming>(S)){
-         for(Module::iterator F = M.begin(), FE = M.end(); F != FE; ++F){
-            for(Function::iterator BB = F->begin(), BBE = F->end(); BB != BBE; ++BB){
-               size_t exec_times = PI.getExecutionCount(BB);
-               BlockTiming += exec_times * LT->count(*BB);
-            }
          }
       }
    }

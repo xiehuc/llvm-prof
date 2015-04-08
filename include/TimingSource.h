@@ -11,6 +11,8 @@ namespace llvm{
 struct TimingSourceInfoEntry;
 class TimingSource{
    public:
+   static TimingSource* Construct(const llvm::StringRef Name);
+   static const std::vector<TimingSourceInfoEntry>& Avail();
 
    enum Kind {
       Base,
@@ -24,6 +26,7 @@ class TimingSource{
       // prevent return NumGroup, which out of range
       params.resize(NumParam+1); 
    }
+   virtual ~TimingSource(){};
    //在该模式中, 立即从文件中读取Timing数据并计算//
    /* init unit_times with nanoseconds unit.
     * @example:
@@ -41,8 +44,10 @@ class TimingSource{
    }
    Kind getKind() const { return kindof;}
 
-   static TimingSource* Construct(const llvm::StringRef Name);
-   static const std::vector<TimingSourceInfoEntry>& Avail();
+   virtual double count(llvm::BasicBlock &BB){return 0.;} // caculation part
+   virtual double count(const llvm::Instruction &I, double bfreq,
+                        double count){return 0.;} // io part
+
    protected:
    Kind kindof;
    void (*file_initializer)(const char* file, double* data);
