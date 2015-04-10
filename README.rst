@@ -75,3 +75,5 @@ note
 -----
 
 you need add `$PKG_CONFIG_PATH` to let pkg-config recognise llvm-prof.pc
+If there is something wrong with mpi or gfortran when you compiling llvm-prof,
+you can try to install libopenmpi-dev and gfortran.
