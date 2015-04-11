@@ -132,8 +132,15 @@ ProfileTimingPrint::ProfileTimingPrint(std::vector<TimingSource*>&& TS,
       errs()<<"No Enough File to initialize Timing Source\n";
       exit(-1);
    }
-   for(unsigned i = 0; i < Sources.size(); ++i)
+   for(unsigned i = 0; i < Sources.size(); ++i){
       Sources[i]->init_with_file(Files[i].c_str());
+#ifndef NDEBUG
+      if(TimingDebug){
+         outs()<<"parsed "<<Files[i]<<" file's content:\n";
+         Sources[i]->print(outs());
+      }
+#endif
+   }
 }
 
 ProfileTimingPrint::~ProfileTimingPrint()

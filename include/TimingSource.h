@@ -45,9 +45,10 @@ class TimingSource{
    }
    Kind getKind() const { return kindof;}
 
-   virtual double count(llvm::BasicBlock &BB){return 0.;} // caculation part
+   virtual double count(llvm::BasicBlock &BB) const {return 0.;} // caculation part
    virtual double count(const llvm::Instruction &I, double bfreq,
-                        double count){return 0.;} // io part
+                        double count) const{return 0.;} // io part
+   virtual void print(llvm::raw_ostream&) const;
 
    protected:
    Kind kindof;
@@ -68,7 +69,7 @@ class T
    std::vector<double>& address;
    public:
    T(std::vector<double>& P):address(P) {}
-   double get(EnumType E){
+   double get(EnumType E) const{
       return address[E];
    }
 };
@@ -98,10 +99,11 @@ class LmbenchTiming:
 
    LmbenchTiming();
 
-   double count(llvm::Instruction& I); // caculation part
-   double count(llvm::BasicBlock& BB); // caculation part
-   
-   double count(const llvm::Instruction& I, double bfreq, double count);
+   double count(llvm::Instruction& I) const; // caculation part
+   double count(llvm::BasicBlock& BB) const override; // caculation part
+
+   double count(const llvm::Instruction &I, double bfreq,
+                double count) const override;
 };
 
 enum IrinstGroups {
@@ -129,8 +131,8 @@ class IrinstTiming:
    IrinstTiming();
 
    using TimingSource::count;
-   double count(llvm::Instruction& I); // caculation part
-   double count(llvm::BasicBlock& BB); // caculation part
+   double count(llvm::Instruction& I) const; // caculation part
+   double count(llvm::BasicBlock& BB) const override; // caculation part
    
 };
 
@@ -141,7 +143,7 @@ class IrinstMaxTiming: public IrinstTiming
       return S->getKind() == IrinstMax;
    }
    IrinstMaxTiming();
-   double count(llvm::BasicBlock& BB);
+   double count(llvm::BasicBlock& BB) const override;
 };
 
 class IrLminstTiming: public IrinstTiming
@@ -152,7 +154,7 @@ class IrLminstTiming: public IrinstTiming
    }
    static void load_mix(const char* file, double* cpu_times);
    IrLminstTiming();
-   double count(llvm::BasicBlock& BB);
+   double count(llvm::BasicBlock& BB) const override;
 };
 
 enum CommSpeed {
@@ -170,7 +172,7 @@ class MPITiming:
    MPITiming():TimingSource(MPI, NumCommSpeed), T(params) {
       file_initializer = load_speed;
    }
-   double count(llvm::CallInst* MPI, size_t Count);
+   double count(llvm::CallInst* MPI, size_t Count) const;
 };
 
 }

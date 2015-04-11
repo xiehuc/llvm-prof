@@ -20,7 +20,7 @@ using namespace llvm;
 #define IGN 3
 
 static 
-std::unordered_map<std::string, unsigned> MpiSpec = 
+const std::unordered_map<std::string, unsigned> MpiSpec = 
 {
    {"mpi_allreduce_" , 2} , // == 0 --- p2p
    {"mpi_bcast_"     , 1} , // == 1 --- collect
@@ -42,7 +42,6 @@ static int mpi_init_type(unsigned* DT)
 #include "datatype.h"
    return 0;
 }
-
 static int mpi_type_initialize = mpi_init_type(MpiType);
 
 #define Register(Group, Cls, name, desc)                                       \
@@ -60,11 +59,15 @@ static int mpi_type_initialize = mpi_init_type(MpiType);
 static unsigned get_datatype_index(StringRef Name, const CallInst& I)
 {
    GlobalVariable* datatype;
-   if(MpiSpec[Name] == 0)
-      datatype = dyn_cast<GlobalVariable>(I.getArgOperand(2)); // this is p2p communication
-   else 
-      datatype = dyn_cast<GlobalVariable>(I.getArgOperand(3)); // this is collect communication
-   if(datatype == NULL) return 0;
+   try{
+      if(MpiSpec.at(Name) == 0)
+         datatype = dyn_cast<GlobalVariable>(I.getArgOperand(2)); // this is p2p communication
+      else 
+         datatype = dyn_cast<GlobalVariable>(I.getArgOperand(3)); // this is collect communication
+      if(datatype == NULL) return 0;
+   }catch(std::out_of_range e){
+      return 0;
+   }
    auto CI = dyn_cast<ConstantInt>(datatype->getInitializer());
    if(CI == NULL) return 0;
    return CI->getZExtValue(); // datatype -> sizeof
@@ -82,6 +85,19 @@ TimingSource* TimingSource::Construct(const StringRef Name)
 const std::vector<TimingSourceInfoEntry>& TimingSource::Avail()
 {
    return TSIEntries;
+}
+
+void TimingSource::print(raw_ostream& OS) const
+{
+   unsigned col = 1;
+   for(auto i = params.begin(), e = params.end()-1 ; i!=e; ++i, ++col){
+      OS<<*i<<",\t";
+      if(col==5){
+         OS<<"\n";
+         col = 0;
+      }
+   }
+   OS<<"\n\n";
 }
 
 StringRef LmbenchTiming::getName(EnumTy IG)
@@ -143,12 +159,12 @@ LmbenchTiming::LmbenchTiming():
    }
    this->R = atoi(REnv);
 }
-double LmbenchTiming::count(Instruction& I)
+double LmbenchTiming::count(Instruction& I) const
 {
    return params[classify(&I)];
 }
 
-double LmbenchTiming::count(BasicBlock& BB)
+double LmbenchTiming::count(BasicBlock& BB) const
 {
    double counts = 0.0;
 
@@ -157,7 +173,7 @@ double LmbenchTiming::count(BasicBlock& BB)
    return counts;
 }
 
-double LmbenchTiming::count(const Instruction& I, double bfreq, double count)
+double LmbenchTiming::count(const Instruction& I, double bfreq, double count) const
 {
    const CallInst* CI = dyn_cast<CallInst>(&I);
    if(CI == NULL) return 0.0;
@@ -271,12 +287,12 @@ IrinstTiming::IrinstTiming():
    }
    this->R = atoi(REnv);
 }
-double IrinstTiming::count(Instruction& I)
+double IrinstTiming::count(Instruction& I) const
 {
    return params[classify(&I)];
 }
 
-double IrinstTiming::count(BasicBlock& BB)
+double IrinstTiming::count(BasicBlock& BB) const
 {
    double counts = 0.0;
 
@@ -361,7 +377,7 @@ void IrinstTiming::load_irinst(const char* file, double* cpu_times)
 }
 
 IrinstMaxTiming::IrinstMaxTiming() { this->kindof = IrinstMax; }
-double IrinstMaxTiming::count(BasicBlock &BB)
+double IrinstMaxTiming::count(BasicBlock &BB) const
 {
    double float_count = 0.0;
    double fix_count = 0.0;
@@ -408,7 +424,7 @@ void IrLminstTiming::load_mix(const char *file, double *cpu_times)
    IrinstTiming::load_irinst(file, cpu_times);
 
 }
-double IrLminstTiming::count(llvm::BasicBlock& BB)
+double IrLminstTiming::count(llvm::BasicBlock& BB) const
 {
    return IrinstTiming::count(BB);
 }
