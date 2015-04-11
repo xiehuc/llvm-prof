@@ -329,9 +329,9 @@ std::unordered_map<std::string, IrinstTiming::EnumTy> InstMap =
    {"xor",           XOR},
 
    //disabled part, we consider these ir couldn't translate to asm precisely
-   //{"icmp",          ICMP},
-   //{"fcmp",          FCMP},
-   //{"getelementptr", GETELEMENTPTR},
+   {"icmp",          ICMP},
+   {"fcmp",          FCMP},
+   {"getelementptr", GETELEMENTPTR},
    {"trunc_to",      TRUNC},
    {"zext_to",       ZEXT},
    {"sext_to",       SEXT},
