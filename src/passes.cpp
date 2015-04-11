@@ -2,7 +2,8 @@
 #include <ProfileInfo.h>
 #include <llvm/IR/Module.h>
 #include <llvm/Support/CommandLine.h>
-
+#include <fstream>
+#include <iterator>
 #include <float.h>
 
 using namespace llvm;
@@ -11,6 +12,9 @@ namespace {
 #ifndef NDEBUG
    cl::opt<bool> TimingDebug("timing-debug", cl::desc("print more detail for timing mode"));
 #endif
+   cl::opt<std::string> TimingIgnore("timing-ignore",
+                                     cl::desc("ignore list for timing mode"),
+                                     cl::init(""));
 };
 
 char ProfileInfoConverter::ID = 0;
@@ -79,6 +83,7 @@ bool ProfileTimingPrint::runOnModule(Module &M)
    for(auto S : Sources){
       if(BlockTiming < DBL_EPSILON){ // BlockTiming is Zero
          for(Module::iterator F = M.begin(), FE = M.end(); F != FE; ++F){
+            if(Ignore.count(F->getName())) continue;
 #ifndef NDEBUG
             double FuncTiming = 0.;
             size_t MaxTimes = 0;
@@ -131,6 +136,17 @@ ProfileTimingPrint::ProfileTimingPrint(std::vector<TimingSource*>&& TS,
    if(Sources.size() > Files.size()){
       errs()<<"No Enough File to initialize Timing Source\n";
       exit(-1);
+   }
+   if(TimingIgnore!=""){
+      std::ifstream IgnoreFile(TimingIgnore);
+      if(!IgnoreFile.is_open()){
+         errs()<<"Couldn't open ignore file: "<<TimingIgnore<<"\n";
+         exit(-1);
+      }
+      std::copy(std::istream_iterator<std::string>(IgnoreFile),
+                std::istream_iterator<std::string>(),
+                std::inserter(Ignore, Ignore.end()));
+      IgnoreFile.close();
    }
    for(unsigned i = 0; i < Sources.size(); ++i){
       Sources[i]->init_with_file(Files[i].c_str());

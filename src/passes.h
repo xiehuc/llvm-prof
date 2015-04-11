@@ -54,6 +54,7 @@ namespace llvm{
    class ProfileTimingPrint: public ModulePass
    {
       std::vector<TimingSource*> Sources;
+      std::set<std::string> Ignore;
       public:
       static char ID;
       ProfileTimingPrint(std::vector<TimingSource*>&& S, std::vector<std::string>& File);
