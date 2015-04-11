@@ -224,6 +224,7 @@ void LmbenchTiming::load_lmbench(const char* file, double* cpu_times)
          cpu_times[bit|op] = nanosec;
       }
    }
+   fclose(f);
 }
 
 
@@ -273,7 +274,6 @@ IrinstTiming::EnumTy IrinstTiming::classify(Instruction* I)
       case Instruction::AShr:          op = ASHR;           break;
       default: op = IrinstNumGroups;
    }
-
    return static_cast<EnumTy>(op);
 }
 IrinstTiming::IrinstTiming():
@@ -303,28 +303,35 @@ double IrinstTiming::count(BasicBlock& BB) const
 static 
 std::unordered_map<std::string, IrinstTiming::EnumTy> InstMap = 
 {
-   {"fix_add",       FIX_ADD}, 
-   {"float_add",     FLOAT_ADD},
    {"load",          LOAD},
    {"store",         STORE},
+   {"alloca",        ALLOCA},
+
+   {"fix_add",       FIX_ADD}, 
    {"fix_sub",       FIX_SUB},
-   {"float_sub",     FLOAT_SUB},
    {"fix_mul",       FIX_MUL},
-   {"float_mul",     FLOAT_MUL},
    {"u_div",         U_DIV},
    {"s_div",         S_DIV},
-   {"float_div",     FLOAT_DIV},
    {"u_rem",         U_REM},
    {"s_rem",         S_REM},
+
+   {"float_add",     FLOAT_ADD},
+   {"float_sub",     FLOAT_SUB},
+   {"float_mul",     FLOAT_MUL},
+   {"float_div",     FLOAT_DIV},
    {"float_rem",     FLOAT_REM},
+
    {"shl",           SHL},
    {"lshr",          LSHR},
    {"ashr",          ASHR},
    {"and",           AND},
    {"or",            OR},
    {"xor",           XOR},
-   {"alloca",        ALLOCA},
-   {"getelementptr", GETELEMENTPTR},
+
+   //disabled part, we consider these ir couldn't translate to asm precisely
+   //{"icmp",          ICMP},
+   //{"fcmp",          FCMP},
+   //{"getelementptr", GETELEMENTPTR},
    {"trunc_to",      TRUNC},
    {"zext_to",       ZEXT},
    {"sext_to",       SEXT},
@@ -337,14 +344,14 @@ std::unordered_map<std::string, IrinstTiming::EnumTy> InstMap =
    {"ptrtoint_to",   PTRTOINT},
    {"inttoptr_to",   INTTOPTR},
    {"bitcast_to",    BITCAST},
-   {"icmp",          ICMP},
-   {"fcmp",          FCMP},
    {"select",        SELECT},
-   //lmbench part
+
+   //lmbench part, lmbench is more precise than ours
    {"integer bit",   AND},
    {"integer add",   FIX_ADD},
    {"integer mul",   FIX_MUL},
-   {"integer div",   U_DIV},
+   {"integer div",   S_DIV},
+   {"integer mod",   S_REM},
    {"double add",    FLOAT_ADD},
    {"double mul",    FLOAT_MUL},
    {"double div",    FLOAT_DIV}
@@ -357,23 +364,24 @@ void IrinstTiming::load_irinst(const char* file, double* cpu_times)
       exit(-1);
    }
 
-   double nanosec,cycles;
+   double nanosec;
    char ops[48];
    char line[512];
    std::string tmp = "";
-   std::unordered_map<std::string, IrinstTiming::EnumTy>::iterator ite; 
+   std::unordered_map<std::string, IrinstTiming::EnumTy>::iterator ite;
    while(fgets(line,sizeof(line),f)){
       unsigned op;
-      if(sscanf(line, "%[^:]:\t%lf nanoseconds,\t%lf cycles", ops, &nanosec,&cycles)==3){
-         tmp = ops;
-         ite = InstMap.find(tmp);
-         if(ite != InstMap.end()){
-            op = ite->second;
-            cpu_times[op] = nanosec;
-         }
-         else continue;
+      if (sscanf(line, "%[^:]:\t%lf nanoseconds", ops, &nanosec) == 2) {
+        tmp = ops;
+        ite = InstMap.find(ops);
+        if (ite != InstMap.end()) {
+          op = ite->second;
+          cpu_times[op] = nanosec;
+        } else
+          continue;
       }
    }
+   fclose(f);
 }
 
 IrinstMaxTiming::IrinstMaxTiming() { this->kindof = IrinstMax; }
@@ -414,26 +422,9 @@ double IrinstMaxTiming::count(BasicBlock &BB) const
    return non_of_them + std::max(float_count, fix_count);
 }
 
-IrLminstTiming::IrLminstTiming() 
-{
-   this->kindof = IrLminst;
-   file_initializer = load_mix;
-};
-void IrLminstTiming::load_mix(const char *file, double *cpu_times)
-{
-   IrinstTiming::load_irinst(file, cpu_times);
-
-}
-double IrLminstTiming::count(llvm::BasicBlock& BB) const
-{
-   return IrinstTiming::count(BB);
-}
-
 Register(TimingSource, LmbenchTiming, "lmbench",
          "loading lmbench timing source");
 Register(TimingSource, IrinstTiming, "irinst",
          "loading llvm ir inst timing source");
 Register(TimingSource, IrinstMaxTiming, "irinst-max",
          "loading llvm ir inst timing source");
-Register(TimingSource, IrLminstTiming, "irlminst",
-         "loading llvm ir inst mix lmbench timing source");

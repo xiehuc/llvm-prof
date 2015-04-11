@@ -146,17 +146,6 @@ class IrinstMaxTiming: public IrinstTiming
    double count(llvm::BasicBlock& BB) const override;
 };
 
-class IrLminstTiming: public IrinstTiming
-{
-   public:
-   static bool classof(const TimingSource* S){
-      return S->getKind() == IrLminst;
-   }
-   static void load_mix(const char* file, double* cpu_times);
-   IrLminstTiming();
-   double count(llvm::BasicBlock& BB) const override;
-};
-
 enum CommSpeed {
    MemRead, MemWrite, NetRead, NetWrite, NumCommSpeed
 };
