@@ -128,6 +128,7 @@ class IrinstTiming:
 
    IrinstTiming();
 
+   using TimingSource::count;
    double count(llvm::Instruction& I); // caculation part
    double count(llvm::BasicBlock& BB); // caculation part
    
@@ -164,11 +165,12 @@ class MPITiming:
    public:
    typedef CommSpeed EnumTy;
    static void load_speed(const char* file, double* speed);
-   double count(llvm::CallInst* MPI, size_t Count);
+   using TimingSource::count;
 
    MPITiming():TimingSource(MPI, NumCommSpeed), T(params) {
       file_initializer = load_speed;
    }
+   double count(llvm::CallInst* MPI, size_t Count);
 };
 
 }

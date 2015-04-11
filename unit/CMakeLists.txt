@@ -12,5 +12,6 @@ add_executable(rt-test
 target_link_libraries(rt-test
    ${GTEST_LIBRARIES}
    profile_rt-static
+   pthread
    )
 
