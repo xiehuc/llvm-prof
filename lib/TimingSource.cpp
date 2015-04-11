@@ -323,7 +323,15 @@ std::unordered_map<std::string, IrinstTiming::EnumTy> InstMap =
    {"bitcast_to",    BITCAST},
    {"icmp",          ICMP},
    {"fcmp",          FCMP},
-   {"select",        SELECT}
+   {"select",        SELECT},
+   //lmbench part
+   {"integer bit",   AND},
+   {"integer add",   FIX_ADD},
+   {"integer mul",   FIX_MUL},
+   {"integer div",   U_DIV},
+   {"double add",    FLOAT_ADD},
+   {"double mul",    FLOAT_MUL},
+   {"double div",    FLOAT_DIV}
 };
 void IrinstTiming::load_irinst(const char* file, double* cpu_times)
 {
@@ -390,9 +398,26 @@ double IrinstMaxTiming::count(BasicBlock &BB)
    return non_of_them + std::max(float_count, fix_count);
 }
 
+IrLminstTiming::IrLminstTiming() 
+{
+   this->kindof = IrLminst;
+   file_initializer = load_mix;
+};
+void IrLminstTiming::load_mix(const char *file, double *cpu_times)
+{
+   IrinstTiming::load_irinst(file, cpu_times);
+
+}
+double IrLminstTiming::count(llvm::BasicBlock& BB)
+{
+   return IrinstTiming::count(BB);
+}
+
 Register(TimingSource, LmbenchTiming, "lmbench",
          "loading lmbench timing source");
 Register(TimingSource, IrinstTiming, "irinst",
          "loading llvm ir inst timing source");
 Register(TimingSource, IrinstMaxTiming, "irinst-max",
          "loading llvm ir inst timing source");
+Register(TimingSource, IrLminstTiming, "irlminst",
+         "loading llvm ir inst mix lmbench timing source");

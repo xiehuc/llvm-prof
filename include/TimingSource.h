@@ -19,6 +19,7 @@ class TimingSource{
       Lmbench,
       Irinst,
       IrinstMax,
+      IrLminst,
       MPI
    };
 
@@ -139,6 +140,17 @@ class IrinstMaxTiming: public IrinstTiming
       return S->getKind() == IrinstMax;
    }
    IrinstMaxTiming();
+   double count(llvm::BasicBlock& BB);
+};
+
+class IrLminstTiming: public IrinstTiming
+{
+   public:
+   static bool classof(const TimingSource* S){
+      return S->getKind() == IrLminst;
+   }
+   static void load_mix(const char* file, double* cpu_times);
+   IrLminstTiming();
    double count(llvm::BasicBlock& BB);
 };
 
