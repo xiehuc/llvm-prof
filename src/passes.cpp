@@ -1,10 +1,17 @@
 #include "passes.h"
 #include <ProfileInfo.h>
 #include <llvm/IR/Module.h>
+#include <llvm/Support/CommandLine.h>
 
 #include <float.h>
 
 using namespace llvm;
+
+namespace {
+#ifndef NDEBUG
+   cl::opt<bool> TimingDebug("timing-debug", cl::desc("print more detail for timing mode"));
+#endif
+};
 
 char ProfileInfoConverter::ID = 0;
 void ProfileInfoConverter::getAnalysisUsage(AnalysisUsage &AU) const
@@ -72,10 +79,34 @@ bool ProfileTimingPrint::runOnModule(Module &M)
    for(auto S : Sources){
       if(BlockTiming < DBL_EPSILON){ // BlockTiming is Zero
          for(Module::iterator F = M.begin(), FE = M.end(); F != FE; ++F){
+#ifndef NDEBUG
+            double FuncTiming = 0.;
+            size_t MaxTimes = 0;
+            double MaxCount = 0.;
+            double MaxProd = 0.;
+            StringRef MaxName;
             for(Function::iterator BB = F->begin(), BBE = F->end(); BB != BBE; ++BB){
                size_t exec_times = PI.getExecutionCount(BB);
-               BlockTiming += exec_times * S->count(*BB); // 基本块频率×基本块时间
+               double exec_count = S->count(*BB);
+               double timing = exec_times * exec_count;
+               if(timing > MaxProd){
+                  MaxProd = timing;
+                  MaxCount = exec_count;
+                  MaxTimes = exec_times;
+                  MaxName = BB->getName();
+               }
+               FuncTiming += timing; // 基本块频率×基本块时间
             }
+            if (TimingDebug)
+              outs() << FuncTiming << "\t"
+                     << "max=" << MaxTimes << "*" << MaxCount << "\t" << MaxName
+                     << "\t" << F->getName() << "\n";
+            BlockTiming += FuncTiming;
+#else
+            for(Function::iterator BB = F->begin(), BBE = F->end(); BB != BBE; ++BB){
+               BlockTiming += PI.getExecutionCount(BB) * S->count(*BB);
+            }
+#endif
          }
       }
       if(MpiTiming < DBL_EPSILON){ // MpiTiming is Zero
