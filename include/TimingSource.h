@@ -12,6 +12,11 @@ struct TimingSourceInfoEntry;
 class TimingSource{
    public:
    static TimingSource* Construct(const llvm::StringRef Name);
+   template<class T>
+   static const char* Register(const char* Name, const char* Desc){
+      TimingSource::Register_(Name, Desc, [](){return new T;});
+      return Name;
+   }
    static const std::vector<TimingSourceInfoEntry>& Avail();
 
    enum Kind {
@@ -54,12 +59,14 @@ class TimingSource{
    Kind kindof;
    void (*file_initializer)(const char* file, double* data);
    std::vector<double> params;
+   private:
+   static void Register_(const char* Name, const char* Desc, std::function<TimingSource*()> &&);
 };
 
 struct TimingSourceInfoEntry{
-   TimingSource* (*Creator)();
    StringRef Name;
    StringRef Desc;
+   std::function<TimingSource*()> Creator;
 };
 
 namespace _timing_source{
@@ -89,6 +96,7 @@ class LmbenchTiming:
 {
    unsigned R;
    public:
+   static const char* Name;
    typedef LmbenchInstGroups EnumTy;
    static llvm::StringRef getName(EnumTy);
    static EnumTy classify(llvm::Instruction* I);
@@ -121,6 +129,7 @@ class IrinstTiming:
 {
    unsigned R;
    public:
+   static const char* Name;
    typedef IrinstGroups EnumTy;
    static EnumTy classify(llvm::Instruction* I);
    static void load_irinst(const char* file, double* cpu_times);
@@ -139,6 +148,7 @@ class IrinstTiming:
 class IrinstMaxTiming: public IrinstTiming
 {
    public:
+   static const char* Name;
    static bool classof(const TimingSource* S) {
       return S->getKind() == IrinstMax;
    }

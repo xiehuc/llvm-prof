@@ -10,9 +10,8 @@
 #include <llvm/IR/Type.h>
 
 #include <errno.h>
-#include <string.h>
 #include <stdio.h>
-#include <unordered_map>
+#include <functional>
 
 #include "ValueUtils.h"
 
@@ -20,7 +19,7 @@ using namespace llvm;
 #define IGN 3
 
 static 
-const std::unordered_map<std::string, unsigned> MpiSpec = 
+const std::map<StringRef, unsigned> MpiSpec = 
 {
    {"mpi_allreduce_" , 2} , // == 0 --- p2p
    {"mpi_bcast_"     , 1} , // == 1 --- collect
@@ -44,17 +43,14 @@ static int mpi_init_type(unsigned* DT)
 }
 static int mpi_type_initialize = mpi_init_type(MpiType);
 
-#define Register(Group, Cls, name, desc)                                       \
-  static Group *Cls##__creator() { return new Cls(); }                         \
-  static int Cls##__initializer() {                                            \
-    TimingSourceInfoEntry Entry;                                               \
-    Entry.Creator = Cls##__creator;                                            \
-    Entry.Name = name;                                                         \
-    Entry.Desc = desc;                                                         \
-    TSIEntries.push_back(Entry);                                               \
-    return 0;                                                                  \
-  }                                                                            \
-  static int Cls##__initialize = Cls##__initializer();
+void TimingSource::Register_(const char* name, const char* desc, std::function<TimingSource*()>&& func)
+{
+   TimingSourceInfoEntry entry;
+   entry.Name = name;
+   entry.Desc = desc;
+   entry.Creator = func;
+   TSIEntries.push_back(std::move(entry));
+}
 
 static unsigned get_datatype_index(StringRef Name, const CallInst& I)
 {
@@ -301,7 +297,7 @@ double IrinstTiming::count(BasicBlock& BB) const
    return counts;
 }
 static 
-std::unordered_map<std::string, IrinstTiming::EnumTy> InstMap = 
+std::map<StringRef, IrinstTiming::EnumTy> InstMap = 
 {
    {"load",          LOAD},
    {"store",         STORE},
@@ -368,12 +364,11 @@ void IrinstTiming::load_irinst(const char* file, double* cpu_times)
    char ops[48];
    char line[512];
    std::string tmp = "";
-   std::unordered_map<std::string, IrinstTiming::EnumTy>::iterator ite;
    while(fgets(line,sizeof(line),f)){
       unsigned op;
       if (sscanf(line, "%[^:]:\t%lf nanoseconds", ops, &nanosec) == 2) {
         tmp = ops;
-        ite = InstMap.find(ops);
+        auto ite = InstMap.find(ops);
         if (ite != InstMap.end()) {
           op = ite->second;
           cpu_times[op] = nanosec;
@@ -422,9 +417,9 @@ double IrinstMaxTiming::count(BasicBlock &BB) const
    return non_of_them + std::max(float_count, fix_count);
 }
 
-Register(TimingSource, LmbenchTiming, "lmbench",
-         "loading lmbench timing source");
-Register(TimingSource, IrinstTiming, "irinst",
-         "loading llvm ir inst timing source");
-Register(TimingSource, IrinstMaxTiming, "irinst-max",
-         "loading llvm ir inst timing source");
+const char* LmbenchTiming::Name = TimingSource::Register<LmbenchTiming>(
+    "lmbench", "loading lmbench timing source");
+const char* IrinstTiming::Name = TimingSource::Register<IrinstTiming>(
+    "irinst", "loading llvm ir inst timing source");
+const char* IrinstMaxTiming::Name = TimingSource::Register<IrinstMaxTiming>(
+    "irinst-max", "loading llvm ir inst timing source");
