@@ -13,6 +13,7 @@
 #include <stdio.h>
 #include <functional>
 
+#include "FreeExpression.h"
 #include "ValueUtils.h"
 
 using namespace llvm;
@@ -276,12 +277,6 @@ IrinstTiming::IrinstTiming():
    TimingSource(Irinst,IrinstNumGroups), 
    T(params) {
    file_initializer = load_irinst;
-   char* REnv = getenv("MPI_SIZE");
-   if(REnv == NULL){
-      errs()<<"please set environment MPI_SIZE same as when profiling\n";
-      exit(-1);
-   }
-   this->R = atoi(REnv);
 }
 double IrinstTiming::count(Instruction& I) const
 {
@@ -417,9 +412,100 @@ double IrinstMaxTiming::count(BasicBlock &BB) const
    return non_of_them + std::max(float_count, fix_count);
 }
 
+MPBenchTiming::MPBenchTiming():TimingSource(MPBench, 0)
+{
+   file_initializer = NULL;
+   bandwidth = latency = NULL;
+   char* REnv = getenv("MPI_SIZE");
+   if(REnv == NULL){
+      errs()<<"please set environment MPI_SIZE same as when profiling\n";
+      exit(-1);
+   }
+   this->R = atoi(REnv);
+}
+
+MPBenchTiming::~MPBenchTiming()
+{
+   if(bandwidth) delete bandwidth;
+   if(latency) delete latency;
+}
+
+void MPBenchTiming::init_with_file(const char* file)
+{
+   FILE* f = fopen(file,"r");
+   if(f == NULL){
+      fprintf(stderr, "Could not open %s file: %s", file, strerror(errno));
+      exit(-1);
+   }
+   char line[512], field[128], group[128];
+   unsigned off;
+   while (fgets(line, sizeof(line), f)) {
+      if (sscanf(line, "%127[^:]: %127[^:]: %n", field, group, &off) != 2)
+         continue;
+      FreeExpression** expr;
+      if (strcmp(field, "mpi_bandwidth") == 0)
+         expr = &bandwidth;
+      else if (strcmp(field, "mpi_latency") == 0)
+         expr = &latency;
+      else continue;
+      *expr = FreeExpression::Construct(group);
+      if(*expr == NULL){
+         fprintf(stderr, "Couldn't construct free expression: %s", group);
+         exit(-1);
+      }
+      (*expr)->init_param(line+off);
+   }
+}
+
+double MPBenchTiming::count(const llvm::Instruction& I, double bfreq,
+                 double count) const
+{
+   const CallInst* CI = dyn_cast<CallInst>(&I);
+   if(CI == NULL) return 0.;
+   Function* F = dyn_cast<Function>(lle::castoff(const_cast<Value*>(CI->getCalledValue())));
+   if(F == NULL) return 0.;
+   StringRef FName = F->getName();
+   if(!FName.startswith("mpi_")) return 0.0;
+   auto Spec = MpiSpec.find(FName);
+   if(Spec == MpiSpec.end()){
+      errs()<<"WARNNING: doesn't consider "<<FName<<" mpi call\n";
+      return 0.;
+   }
+   unsigned C = Spec->second;
+   if(C == IGN) return 0.0;
+   size_t D = get_datatype_index(FName, *CI);
+   if(D == 0){
+      errs()<<"WARNNING: doesn't consider MPI_datatype "<<D<<"\n";
+      return 0.; // 避免传入0到自由表达式，因为有些会用于分母(除0异常)
+   }
+   //D = count * MpiType[D];
+   D = MpiType[D];
+   if (C == 0) {
+      return bfreq * (*latency)(D) + count * D / (*bandwidth)(D);
+   } else
+      return bfreq * (*latency)(D) + C * count * D * log(R) / (*bandwidth)(D);
+}
+
+void MPBenchTiming::print(llvm::raw_ostream &OS) const
+{
+   OS<<"mpi_bandwidth: ";
+   if (bandwidth)
+      bandwidth->print(OS);
+   else
+      OS << "(NULL)";
+   OS << "\nmpi_latency: ";
+   if (latency)
+      latency->print(OS);
+   else
+      OS << "(NULL)";
+   OS << "\n";
+}
+
 const char* LmbenchTiming::Name = TimingSource::Register<LmbenchTiming>(
     "lmbench", "loading lmbench timing source");
 const char* IrinstTiming::Name = TimingSource::Register<IrinstTiming>(
     "irinst", "loading llvm ir inst timing source");
 const char* IrinstMaxTiming::Name = TimingSource::Register<IrinstMaxTiming>(
     "irinst-max", "loading llvm ir inst timing source");
+const char* MPBenchTiming::Name = TimingSource::Register<MPBenchTiming>(
+    "mpbench", "loading mpbench timing source");

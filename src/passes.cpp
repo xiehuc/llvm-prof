@@ -149,7 +149,10 @@ ProfileTimingPrint::ProfileTimingPrint(std::vector<TimingSource*>&& TS,
       IgnoreFile.close();
    }
    for(unsigned i = 0; i < Sources.size(); ++i){
-      Sources[i]->init_with_file(Files[i].c_str());
+      if(auto MPB = dyn_cast<MPBenchTiming>(Sources[i]))
+         MPB->init_with_file(Files[i].c_str());
+      else
+         Sources[i]->init_with_file(Files[i].c_str());
 #ifndef NDEBUG
       if(TimingDebug){
          outs()<<"parsed "<<Files[i]<<" file's content:\n";

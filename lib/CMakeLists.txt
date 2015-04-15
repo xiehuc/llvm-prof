@@ -23,6 +23,7 @@ set(SOURCES
    PredBlockProfiling.cpp
    datatype.h
    InstTemplate.cpp
+   FreeExpression.cpp
 	)
 #some platform need disable rtti to void 
 #undefined reference `typeinfo for xxx`

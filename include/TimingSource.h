@@ -5,8 +5,9 @@
 #include <llvm/ADT/SmallVector.h>
 #include <llvm/IR/GlobalVariable.h>
 
-/* a timing source is used to count inst types in a basicblock */
+class FreeExpression;
 
+/* a timing source is used to count inst types in a basicblock */
 namespace llvm{
 struct TimingSourceInfoEntry;
 class TimingSource{
@@ -24,8 +25,7 @@ class TimingSource{
       Lmbench,
       Irinst,
       IrinstMax,
-      IrLminst,
-      MPI
+      MPBench
    };
 
    TimingSource(Kind K, size_t NumParam):kindof(K){
@@ -127,7 +127,6 @@ enum IrinstGroups {
 class IrinstTiming: 
    public TimingSource, public _timing_source::T<IrinstGroups>
 {
-   unsigned R;
    public:
    static const char* Name;
    typedef IrinstGroups EnumTy;
@@ -156,22 +155,29 @@ class IrinstMaxTiming: public IrinstTiming
    double count(llvm::BasicBlock& BB) const override;
 };
 
-enum CommSpeed {
-   MemRead, MemWrite, NetRead, NetWrite, NumCommSpeed
-};
-
-class MPITiming:
-   public TimingSource, _timing_source::T<CommSpeed>
-{
+/** if need init with file, should first cast TimingSource to
+ * MPBenchTiming, then use it's init_with_file.
+ * because it's init_with_file differs from TimingSource's
+ */
+class MPBenchTiming : public TimingSource {
    public:
-   typedef CommSpeed EnumTy;
-   static void load_speed(const char* file, double* speed);
-   using TimingSource::count;
-
-   MPITiming():TimingSource(MPI, NumCommSpeed), T(params) {
-      file_initializer = load_speed;
+   static const char* Name;
+   static bool classof(const TimingSource* S) {
+      return S->getKind() == MPBench;
    }
-   double count(llvm::CallInst* MPI, size_t Count) const;
+
+   MPBenchTiming();
+   ~MPBenchTiming();
+   void init_with_file(const char* file);
+
+   using TimingSource::count;
+   double count(const llvm::Instruction &I, double bfreq,
+                double count) const override;
+   void print(llvm::raw_ostream&) const override;
+   private: 
+   FreeExpression* bandwidth;
+   FreeExpression* latency;
+   unsigned R;
 };
 
 }
