@@ -214,7 +214,7 @@ void LmbenchTiming::load_lmbench(const char* file, double* cpu_times)
       }else if(sscanf(line, "AF_UNIX sock stream bandwidth: %lf MB/sec",
                &mbpsec)==1) {
          cpu_times[SOCK_BANDWIDTH] = mbpsec * 1024*1024/1000000000; // MB/sec -> B/ns
-      } else if(sscanf(line, "%s %[^:]: %lf nanoseconds", bits, ops, &nanosec)==3){
+      } else if(sscanf(line, "%47s %47[^:]: %lf nanoseconds", bits, ops, &nanosec)==3){
          bit = eq(bits,"integer")?Integer:eq(bits,"int64")?I64:eq(bits,"float")?Float:eq(bits,"double")?Double:-1U;
          op = eq(ops,"add")?Add:eq(ops,"mul")?Mul:eq(ops,"div")?Div:eq(ops,"mod")?Mod:-1U;
          if(bit == -1U || op == -1U) continue;
@@ -361,7 +361,7 @@ void IrinstTiming::load_irinst(const char* file, double* cpu_times)
    std::string tmp = "";
    while(fgets(line,sizeof(line),f)){
       unsigned op;
-      if (sscanf(line, "%[^:]:\t%lf nanoseconds", ops, &nanosec) == 2) {
+      if (sscanf(line, "%47[^:]:\t%lf nanoseconds", ops, &nanosec) == 2) {
         tmp = ops;
         auto ite = InstMap.find(ops);
         if (ite != InstMap.end()) {
