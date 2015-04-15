@@ -118,7 +118,12 @@ bool ProfileTimingPrint::runOnModule(Module &M)
          for(auto I : PI.getAllTrapedValues(MPInfo)){
             const CallInst* CI = cast<CallInst>(I);
             const BasicBlock* BB = CI->getParent();
+            if(Ignore.count(BB->getParent()->getName())) continue;
             double timing = S->count(*I, PI.getExecutionCount(BB), PI.getExecutionCount(CI)); // IO 模型
+#ifndef NDEBUG
+            if(TimingDebug)
+               outs() << "  " << PI.getTrapedIndex(I) << "\t" << timing << "\n";
+#endif
             MpiTiming += timing;
          }
       }
