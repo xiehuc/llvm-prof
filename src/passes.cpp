@@ -80,8 +80,10 @@ bool ProfileTimingPrint::runOnModule(Module &M)
 {
    ProfileInfo& PI = getAnalysis<ProfileInfo>();
    double AbsoluteTiming = 0.0, BlockTiming = 0.0, MpiTiming = 0.0;
-   for(auto S : Sources){
-      if(BlockTiming < DBL_EPSILON){ // BlockTiming is Zero
+   for(TimingSource* S : Sources){
+      if (isa<BBlockTiming>(S)
+          && BlockTiming < DBL_EPSILON) { // BlockTiming is Zero
+         auto BT = cast<BBlockTiming>(S);
          for(Module::iterator F = M.begin(), FE = M.end(); F != FE; ++F){
             if(Ignore.count(F->getName())) continue;
 #ifndef NDEBUG
@@ -92,7 +94,7 @@ bool ProfileTimingPrint::runOnModule(Module &M)
             StringRef MaxName;
             for(Function::iterator BB = F->begin(), BBE = F->end(); BB != BBE; ++BB){
                size_t exec_times = PI.getExecutionCount(BB);
-               double exec_count = S->count(*BB);
+               double exec_count = BT->count(*BB);
                double timing = exec_times * exec_count;
                if(timing > MaxProd){
                   MaxProd = timing;
@@ -114,12 +116,13 @@ bool ProfileTimingPrint::runOnModule(Module &M)
 #endif
          }
       }
-      if(MpiTiming < DBL_EPSILON){ // MpiTiming is Zero
+      if(isa<MPITiming>(S) && MpiTiming < DBL_EPSILON){ // MpiTiming is Zero
+         auto MT = cast<MPITiming>(S);
          for(auto I : PI.getAllTrapedValues(MPInfo)){
             const CallInst* CI = cast<CallInst>(I);
             const BasicBlock* BB = CI->getParent();
             if(Ignore.count(BB->getParent()->getName())) continue;
-            double timing = S->count(*I, PI.getExecutionCount(BB), PI.getExecutionCount(CI)); // IO 模型
+            double timing = MT->count(*I, PI.getExecutionCount(BB), PI.getExecutionCount(CI)); // IO 模型
 #ifndef NDEBUG
             if(TimingDebug)
                outs() << "  " << PI.getTrapedIndex(I) << "\t" << timing << "\n";
@@ -154,10 +157,7 @@ ProfileTimingPrint::ProfileTimingPrint(std::vector<TimingSource*>&& TS,
       IgnoreFile.close();
    }
    for(unsigned i = 0; i < Sources.size(); ++i){
-      if(auto MPB = dyn_cast<MPBenchTiming>(Sources[i]))
-         MPB->init_with_file(Files[i].c_str());
-      else
-         Sources[i]->init_with_file(Files[i].c_str());
+      Sources[i]->init_with_file(Files[i].c_str());
 #ifndef NDEBUG
       if(TimingDebug){
          outs()<<"parsed "<<Files[i]<<" file's content:\n";

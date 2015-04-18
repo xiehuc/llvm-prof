@@ -20,18 +20,18 @@ class TimingSource{
    }
    static const std::vector<TimingSourceInfoEntry>& Avail();
 
-   enum Kind {
+   enum class Kind {
       Base,
+      BBlock,
       Lmbench,
       Irinst,
       IrinstMax,
-      MPBench
+      BBlockLast,
+      MPI = BBlockLast,
+      MPBench,
+      MPILast
    };
 
-   TimingSource(Kind K, size_t NumParam):kindof(K){
-      // prevent return NumGroup, which out of range
-      params.resize(NumParam+1); 
-   }
    virtual ~TimingSource(){};
    //在该模式中, 立即从文件中读取Timing数据并计算//
    /* init unit_times with nanoseconds unit.
@@ -50,20 +50,42 @@ class TimingSource{
    }
    Kind getKind() const { return kindof;}
 
-   virtual double count(llvm::BasicBlock &BB) const {return 0.;} // caculation part
-   virtual double count(const llvm::Instruction &I, double bfreq,
-                        double count) const{return 0.;} // io part
    virtual void print(llvm::raw_ostream&) const;
 
    protected:
    Kind kindof;
    void (*file_initializer)(const char* file, double* data);
    std::vector<double> params;
+
+   TimingSource(Kind K, size_t NumParam):kindof(K){
+      // prevent return NumGroup, which out of range
+      params.resize(NumParam+1); 
+   }
    private:
    static void Register_(const char* Name, const char* Desc, std::function<TimingSource*()> &&);
 };
 
-struct TimingSourceInfoEntry{
+struct BBlockTiming
+{
+   static bool classof(const TimingSource* S)
+   {
+      return S->getKind() < S->Kind::BBlockLast
+             && S->getKind() > S->Kind::BBlock;
+   }
+   virtual double count(llvm::BasicBlock& BB) const = 0;
+};
+
+struct MPITiming
+{
+   static bool classof(const TimingSource* S)
+   {
+      return S->getKind() < S->Kind::MPILast && S->getKind() > S->Kind::MPI;
+   }
+   virtual double count(const llvm::Instruction& I, double bfreq,
+                        double count) const = 0; // io part
+};
+
+struct TimingSourceInfoEntry {
    StringRef Name;
    StringRef Desc;
    std::function<TimingSource*()> Creator;
@@ -91,18 +113,22 @@ enum LmbenchInstGroups {
    NumGroups
 };
 
-class LmbenchTiming: 
-   public TimingSource, public _timing_source::T<LmbenchInstGroups>
+class LmbenchTiming : public TimingSource,
+                      public BBlockTiming,
+                      public MPITiming,
+                      public _timing_source::T<LmbenchInstGroups> 
 {
    unsigned R;
+
    public:
    static const char* Name;
    typedef LmbenchInstGroups EnumTy;
    static llvm::StringRef getName(EnumTy);
    static EnumTy classify(llvm::Instruction* I);
    static void load_lmbench(const char* file, double* cpu_times);
-   static bool classof(const TimingSource* S) {
-      return S->getKind() == Lmbench;
+   static bool classof(const TimingSource* S)
+   {
+      return S->getKind() == Kind::Lmbench;
    }
 
    LmbenchTiming();
@@ -110,7 +136,7 @@ class LmbenchTiming:
    double count(llvm::Instruction& I) const; // caculation part
    double count(llvm::BasicBlock& BB) const override; // caculation part
 
-   double count(const llvm::Instruction &I, double bfreq,
+   double count(const llvm::Instruction& I, double bfreq,
                 double count) const override;
 };
 
@@ -124,8 +150,9 @@ enum IrinstGroups {
    SELECT    ,
    IrinstNumGroups
 };
-class IrinstTiming: 
-   public TimingSource, public _timing_source::T<IrinstGroups>
+class IrinstTiming : public TimingSource,
+                     public BBlockTiming,
+                     public _timing_source::T<IrinstGroups> 
 {
    public:
    static const char* Name;
@@ -133,15 +160,13 @@ class IrinstTiming:
    static EnumTy classify(llvm::Instruction* I);
    static void load_irinst(const char* file, double* cpu_times);
    static bool classof(const TimingSource* S) {
-      return S->getKind() == Irinst;
+      return S->getKind() == Kind::Irinst;
    }
 
    IrinstTiming();
 
-   using TimingSource::count;
    double count(llvm::Instruction& I) const; // caculation part
    double count(llvm::BasicBlock& BB) const override; // caculation part
-   
 };
 
 class IrinstMaxTiming: public IrinstTiming
@@ -149,7 +174,7 @@ class IrinstMaxTiming: public IrinstTiming
    public:
    static const char* Name;
    static bool classof(const TimingSource* S) {
-      return S->getKind() == IrinstMax;
+      return S->getKind() == Kind::IrinstMax;
    }
    IrinstMaxTiming();
    double count(llvm::BasicBlock& BB) const override;
@@ -159,18 +184,18 @@ class IrinstMaxTiming: public IrinstTiming
  * MPBenchTiming, then use it's init_with_file.
  * because it's init_with_file differs from TimingSource's
  */
-class MPBenchTiming : public TimingSource {
+class MPBenchTiming : public TimingSource, public MPITiming 
+{
    public:
    static const char* Name;
    static bool classof(const TimingSource* S) {
-      return S->getKind() == MPBench;
+      return S->getKind() == Kind::MPBench;
    }
 
    MPBenchTiming();
    ~MPBenchTiming();
    void init_with_file(const char* file);
 
-   using TimingSource::count;
    double count(const llvm::Instruction &I, double bfreq,
                 double count) const override;
    void print(llvm::raw_ostream&) const override;

@@ -146,7 +146,7 @@ LmbenchTiming::EnumTy LmbenchTiming::classify(Instruction* I)
 }
 
 LmbenchTiming::LmbenchTiming():
-   TimingSource(Lmbench, NumGroups), 
+   TimingSource(Kind::Lmbench, NumGroups), 
    T(params) {
    file_initializer = load_lmbench;
    char* REnv = getenv("MPI_SIZE");
@@ -274,7 +274,7 @@ IrinstTiming::EnumTy IrinstTiming::classify(Instruction* I)
    return static_cast<EnumTy>(op);
 }
 IrinstTiming::IrinstTiming():
-   TimingSource(Irinst,IrinstNumGroups), 
+   TimingSource(Kind::Irinst,IrinstNumGroups), 
    T(params) {
    file_initializer = load_irinst;
 }
@@ -374,7 +374,7 @@ void IrinstTiming::load_irinst(const char* file, double* cpu_times)
    fclose(f);
 }
 
-IrinstMaxTiming::IrinstMaxTiming() { this->kindof = IrinstMax; }
+IrinstMaxTiming::IrinstMaxTiming() { this->kindof = Kind::IrinstMax; }
 double IrinstMaxTiming::count(BasicBlock &BB) const
 {
    double float_count = 0.0;
@@ -412,7 +412,8 @@ double IrinstMaxTiming::count(BasicBlock &BB) const
    return non_of_them + std::max(float_count, fix_count);
 }
 
-MPBenchTiming::MPBenchTiming():TimingSource(MPBench, 0)
+MPBenchTiming::MPBenchTiming()
+    : TimingSource(Kind::MPBench, 0)
 {
    file_initializer = NULL;
    bandwidth = latency = NULL;
