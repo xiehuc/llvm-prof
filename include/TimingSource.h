@@ -38,14 +38,14 @@ class TimingSource{
     * @example:
     *    init(std::bind(TimingSource::load_lmbench, "lmbench.log", _1));
     */
-   void init(std::function<void(double*)> func){
+   virtual void init(std::function<void(double*)> func){
       func(params.data());
    }
-   void init(std::initializer_list<double> list) {
+   virtual void init(std::initializer_list<double> list) {
       params.clear();
       params.assign(list);
    }
-   void init_with_file(const char* file) {
+   virtual void init_with_file(const char* file) {
       init(std::bind(file_initializer, file, std::placeholders::_1));
    }
    Kind getKind() const { return kindof;}
