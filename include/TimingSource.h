@@ -65,24 +65,30 @@ class TimingSource{
    static void Register_(const char* Name, const char* Desc, std::function<TimingSource*()> &&);
 };
 
-struct BBlockTiming
+class BBlockTiming: public TimingSource
 {
+   public:
    static bool classof(const TimingSource* S)
    {
       return S->getKind() < S->Kind::BBlockLast
              && S->getKind() > S->Kind::BBlock;
    }
    virtual double count(llvm::BasicBlock& BB) const = 0;
+   protected:
+   BBlockTiming(Kind K, size_t N):TimingSource(K,N) {}
 };
 
-struct MPITiming
+class MPITiming: public TimingSource
 {
+   public:
    static bool classof(const TimingSource* S)
    {
       return S->getKind() < S->Kind::MPILast && S->getKind() > S->Kind::MPI;
    }
    virtual double count(const llvm::Instruction& I, double bfreq,
                         double count) const = 0; // io part
+   protected:
+   MPITiming(Kind K, size_t N):TimingSource(K, N) {}
 };
 
 struct TimingSourceInfoEntry {
@@ -108,18 +114,12 @@ enum LmbenchInstGroups {
    Integer = 0, I64 = 1, Float = 2, Double = 3,    // Ntype
    Add = 0<<2, Mul = 1<<2, Div = 2<<2, Mod = 3<<2, // Method
    Last = Double|Mod,                              // Method | Ntype unit: nanosecond
-   SOCK_BANDWIDTH,                                 // unit: MB/sec
-   SOCK_LATENCY,                                   // unit: microsecond
    NumGroups
 };
 
-class LmbenchTiming : public TimingSource,
-                      public BBlockTiming,
-                      public MPITiming,
+class LmbenchTiming : public BBlockTiming,
                       public _timing_source::T<LmbenchInstGroups> 
 {
-   unsigned R;
-
    public:
    static const char* Name;
    typedef LmbenchInstGroups EnumTy;
@@ -135,9 +135,6 @@ class LmbenchTiming : public TimingSource,
 
    double count(llvm::Instruction& I) const; // caculation part
    double count(llvm::BasicBlock& BB) const override; // caculation part
-
-   double count(const llvm::Instruction& I, double bfreq,
-                double count) const override;
 };
 
 enum IrinstGroups {
@@ -150,8 +147,7 @@ enum IrinstGroups {
    SELECT    ,
    IrinstNumGroups
 };
-class IrinstTiming : public TimingSource,
-                     public BBlockTiming,
+class IrinstTiming : public BBlockTiming,
                      public _timing_source::T<IrinstGroups> 
 {
    public:
@@ -184,7 +180,7 @@ class IrinstMaxTiming: public IrinstTiming
  * MPBenchTiming, then use it's init_with_file.
  * because it's init_with_file differs from TimingSource's
  */
-class MPBenchTiming : public TimingSource, public MPITiming 
+class MPBenchTiming : public MPITiming 
 {
    public:
    static const char* Name;

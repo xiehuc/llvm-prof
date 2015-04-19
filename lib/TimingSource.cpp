@@ -146,15 +146,9 @@ LmbenchTiming::EnumTy LmbenchTiming::classify(Instruction* I)
 }
 
 LmbenchTiming::LmbenchTiming():
-   TimingSource(Kind::Lmbench, NumGroups), 
+   BBlockTiming(Kind::Lmbench, NumGroups), 
    T(params) {
    file_initializer = load_lmbench;
-   char* REnv = getenv("MPI_SIZE");
-   if(REnv == NULL){
-      errs()<<"please set environment MPI_SIZE same as when profiling\n";
-      exit(-1);
-   }
-   this->R = atoi(REnv);
 }
 double LmbenchTiming::count(Instruction& I) const
 {
@@ -170,51 +164,22 @@ double LmbenchTiming::count(BasicBlock& BB) const
    return counts;
 }
 
-double LmbenchTiming::count(const Instruction& I, double bfreq, double count) const
-{
-   const CallInst* CI = dyn_cast<CallInst>(&I);
-   if(CI == NULL) return 0.0;
-   Function* F = dyn_cast<Function>(lle::castoff(const_cast<Value*>(CI->getCalledValue())));
-   if(F == NULL) return 0.0;
-   StringRef FName = F->getName();
-   if(!FName.startswith("mpi_")) return 0.0;
-   auto Spec = MpiSpec.find(FName);
-   if(Spec == MpiSpec.end()){
-      errs()<<"WARNNING: doesn't consider "<<FName<<" mpi call\n";
-      return 0.0;
-   }
-   unsigned C = Spec->second;
-   if(C == IGN) return 0.0;
-   size_t D = get_datatype_index(FName, *CI);
-   if(D == 0) errs()<<"WARNNING: doesn't consider MPI_datatype "<<D<<"\n";
-   D = count * MpiType[D];
-   if(C == 0){
-      return bfreq*get(SOCK_LATENCY) + D/get(SOCK_BANDWIDTH);
-   }else
-      return bfreq*get(SOCK_LATENCY) + C*D*log(R)/get(SOCK_BANDWIDTH);
-}
 
-#define eq(a,b) (strcmp(a,b)==0)
 void LmbenchTiming::load_lmbench(const char* file, double* cpu_times)
 {
+#define eq(a,b) (strcmp(a,b)==0)
    FILE* f = fopen(file,"r");
    if(f == NULL){
       fprintf(stderr, "Could not open %s file: %s", file, strerror(errno));
       exit(-1);
    }
 
-   double nanosec, mbpsec, microsec;
+   double nanosec;
    char bits[48], ops[48];
    char line[512];
    while(fgets(line,sizeof(line),f)){
       unsigned bit,op;
-      if(sscanf(line, "AF_UNIX sock stream latency: %lf microseconds",
-               &microsec)==1) {
-         cpu_times[SOCK_LATENCY] = microsec * 1000; // ms -> ns
-      }else if(sscanf(line, "AF_UNIX sock stream bandwidth: %lf MB/sec",
-               &mbpsec)==1) {
-         cpu_times[SOCK_BANDWIDTH] = mbpsec * 1024*1024/1000000000; // MB/sec -> B/ns
-      } else if(sscanf(line, "%47s %47[^:]: %lf nanoseconds", bits, ops, &nanosec)==3){
+      if(sscanf(line, "%47s %47[^:]: %lf nanoseconds", bits, ops, &nanosec)==3){
          bit = eq(bits,"integer")?Integer:eq(bits,"int64")?I64:eq(bits,"float")?Float:eq(bits,"double")?Double:-1U;
          op = eq(ops,"add")?Add:eq(ops,"mul")?Mul:eq(ops,"div")?Div:eq(ops,"mod")?Mod:-1U;
          if(bit == -1U || op == -1U) continue;
@@ -222,6 +187,7 @@ void LmbenchTiming::load_lmbench(const char* file, double* cpu_times)
       }
    }
    fclose(f);
+#undef eq
 }
 
 
@@ -274,7 +240,7 @@ IrinstTiming::EnumTy IrinstTiming::classify(Instruction* I)
    return static_cast<EnumTy>(op);
 }
 IrinstTiming::IrinstTiming():
-   TimingSource(Kind::Irinst,IrinstNumGroups), 
+   BBlockTiming(Kind::Irinst,IrinstNumGroups), 
    T(params) {
    file_initializer = load_irinst;
 }
@@ -413,7 +379,7 @@ double IrinstMaxTiming::count(BasicBlock &BB) const
 }
 
 MPBenchTiming::MPBenchTiming()
-    : TimingSource(Kind::MPBench, 0)
+    : MPITiming(Kind::MPBench, 0)
 {
    file_initializer = NULL;
    bandwidth = latency = NULL;
