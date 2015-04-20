@@ -26,6 +26,9 @@ class Module;
 class Function;
 class BasicBlock;
 
+raw_ostream& operator<<(raw_ostream& O,
+                        std::pair<const BasicBlock*, const BasicBlock*> E);
+
 class ProfileInfoLoader {
   const std::string &Filename;
   std::vector<std::string> CommandLines;

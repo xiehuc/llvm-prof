@@ -1,30 +1,30 @@
 set(SOURCES
-   ValueUtils.cpp
-	ValueProfiling.cpp
-   SLGlobalProfiling.cpp
-	EdgeProfiling.cpp
-	#GCOVProfiling.cpp					#seems llvm 3.4 keeps gcov profiling
-	OptimalEdgeProfiling.cpp
-	PathProfileInfo.cpp
-	PathProfileVerifier.cpp
-	PathProfiling.cpp
-	PathNumbering.cpp
-	ProfileDataLoader.cpp
-	ProfileDataLoaderPass.cpp
-	ProfileEstimatorPass.cpp
-	ProfileInfo.cpp
-	ProfileInfoLoader.cpp
-   ProfileInfoWriter.cpp
-	ProfileInfoLoaderPass.cpp
-	ProfileVerifierPass.cpp
-	ProfilingUtils.cpp
-   TimingSource.cpp
-   MPIProfiling.cpp
-   PredBlockProfiling.cpp
-   datatype.h
-   InstTemplate.cpp
-   FreeExpression.cpp
-	)
+  ValueUtils.cpp
+  ValueProfiling.cpp
+  SLGlobalProfiling.cpp
+  EdgeProfiling.cpp
+  #GCOVProfiling.cpp					#seems llvm 3.4 keeps gcov profiling
+  OptimalEdgeProfiling.cpp
+  PathProfileInfo.cpp
+  PathProfileVerifier.cpp
+  PathProfiling.cpp
+  PathNumbering.cpp
+  #ProfileDataLoader.cpp
+  #ProfileDataLoaderPass.cpp
+  ProfileEstimatorPass.cpp
+  ProfileInfo.cpp
+  ProfileInfoLoader.cpp
+  ProfileInfoWriter.cpp
+  ProfileInfoLoaderPass.cpp
+  ProfileVerifierPass.cpp
+  ProfilingUtils.cpp
+  TimingSource.cpp
+  MPIProfiling.cpp
+  PredBlockProfiling.cpp
+  datatype.h
+  InstTemplate.cpp
+  FreeExpression.cpp
+  )
 #some platform need disable rtti to void 
 #undefined reference `typeinfo for xxx`
 add_definitions(-Wall -fno-rtti -std=c++11)
