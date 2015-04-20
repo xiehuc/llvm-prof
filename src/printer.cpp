@@ -243,10 +243,10 @@ void ProfileInfoPrinterPass::printSLGCounts()
    }
 }
 
-void ProfileInfoPrinterPass::printMPICounts()
+void ProfileInfoPrinterPass::printMPICounts(ProfilingType Info)
 {
    ProfileInfo& PI = getAnalysis<ProfileInfo>();
-   auto trapes = PI.getAllTrapedValues(MPInfo);
+   auto trapes = PI.getAllTrapedValues(Info);
    if(trapes.empty()) return;
 
    outs() << "\n===" << std::string(73, '-') << "===\n";
@@ -365,7 +365,8 @@ bool ProfileInfoPrinterPass::runOnModule(Module &M) {
 	FunctionToPrint = printBasicBlockCounts(Counts);
 	printValueCounts();
    printSLGCounts();
-   printMPICounts();
+   printMPICounts(MPInfo);
+   printMPICounts(MPIFullInfo);
 	printAnnotatedCode(FunctionToPrint,M);
 
 	return false;
