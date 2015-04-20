@@ -445,12 +445,12 @@ double MPBenchTiming::count(const llvm::Instruction& I, double bfreq,
       errs()<<"WARNNING: doesn't consider MPI_datatype "<<D<<"\n";
       return 0.; // 避免传入0到自由表达式，因为有些会用于分母(除0异常)
    }
-   //D = count * MpiType[D];
-   D = MpiType[D];
+   D = count * MpiType[D];
+   double O = D/bfreq; // 一次通信量
    if (C == 0) {
-      return bfreq * (*latency)(D) + count * D / (*bandwidth)(D);
+      return bfreq * (*latency)(O) + D / (*bandwidth)(O);
    } else
-      return bfreq * (*latency)(D) + C * count * D * log(R) / (*bandwidth)(D);
+      return bfreq * (*latency)(O) + C * D * log(R) / (*bandwidth)(O);
 }
 
 void MPBenchTiming::print(llvm::raw_ostream &OS) const
