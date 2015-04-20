@@ -88,7 +88,11 @@ namespace llvm {
 
     std::map<const Instruction*, SLGCounts> SLGInformation;
 
-    std::map<const CallInst*, MPICounts> MPInformation;
+    // MPICounts = count
+    std::map<const CallInst*, MPICounts> MPInformation; // old mpi profiling format
+
+    // MPICounts = count * size(fortran_type)
+    std::map<const CallInst*, MPICounts> MPIFullInformation; // new mpi profiling format
 
     ProfileInfoT<MachineFunction, MachineBasicBlock> *MachineProfile;
   public:

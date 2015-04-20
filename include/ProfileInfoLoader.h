@@ -41,6 +41,7 @@ class ProfileInfoLoader {
   std::vector<std::vector<int> > ValueContents;
   std::vector<unsigned>    SLGCounts;
   std::vector<unsigned>    MPICounts;
+  std::vector<unsigned>    MPIFullCounters; // new mpi profiling format
 public:
   // ProfileInfoLoader ctor - Read the specified profiling data file, exiting
   // the program if the file is invalid or broken.
@@ -95,6 +96,10 @@ public:
 
   const std::vector<unsigned> &getRawMPICounts() const {
      return MPICounts;
+  }
+
+  const std::vector<unsigned> &getRawMPIFullCounts() const {
+     return MPIFullCounters;
   }
 
 };

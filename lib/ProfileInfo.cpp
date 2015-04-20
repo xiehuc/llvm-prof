@@ -68,6 +68,8 @@ ProfileInfoT<Function,BasicBlock>::getExecutionCount(const CallInst* V) {
 	std::map<const CallInst*,ValueCounts>::iterator J = 
 		ValueInformation.find(V);
 	if(J != ValueInformation.end()) return (double)J->second.Nums;
+   auto L = MPIFullInformation.find(V);
+   if(L != MPIFullInformation.end()) return (double) L->second.second;
    auto K = MPInformation.find(V);
    if(K != MPInformation.end()) return (double) K->second.second;
 	return MissingValue;
@@ -121,7 +123,10 @@ template<> unsigned
 ProfileInfoT<Function,BasicBlock>::getTrapedIndex(const Instruction* V) 
 {
    if(const CallInst* CI = dyn_cast<CallInst>(V)){
-      auto Found = MPInformation.find(CI);
+      auto Found = MPIFullInformation.find(CI);
+      if(Found != MPIFullInformation.end()) return Found->second.first;
+
+      Found = MPInformation.find(CI);
       if(Found != MPInformation.end()) return Found->second.first;
 
       ConstantInt* C = dyn_cast<ConstantInt>(CI->getArgOperand(0));

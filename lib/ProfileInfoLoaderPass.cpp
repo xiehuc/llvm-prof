@@ -356,5 +356,21 @@ bool LoaderPass::runOnModule(Module &M) {
      }
   }
 
+  MPIFullInformation.clear();
+  Counters = PIL.getRawMPIFullCounts();
+  if(Counters.size() > 0) {
+     ReadCount = 0;
+     for(auto F = M.begin(), E = M.end(); F!=E; ++F){
+        for(auto I = inst_begin(F), IE = inst_end(F); I!=IE; ++I){
+           CallInst* CI = dyn_cast<CallInst>(&*I);
+           if(CI == NULL) continue;
+           if(lle::get_mpi_count_idx(CI)){
+              MPIFullInformation[CI] = std::make_pair(ReadCount, Counters[ReadCount]);
+              ++ReadCount;
+           }
+        }
+     }
+  }
+
   return false;
 }

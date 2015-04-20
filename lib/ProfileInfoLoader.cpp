@@ -215,6 +215,10 @@ ProfileInfoLoader::ProfileInfoLoader(const char *ToolName,
       ReadProfilingBlock(ToolName, F, ShouldByteSwap, MPICounts);
       break;
 
+   case MPIFullInfo:
+      ReadProfilingBlock(ToolName, F, ShouldByteSwap, MPIFullCounters);
+      break;
+
    default:
       errs() << ToolName << ": Unknown packet type #" << PacketType << "!\n";
       errs() << "at position "<<ftell(F) <<"/";

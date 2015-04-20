@@ -1,8 +1,8 @@
 #ifndef LLVM_PROF_PASSES_H_H
 #define LLVM_PROF_PASSES_H_H
 #include <llvm/Pass.h>
-#include <TimingSource.h>
-#include <ProfileInfoWriter.h>
+#include "TimingSource.h"
+#include "ProfileInfoWriter.h"
 #include <set>
 namespace llvm{
    /// ProfileInfoPrinterPass - Helper pass to dump the profile information for
