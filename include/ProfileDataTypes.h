@@ -33,6 +33,7 @@ enum ProfilingType {
 	ValueInfo    = 100, /* Value profiling information     */
    SLGInfo      = 101, /* StoreLoadGlobal profiling info  */
    MPInfo       = 102, /* MPI Inst profiling info         */
+   MPIFullInfo  = 103, /* an expand MPI Inst profiling info contain datatype */
 };
 
 // special flags used in value profiling
@@ -41,6 +42,7 @@ enum ProfilingFlags {
 	RUN_LENGTH_COMPRESS = 1<<1
 };
 
+#define FORTRAN_DATATYPE_MAP_SIZE 128
 
 #if defined(__cplusplus)
 }

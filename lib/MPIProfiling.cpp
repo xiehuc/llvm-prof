@@ -8,6 +8,7 @@
 #include "ValueUtils.h"
 #include "ProfilingUtils.h"
 #include "ProfileInstrumentations.h"
+#include "ProfileDataTypes.h"
 
 namespace {
    class MPIProfiler : public llvm::ModulePass
@@ -57,21 +58,30 @@ bool MPIProfiler::runOnModule(llvm::Module &M)
      for(auto I = inst_begin(*F), IE = inst_end(*F); I!=IE; ++I){
         CallInst* CI = dyn_cast<CallInst>(&*I);
         if(CI == NULL) continue;
-        if(unsigned idx = get_mpi_count_idx(CI))
+        if(unsigned idx = get_mpi_count_idx(CI)) // idx > 0
            Traped.emplace_back(CI, idx);
      }
   }
 
   IRBuilder<> Builder(M.getContext());
-  Type*ATy = ArrayType::get(Type::getInt32Ty(M.getContext()), Traped.size());
+  Type* I32Ty = Type::getInt32Ty(M.getContext());
+  // last 128 is datatype map array
+  Type*ATy = ArrayType::get(I32Ty, Traped.size() + FORTRAN_DATATYPE_MAP_SIZE);
   GlobalVariable* Counters = new GlobalVariable(M, ATy, false,
         GlobalVariable::InternalLinkage, Constant::getNullValue(ATy),
         "MPICounters");
+  Value* Zero = ConstantInt::get(I32Ty, 0);
+  Value* Length = ConstantInt::get(I32Ty, Traped.size());
 
   unsigned I=0;
   for(auto P : Traped){
      Builder.SetInsertPoint(P.first);
-     IncrementMPICounter(P.first->getArgOperand(P.second), I++, Counters, Builder);
+     Value* FortranDT = P.first->getArgOperand(P.second+1);
+     Value* Idx[] = {Zero, Builder.CreateAdd(Length, FortranDT)};// get offset of global array
+     Value* DataSize = Builder.CreateLoad(Builder.CreateGEP(Counters, Idx));
+     Value* Count = P.first->getArgOperand(P.second);
+     //trap for count * datasize
+     IncrementMPICounter(Builder.CreateMul(Count, DataSize), I++, Counters, Builder);
   }
 
   InsertProfilingInitCall(Main, "llvm_start_mpi_profiling", Counters);

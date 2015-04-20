@@ -10,7 +10,11 @@ set(SOURCES
   PredBlockProfiling.c
   )
 
-include_directories(../include ${LLVM_INCLUDE_DIRS})
+include_directories(
+  ../include 
+  ${CMAKE_CURRENT_BINARY_DIR}/../lib
+  ${LLVM_INCLUDE_DIRS}
+  )
 add_definitions(${LLVM_DEFINITIONS} -Wall)
 if(OUTPUT_HASPID)
 	add_definitions(-DOUTPUT_HASPID)
