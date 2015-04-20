@@ -11,6 +11,7 @@
 
 #include <errno.h>
 #include <stdio.h>
+#include <float.h>
 #include <functional>
 
 #include "FreeExpression.h"
@@ -56,17 +57,17 @@ void TimingSource::Register_(const char* name, const char* desc, std::function<T
 static unsigned get_datatype_index(StringRef Name, const CallInst& I)
 {
    GlobalVariable* datatype;
-   try{
-      if(MpiSpec.at(Name) == 0)
-         datatype = dyn_cast<GlobalVariable>(I.getArgOperand(2)); // this is p2p communication
-      else 
-         datatype = dyn_cast<GlobalVariable>(I.getArgOperand(3)); // this is collect communication
-      if(datatype == NULL) return 0;
-   }catch(std::out_of_range e){
+   unsigned C = lle::get_mpi_count_idx(&I);
+   if(C==0){
+      errs()<<"WARNNING: doesn't consider "<<Name<<" mpi call\n";
       return 0;
    }
+   datatype = dyn_cast<GlobalVariable>(I.getArgOperand(C+1)); // this is p2p communication
    auto CI = dyn_cast<ConstantInt>(datatype->getInitializer());
-   if(CI == NULL) return 0;
+   if(CI == NULL){
+      errs()<<"WARNNING: not a constant number "<<*I.getArgOperand(C+1)<<"\n";
+      return 0;
+   }
    return CI->getZExtValue(); // datatype -> sizeof
 }
 
@@ -378,8 +379,8 @@ double IrinstMaxTiming::count(BasicBlock &BB) const
    return non_of_them + std::max(float_count, fix_count);
 }
 
-MPBenchTiming::MPBenchTiming()
-    : MPITiming(Kind::MPBench, 0)
+MPBenchReTiming::MPBenchReTiming()
+    : MPITiming(Kind::MPBenchRe, 0)
 {
    file_initializer = NULL;
    bandwidth = latency = NULL;
@@ -391,13 +392,13 @@ MPBenchTiming::MPBenchTiming()
    this->R = atoi(REnv);
 }
 
-MPBenchTiming::~MPBenchTiming()
+MPBenchReTiming::~MPBenchReTiming()
 {
    if(bandwidth) delete bandwidth;
    if(latency) delete latency;
 }
 
-void MPBenchTiming::init_with_file(const char* file)
+void MPBenchReTiming::init_with_file(const char* file)
 {
    FILE* f = fopen(file,"r");
    if(f == NULL){
@@ -424,36 +425,25 @@ void MPBenchTiming::init_with_file(const char* file)
    }
 }
 
-double MPBenchTiming::count(const llvm::Instruction& I, double bfreq,
-                 double count) const
+double MPBenchReTiming::count(const llvm::Instruction& I, double bfreq,
+                               double total) const
 {
    const CallInst* CI = dyn_cast<CallInst>(&I);
    if(CI == NULL) return 0.;
-   Function* F = dyn_cast<Function>(lle::castoff(const_cast<Value*>(CI->getCalledValue())));
-   if(F == NULL) return 0.;
-   StringRef FName = F->getName();
-   if(!FName.startswith("mpi_")) return 0.0;
-   auto Spec = MpiSpec.find(FName);
-   if(Spec == MpiSpec.end()){
-      errs()<<"WARNNING: doesn't consider "<<FName<<" mpi call\n";
-      return 0.;
+   unsigned C = 0;
+   try{
+      C = lle::get_mpi_collection(CI);
+   }catch(const std::out_of_range& e){
+      return 0;
    }
-   unsigned C = Spec->second;
-   if(C == IGN) return 0.0;
-   size_t D = get_datatype_index(FName, *CI);
-   if(D == 0){
-      errs()<<"WARNNING: doesn't consider MPI_datatype "<<D<<"\n";
-      return 0.; // 避免传入0到自由表达式，因为有些会用于分母(除0异常)
-   }
-   D = count * MpiType[D];
-   double O = D/bfreq; // 一次通信量
+   double O = total/bfreq; // 一次通信量
    if (C == 0) {
-      return bfreq * (*latency)(O) + D / (*bandwidth)(O);
+      return bfreq * (*latency)(O) + total / (*bandwidth)(O);
    } else
-      return bfreq * (*latency)(O) + C * D * log(R) / (*bandwidth)(O);
+      return bfreq * (*latency)(O) + C * total * log(R) / (*bandwidth)(O);
 }
 
-void MPBenchTiming::print(llvm::raw_ostream &OS) const
+void MPBenchReTiming::print(llvm::raw_ostream &OS) const
 {
    OS<<"mpi_bandwidth: ";
    if (bandwidth)
@@ -468,6 +458,39 @@ void MPBenchTiming::print(llvm::raw_ostream &OS) const
    OS << "\n";
 }
 
+MPBenchTiming::MPBenchTiming() {
+   this->kindof = Kind::MPBench;
+}
+
+double MPBenchTiming::count(const llvm::Instruction& I, double bfreq,
+                 double count) const
+{
+   if(count < DBL_EPSILON || bfreq < DBL_EPSILON) return 0.;
+   const CallInst* CI = dyn_cast<CallInst>(&I);
+   if(CI == NULL) return 0.;
+   Function* F = dyn_cast<Function>(lle::castoff(const_cast<Value*>(CI->getCalledValue())));
+   if(F == NULL) return 0.;
+   unsigned C = 0;
+   try{
+      C = lle::get_mpi_collection(CI);
+   }catch(const std::out_of_range& e){
+      return 0.;
+   }
+   StringRef FName = F->getName();
+   size_t D = get_datatype_index(FName, *CI);
+   if(D == 0) return 0.;
+   if(MpiType[D] == 0){
+      errs()<<"WARNNING: doesn't consider MPI Fortran Type "<<D<<"\n";
+      return 0.; // 避免传入0到自由表达式，因为有些会用于分母(除0异常)
+   }
+   D = count * MpiType[D];
+   double O = D/bfreq; // 一次通信量
+   if (C == 0) {
+      return bfreq * (*latency)(O) + D / (*bandwidth)(O);
+   } else
+      return bfreq * (*latency)(O) + C * D * log(R) / (*bandwidth)(O);
+}
+
 const char* LmbenchTiming::Name = TimingSource::Register<LmbenchTiming>(
     "lmbench", "loading lmbench timing source");
 const char* IrinstTiming::Name = TimingSource::Register<IrinstTiming>(
@@ -476,3 +499,5 @@ const char* IrinstMaxTiming::Name = TimingSource::Register<IrinstMaxTiming>(
     "irinst-max", "loading llvm ir inst timing source");
 const char* MPBenchTiming::Name = TimingSource::Register<MPBenchTiming>(
     "mpbench", "loading mpbench timing source");
+const char* MPBenchReTiming::Name = TimingSource::Register<MPBenchReTiming>(
+    "mpbench-re", "loading mpbench timing source for new mpi format");

@@ -71,24 +71,39 @@ GlobalVariable* lle::access_global_variable(Instruction *I)
 }
 
 
+/** Mpi Specific
+ * DataType: name->{categroy, count param idx}
+ */
+const unsigned MpiSpecIgnore = 3;
+static 
+std::map<StringRef, 
+   std::pair<unsigned char, unsigned char> > 
+   MpiSpec = {
+   {"mpi_allreduce_" , {2, 2}} , 
+   {"mpi_reduce_"    , {1, 2}} , 
+   {"mpi_send_"      , {0, 1}} , 
+   {"mpi_recv_"      , {0, 1}} , 
+   {"mpi_isend_"     , {0, 1}} , 
+   {"mpi_irecv_"     , {0, 1}} , 
+   {"mpi_bcast_"     , {1, 1}}
+};
+
 unsigned lle::get_mpi_count_idx(const llvm::CallInst* CI)
 {
-   static std::unordered_map<std::string, unsigned> CountPos = {
-      {"mpi_reduce_"    , 2} , 
-      {"mpi_allreduce_" , 2} , 
-      {"mpi_send_"      , 1} , 
-      {"mpi_recv_"      , 1} , 
-      {"mpi_isend_"     , 1} , 
-      {"mpi_irecv_"     , 1} , 
-      {"mpi_bcast_"     , 1}
-   };
-
-
    Value* CV = const_cast<CallInst*>(CI)->getCalledValue();
    Function* Called = dyn_cast<Function>(castoff(CV));
    if(Called == NULL) return 0;
-   auto Found = CountPos.find(Called->getName());
-   if(Found == CountPos.end()) return 0;
-   return Found->second;
-
+   try{
+      return MpiSpec.at(Called->getName()).second;
+   }catch(...){
+      return 0;
+   }
+}
+unsigned lle::get_mpi_collection(const llvm::CallInst* CI)
+{
+   Value* CV = const_cast<CallInst*>(CI)->getCalledValue();
+   Function* Called = dyn_cast<Function>(castoff(CV));
+   if (Called == NULL)
+      throw std::out_of_range("not considered mpi instruction collection");
+   return MpiSpec.at(Called->getName()).first;
 }

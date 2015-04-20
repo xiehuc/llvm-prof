@@ -32,5 +32,15 @@ namespace lle{
     * return >0 means the index of count param 
     */
    unsigned get_mpi_count_idx(const llvm::CallInst*);
+
+   /**
+    * return mpi collection category
+    * category:
+    *   == 0 --- p2p
+    *   == 1 --- collect
+    *   == 2 --- double collect
+    *   == unknow --- throw std::out_of_range
+    */
+   unsigned get_mpi_collection(const llvm::CallInst*) noexcept(false);
 }
 #endif

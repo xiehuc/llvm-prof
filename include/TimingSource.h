@@ -29,6 +29,7 @@ class TimingSource{
       BBlockLast,
       MPI = BBlockLast,
       MPBench,
+      MPBenchRe, // a mpbench source for new mpi format
       MPILast
    };
 
@@ -176,11 +177,28 @@ class IrinstMaxTiming: public IrinstTiming
    double count(llvm::BasicBlock& BB) const override;
 };
 
-/** if need init with file, should first cast TimingSource to
- * MPBenchTiming, then use it's init_with_file.
- * because it's init_with_file differs from TimingSource's
- */
-class MPBenchTiming : public MPITiming 
+class MPBenchReTiming : public MPITiming 
+{
+   public:
+   static const char* Name;
+   static bool classof(const TimingSource* S) {
+      return S->getKind() == Kind::MPBenchRe;
+   }
+
+   MPBenchReTiming();
+   ~MPBenchReTiming();
+   void init_with_file(const char* file);
+
+   double count(const llvm::Instruction &I, double bfreq,
+                double count) const override;
+   void print(llvm::raw_ostream&) const override;
+   protected: 
+   FreeExpression* bandwidth;
+   FreeExpression* latency;
+   unsigned R;
+};
+
+class MPBenchTiming : public MPBenchReTiming
 {
    public:
    static const char* Name;
@@ -189,16 +207,9 @@ class MPBenchTiming : public MPITiming
    }
 
    MPBenchTiming();
-   ~MPBenchTiming();
-   void init_with_file(const char* file);
 
-   double count(const llvm::Instruction &I, double bfreq,
+   double count(const llvm::Instruction& I, double bfreq,
                 double count) const override;
-   void print(llvm::raw_ostream&) const override;
-   private: 
-   FreeExpression* bandwidth;
-   FreeExpression* latency;
-   unsigned R;
 };
 
 }
