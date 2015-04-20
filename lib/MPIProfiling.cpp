@@ -38,7 +38,6 @@ static void IncrementMPICounter(Value* Inc, unsigned Index, GlobalVariable* Coun
       ConstantExpr::getGetElementPtr(Counters, Indices);
 
    // Load, increment and store the value back.
-   Inc = Builder.CreateLoad(Inc);
    Value* OldVal = Builder.CreateLoad(ElementPtr, "OldMPICounter");
    Value* NewVal = Builder.CreateAdd(OldVal, Inc, "NewMPICounter");
    Builder.CreateStore(NewVal, ElementPtr);
@@ -76,10 +75,10 @@ bool MPIProfiler::runOnModule(llvm::Module &M)
   unsigned I=0;
   for(auto P : Traped){
      Builder.SetInsertPoint(P.first);
-     Value* FortranDT = P.first->getArgOperand(P.second+1);
+     Value* FortranDT = Builder.CreateLoad(P.first->getArgOperand(P.second+1));
      Value* Idx[] = {Zero, Builder.CreateAdd(Length, FortranDT)};// get offset of global array
      Value* DataSize = Builder.CreateLoad(Builder.CreateGEP(Counters, Idx));
-     Value* Count = P.first->getArgOperand(P.second);
+     Value* Count = Builder.CreateLoad(P.first->getArgOperand(P.second));
      //trap for count * datasize
      IncrementMPICounter(Builder.CreateMul(Count, DataSize), I++, Counters, Builder);
   }
