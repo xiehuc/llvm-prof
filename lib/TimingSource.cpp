@@ -428,6 +428,7 @@ void MPBenchReTiming::init_with_file(const char* file)
 double MPBenchReTiming::count(const llvm::Instruction& I, double bfreq,
                                double total) const
 {
+   if(total<DBL_EPSILON || bfreq < DBL_EPSILON) return 0.;
    const CallInst* CI = dyn_cast<CallInst>(&I);
    if(CI == NULL) return 0.;
    unsigned C = 0;

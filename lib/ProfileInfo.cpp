@@ -162,6 +162,7 @@ ProfileInfoT<Function,BasicBlock>::getAllTrapedValues(ProfilingType PT) {
    SELECT(Value);
    SELECT(SLG);
    SELECT(MP);
+   SELECT(MPIFull);
 
 	std::sort(ret.begin(), ret.end(), SortBasedIndex(*this));
 #undef SELECT

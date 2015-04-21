@@ -130,6 +130,20 @@ bool ProfileTimingPrint::runOnModule(Module &M)
             MpiTiming += timing;
          }
       }
+      if(isa<MPITiming>(S) && MpiTiming < DBL_EPSILON){ // MpiTiming is Zero
+         auto MT = cast<MPITiming>(S);
+         for(auto I : PI.getAllTrapedValues(MPIFullInfo)){
+            const CallInst* CI = cast<CallInst>(I);
+            const BasicBlock* BB = CI->getParent();
+            if(Ignore.count(BB->getParent()->getName())) continue;
+            double timing = MT->count(*I, PI.getExecutionCount(BB), PI.getExecutionCount(CI)); // IO 模型
+#ifndef NDEBUG
+            if(TimingDebug)
+               outs() << "  " << PI.getTrapedIndex(I) << "\t" << timing << "\n";
+#endif
+            MpiTiming += timing;
+         }
+      }
    }
    AbsoluteTiming = BlockTiming + MpiTiming;
    outs()<<"Block Timing: "<<BlockTiming<<" ns\n";
