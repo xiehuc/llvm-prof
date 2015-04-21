@@ -64,19 +64,24 @@ bool MPIProfiler::runOnModule(llvm::Module &M)
 
   IRBuilder<> Builder(M.getContext());
   Type* I32Ty = Type::getInt32Ty(M.getContext());
-  // last 128 is datatype map array
-  Type*ATy = ArrayType::get(I32Ty, Traped.size() + FORTRAN_DATATYPE_MAP_SIZE);
+  // 128位的映射表
+  // 128位的访问表
+  Type*ATy = ArrayType::get(I32Ty, Traped.size() + FORTRAN_DATATYPE_MAP_SIZE * 2);
   GlobalVariable* Counters = new GlobalVariable(M, ATy, false,
         GlobalVariable::InternalLinkage, Constant::getNullValue(ATy),
         "MPICounters");
   Value* Zero = ConstantInt::get(I32Ty, 0);
-  Value* Length = ConstantInt::get(I32Ty, Traped.size());
+  Value* One = ConstantInt::get(I32Ty, 0);
+  Value* MapTableBegin = ConstantInt::get(I32Ty, Traped.size());
+  Value* VisitTableBegin = ConstantInt::get(I32Ty, Traped.size() + FORTRAN_DATATYPE_MAP_SIZE);
 
   unsigned I=0;
   for(auto P : Traped){
      Builder.SetInsertPoint(P.first);
      Value* FortranDT = Builder.CreateLoad(P.first->getArgOperand(P.second+1));
-     Value* Idx[] = {Zero, Builder.CreateAdd(Length, FortranDT)};// get offset of global array
+     Value* Idx[] = {Zero, Builder.CreateAdd(VisitTableBegin, FortranDT)};// get offset of global array
+     Builder.CreateStore(One, Builder.CreateGEP(Counters, Idx));
+     Idx[1] = Builder.CreateAdd(MapTableBegin, FortranDT);
      Value* DataSize = Builder.CreateLoad(Builder.CreateGEP(Counters, Idx));
      Value* Count = Builder.CreateLoad(P.first->getArgOperand(P.second));
      //trap for count * datasize
