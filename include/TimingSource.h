@@ -71,8 +71,8 @@ class BBlockTiming: public TimingSource
    public:
    static bool classof(const TimingSource* S)
    {
-      return S->getKind() < S->Kind::BBlockLast
-             && S->getKind() > S->Kind::BBlock;
+      return S->getKind() < Kind::BBlockLast
+             && S->getKind() > Kind::BBlock;
    }
    virtual double count(llvm::BasicBlock& BB) const = 0;
    protected:
@@ -84,7 +84,7 @@ class MPITiming: public TimingSource
    public:
    static bool classof(const TimingSource* S)
    {
-      return S->getKind() < S->Kind::MPILast && S->getKind() > S->Kind::MPI;
+      return S->getKind() < Kind::MPILast && S->getKind() > Kind::MPI;
    }
    virtual double count(const llvm::Instruction& I, double bfreq,
                         double count) const = 0; // io part
