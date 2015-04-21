@@ -17,6 +17,7 @@
 #include <stdlib.h>
 #include <inttypes.h>
 #include <string.h>
+#include <stdio.h>
 
 static unsigned *ArrayStart;
 static unsigned NumElements;
@@ -30,6 +31,12 @@ static void MPIProfAtExitHandler(void) {
    * collected into simple edge profiles.  Since we directly count each edge, we
    * just write out all of the counters directly.
    */
+  unsigned* MapTable = ArrayStart + NumElements;
+  unsigned* VisitTable = MapTable + FORTRAN_DATATYPE_MAP_SIZE;
+  for(unsigned i=0;i<FORTRAN_DATATYPE_MAP_SIZE;++i){
+    if(*VisitTable++ == 1 && *MapTable++ == 0)
+      fprintf(stderr, "WARNNING: doesn't consider MPI Fortran Type %d\n", i);
+  }
   write_profiling_data(MPIFullInfo, ArrayStart, NumElements);
 }
 
@@ -48,7 +55,7 @@ int llvm_start_mpi_profiling(int argc, const char **argv,
                               unsigned *arrayStart, unsigned numElements) {
   int Ret = save_arguments(argc, argv);
   ArrayStart = arrayStart;
-  NumElements = numElements - FORTRAN_DATATYPE_MAP_SIZE;
+  NumElements = numElements - FORTRAN_DATATYPE_MAP_SIZE * 2;
   init_datatype_map(ArrayStart + NumElements);
   atexit(MPIProfAtExitHandler);
   return Ret;
