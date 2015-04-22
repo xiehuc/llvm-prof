@@ -33,7 +33,8 @@ static void MPIProfAtExitHandler(void) {
    */
   unsigned* MapTable = ArrayStart + NumElements;
   unsigned* VisitTable = MapTable + FORTRAN_DATATYPE_MAP_SIZE;
-  for(unsigned i=0;i<FORTRAN_DATATYPE_MAP_SIZE;++i){
+  unsigned i;
+  for(i=0;i<FORTRAN_DATATYPE_MAP_SIZE;++i){
     if(*VisitTable++ == 1 && *MapTable++ == 0)
       fprintf(stderr, "WARNNING: doesn't consider MPI Fortran Type %d\n", i);
   }
