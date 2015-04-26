@@ -139,7 +139,10 @@ bool ProfileTimingPrint::runOnModule(Module &M)
             double timing = MT->count(*I, PI.getExecutionCount(BB), PI.getExecutionCount(CI)); // IO 模型
 #ifndef NDEBUG
             if(TimingDebug)
-               outs() << "  " << PI.getTrapedIndex(I) << "\t" << timing << "\n";
+               outs() << "  " << PI.getTrapedIndex(I)
+                      << "\tBB:" << PI.getExecutionCount(BB) << "\tT:" << timing
+                      << "N:" << BB->getParent()->getName() << ":"
+                      << BB->getName() << "\n";
 #endif
             MpiTiming += timing;
          }
