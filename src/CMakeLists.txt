@@ -1,10 +1,6 @@
 #some platform need disable rtti to void 
 #undefined reference `typeinfo for xxx`
-add_definitions(-fno-rtti)
 add_definitions(${LLVM_DEFINITIONS} -Wall)
-if(LLVM_VERSION VERSION_GREATER "3.4")
-add_definitions(-std=c++11)
-endif()
 include_directories(
     ${LLVM_INCLUDE_DIRS}
     ../include 
@@ -23,12 +19,14 @@ add_executable(llvm-prof
    printer.cpp
    passes.cpp
 	)
-
 target_link_libraries(llvm-prof
 	${LLVM_LIBRARIES}
    ${LLVM_PROF_LIBRARY}
 	LLVMProfiling-shared
 	)
+set_target_properties(llvm-prof
+   PROPERTIES COMPILE_FLAGS "-std=c++11 -fno-rtti"
+   )
 
 set(SELF ${CMAKE_CURRENT_SOURCE_DIR})
 find_program(CLANG NAMES "clang-${LLVM_RECOMMEND_VERSION}" "clang")
