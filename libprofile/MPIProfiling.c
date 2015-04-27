@@ -43,7 +43,7 @@ static void MPIProfAtExitHandler(void) {
 
 static int init_datatype_map(uint32_t* DT)
 {
-   memset(DT, 0, sizeof(uint32_t) * FORTRAN_DATATYPE_MAP_SIZE);
+   memset(DT, 0, sizeof(uint32_t) * FORTRAN_DATATYPE_MAP_SIZE * 2);
 #include "datatype.h"
    return 0;
 }
