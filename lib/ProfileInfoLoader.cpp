@@ -143,7 +143,8 @@ ProfileInfoLoader::ProfileInfoLoader(const char *ToolName,
     perror(0);
     exit(1);
   }
-  if (ftell(F) == (fseek(F, 0, SEEK_END), ftell(F))) { // XXX may lead problem
+  if (0 == (fseek(F, 0, SEEK_END), ftell(F))) { 
+    // end == begin == 0, then it is empty
     errs() << " Warnning '" << Filename << "' seems empty\n";
   }
   fseek(F, 0, SEEK_SET);
