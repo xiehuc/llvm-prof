@@ -43,3 +43,11 @@ add_custom_target(InstTiming ALL DEPENDS inst-timing)
 install(TARGETS llvm-prof
 	DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
 	)
+
+add_executable(libfn-timing
+   libfn-timing.c
+   )
+target_link_libraries(libfn-timing m)
+set_target_properties(libfn-timing
+   PROPERTIES COMPILE_FLAGS "-DTIMING_${TIMING} -O0"
+   )
