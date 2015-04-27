@@ -18,19 +18,6 @@
 #include "ValueUtils.h"
 
 using namespace llvm;
-#define IGN 3
-
-static 
-const std::map<StringRef, unsigned> MpiSpec = 
-{
-   {"mpi_allreduce_" , 2} , // == 0 --- p2p
-   {"mpi_bcast_"     , 1} , // == 1 --- collect
-   {"mpi_reduce_"    , 1} , // == 2 --- full collect
-   {"mpi_send_"      , 0} , // == Ignore --- ignore
-   {"mpi_recv_"      , 0} , 
-   {"mpi_isend_"     , 0} , 
-   {"mpi_irecv_"     , 0}
-};
 
 static 
 std::vector<TimingSourceInfoEntry> TSIEntries;
@@ -44,15 +31,6 @@ static int mpi_init_type(unsigned* DT)
    return 0;
 }
 static int mpi_type_initialize = mpi_init_type(MpiType);
-
-void TimingSource::Register_(const char* name, const char* desc, std::function<TimingSource*()>&& func)
-{
-   TimingSourceInfoEntry entry;
-   entry.Name = name;
-   entry.Desc = desc;
-   entry.Creator = func;
-   TSIEntries.push_back(std::move(entry));
-}
 
 static unsigned get_datatype_index(StringRef Name, const CallInst& I)
 {
@@ -69,6 +47,43 @@ static unsigned get_datatype_index(StringRef Name, const CallInst& I)
       return 0;
    }
    return CI->getZExtValue(); // datatype -> sizeof
+}
+
+template <class MapT>
+static void load_and_init_with_map(const char* file, double* cpu_times, MapT& M)
+{
+   FILE* f = fopen(file,"r");
+   if(f == NULL){
+      fprintf(stderr, "Could not open %s file: %s", file, strerror(errno));
+      exit(-1);
+   }
+
+   double nanosec;
+   char ops[48];
+   char line[512];
+   std::string tmp = "";
+   while(fgets(line,sizeof(line),f)){
+      unsigned op;
+      if (sscanf(line, "%47[^:]:\t%lf nanoseconds", ops, &nanosec) == 2) {
+        tmp = ops;
+        auto ite = M.find(ops);
+        if (ite != M.end()) {
+          op = ite->second;
+          cpu_times[op] = nanosec;
+        } else
+          continue;
+      }
+   }
+   fclose(f);
+}
+
+void TimingSource::Register_(const char* name, const char* desc, std::function<TimingSource*()>&& func)
+{
+   TimingSourceInfoEntry entry;
+   entry.Name = name;
+   entry.Desc = desc;
+   entry.Creator = func;
+   TSIEntries.push_back(std::move(entry));
 }
 
 TimingSource* TimingSource::Construct(const StringRef Name)
@@ -258,87 +273,64 @@ double IrinstTiming::count(BasicBlock& BB) const
       counts += params[classify(&I)];
    return counts;
 }
-static 
-std::map<StringRef, IrinstTiming::EnumTy> InstMap = 
-{
-   {"load",          LOAD},
-   {"store",         STORE},
-   {"alloca",        ALLOCA},
-
-   {"fix_add",       FIX_ADD}, 
-   {"fix_sub",       FIX_SUB},
-   {"fix_mul",       FIX_MUL},
-   {"u_div",         U_DIV},
-   {"s_div",         S_DIV},
-   {"u_rem",         U_REM},
-   {"s_rem",         S_REM},
-
-   {"float_add",     FLOAT_ADD},
-   {"float_sub",     FLOAT_SUB},
-   {"float_mul",     FLOAT_MUL},
-   {"float_div",     FLOAT_DIV},
-   {"float_rem",     FLOAT_REM},
-
-   {"shl",           SHL},
-   {"lshr",          LSHR},
-   {"ashr",          ASHR},
-   {"and",           AND},
-   {"or",            OR},
-   {"xor",           XOR},
-
-   //disabled part, we consider these ir couldn't translate to asm precisely
-   {"icmp",          ICMP},
-   {"fcmp",          FCMP},
-   {"getelementptr", GETELEMENTPTR},
-   {"trunc_to",      TRUNC},
-   {"zext_to",       ZEXT},
-   {"sext_to",       SEXT},
-   {"fptrunc_to",    FPTRUNC},
-   {"fpext_to",      FPEXT},
-   {"fptoui_to",     FPTOUI},
-   {"fptosi_to",     FPTOSI},
-   {"uitofp_to",     UITOFP},
-   {"sitofp_to",     SITOFP},
-   {"ptrtoint_to",   PTRTOINT},
-   {"inttoptr_to",   INTTOPTR},
-   {"bitcast_to",    BITCAST},
-   {"select",        SELECT},
-
-   //lmbench part, lmbench is more precise than ours
-   {"integer bit",   AND},
-   {"integer add",   FIX_ADD},
-   {"integer mul",   FIX_MUL},
-   {"integer div",   S_DIV},
-   {"integer mod",   S_REM},
-   {"double add",    FLOAT_ADD},
-   {"double mul",    FLOAT_MUL},
-   {"double div",    FLOAT_DIV}
-};
 void IrinstTiming::load_irinst(const char* file, double* cpu_times)
 {
-   FILE* f = fopen(file,"r");
-   if(f == NULL){
-      fprintf(stderr, "Could not open %s file: %s", file, strerror(errno));
-      exit(-1);
-   }
+   static std::map<StringRef, IrinstTiming::EnumTy> InstMap = 
+   {
+      {"load",          LOAD},
+      {"store",         STORE},
+      {"alloca",        ALLOCA},
 
-   double nanosec;
-   char ops[48];
-   char line[512];
-   std::string tmp = "";
-   while(fgets(line,sizeof(line),f)){
-      unsigned op;
-      if (sscanf(line, "%47[^:]:\t%lf nanoseconds", ops, &nanosec) == 2) {
-        tmp = ops;
-        auto ite = InstMap.find(ops);
-        if (ite != InstMap.end()) {
-          op = ite->second;
-          cpu_times[op] = nanosec;
-        } else
-          continue;
-      }
-   }
-   fclose(f);
+      {"fix_add",       FIX_ADD}, 
+      {"fix_sub",       FIX_SUB},
+      {"fix_mul",       FIX_MUL},
+      {"u_div",         U_DIV},
+      {"s_div",         S_DIV},
+      {"u_rem",         U_REM},
+      {"s_rem",         S_REM},
+
+      {"float_add",     FLOAT_ADD},
+      {"float_sub",     FLOAT_SUB},
+      {"float_mul",     FLOAT_MUL},
+      {"float_div",     FLOAT_DIV},
+      {"float_rem",     FLOAT_REM},
+
+      {"shl",           SHL},
+      {"lshr",          LSHR},
+      {"ashr",          ASHR},
+      {"and",           AND},
+      {"or",            OR},
+      {"xor",           XOR},
+
+      //disabled part, we consider these ir couldn't translate to asm precisely
+      {"icmp",          ICMP},
+      {"fcmp",          FCMP},
+      {"getelementptr", GETELEMENTPTR},
+      {"trunc_to",      TRUNC},
+      {"zext_to",       ZEXT},
+      {"sext_to",       SEXT},
+      {"fptrunc_to",    FPTRUNC},
+      {"fpext_to",      FPEXT},
+      {"fptoui_to",     FPTOUI},
+      {"fptosi_to",     FPTOSI},
+      {"uitofp_to",     UITOFP},
+      {"sitofp_to",     SITOFP},
+      {"ptrtoint_to",   PTRTOINT},
+      {"inttoptr_to",   INTTOPTR},
+      {"bitcast_to",    BITCAST},
+      {"select",        SELECT},
+
+      //lmbench part, lmbench is more precise than ours
+      {"integer bit",   AND},
+      {"integer add",   FIX_ADD},
+      {"integer mul",   FIX_MUL},
+      {"integer div",   S_DIV},
+      {"integer mod",   S_REM},
+      {"double add",    FLOAT_ADD},
+      {"double mul",    FLOAT_MUL},
+      {"double div",    FLOAT_DIV}
+   };
+   load_and_init_with_map(file, cpu_times, InstMap);
 }
 
 IrinstMaxTiming::IrinstMaxTiming() { this->kindof = Kind::IrinstMax; }
@@ -492,6 +484,39 @@ double MPBenchTiming::count(const llvm::Instruction& I, double bfreq,
       return bfreq * (*latency)(O) + C * D * log(R) / (*bandwidth)(O);
 }
 
+static std::map<StringRef, LibFnTiming::EnumTy> LibFnMap = 
+{
+   {"sqrt", SQRT},
+   {"log",  LOG},
+   {"fabs", FABS}
+};
+void LibFnTiming::load_libfn(const char* file, double* param)
+{
+   load_and_init_with_map(file, param, LibFnMap);
+}
+
+LibFnTiming::LibFnTiming()
+    : LibCallTiming(Kind::LibFn, LibFnNumSpec)
+    , T(params)
+{
+   file_initializer = load_libfn;
+}
+
+double LibFnTiming::count(const llvm::CallInst& CI, double bfreq) const
+{
+   Function* F = CI.getCalledFunction();
+   double ret = 0.;
+   if (!F)
+      return 0.;
+   try {
+      ret = bfreq * get(LibFnMap.at(F->getName()));
+   }
+   catch (std::out_of_range& e) {
+      ret = 0.;
+   }
+   return ret;
+}
+
 const char* LmbenchTiming::Name = TimingSource::Register<LmbenchTiming>(
     "lmbench", "loading lmbench timing source");
 const char* IrinstTiming::Name = TimingSource::Register<IrinstTiming>(
@@ -502,3 +527,5 @@ const char* MPBenchTiming::Name = TimingSource::Register<MPBenchTiming>(
     "mpbench", "loading mpbench timing source");
 const char* MPBenchReTiming::Name = TimingSource::Register<MPBenchReTiming>(
     "mpbench-re", "loading mpbench timing source for new mpi format");
+const char* LibFnTiming::Name = TimingSource::Register<LibFnTiming>(
+    "libfn", "loading lib func call timing source");

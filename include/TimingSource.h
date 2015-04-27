@@ -30,7 +30,10 @@ class TimingSource{
       MPI = BBlockLast,
       MPBench,
       MPBenchRe, // a mpbench source for new mpi format
-      MPILast
+      MPILast,
+      LibCall = MPILast,
+      LibFn,
+      LibCallLast
    };
 
    virtual ~TimingSource(){};
@@ -90,6 +93,18 @@ class MPITiming: public TimingSource
                         double count) const = 0; // io part
    protected:
    MPITiming(Kind K, size_t N):TimingSource(K, N) {}
+};
+
+class LibCallTiming: public TimingSource
+{
+   public:
+   static bool classof(const TimingSource* S)
+   {
+      return S->getKind() < Kind::LibCallLast && S->getKind() > Kind::LibCall;
+   }
+   virtual double count(const llvm::CallInst& CI, double bfreq) const = 0;
+   protected:
+   LibCallTiming(Kind K, size_t N):TimingSource(K, N) {}
 };
 
 struct TimingSourceInfoEntry {
@@ -210,6 +225,23 @@ class MPBenchTiming : public MPBenchReTiming
 
    double count(const llvm::Instruction& I, double bfreq,
                 double count) const override;
+};
+
+enum LibFnSpec { SQRT, LOG, FABS, LibFnNumSpec };
+
+class LibFnTiming : public LibCallTiming, public _timing_source::T<LibFnSpec> 
+{
+   public:
+   typedef LibFnSpec EnumTy;
+   static const char* Name;
+   static bool classof(const TimingSource* S) {
+      return S->getKind() == Kind::LibFn;
+   }
+   static void load_libfn(const char* file, double* cpu_times);
+
+   LibFnTiming();
+
+   double count(const llvm::CallInst& CI, double bfreq) const override;
 };
 
 }

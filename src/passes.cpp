@@ -79,7 +79,7 @@ void ProfileTimingPrint::getAnalysisUsage(AnalysisUsage &AU) const
 bool ProfileTimingPrint::runOnModule(Module &M)
 {
    ProfileInfo& PI = getAnalysis<ProfileInfo>();
-   double AbsoluteTiming = 0.0, BlockTiming = 0.0, MpiTiming = 0.0;
+   double AbsoluteTiming = 0.0, BlockTiming = 0.0, MpiTiming = 0.0, CallTiming = 0.0;
    for(TimingSource* S : Sources){
       if (isa<BBlockTiming>(S)
           && BlockTiming < DBL_EPSILON) { // BlockTiming is Zero
@@ -118,21 +118,10 @@ bool ProfileTimingPrint::runOnModule(Module &M)
       }
       if(isa<MPITiming>(S) && MpiTiming < DBL_EPSILON){ // MpiTiming is Zero
          auto MT = cast<MPITiming>(S);
-         for(auto I : PI.getAllTrapedValues(MPInfo)){
-            const CallInst* CI = cast<CallInst>(I);
-            const BasicBlock* BB = CI->getParent();
-            if(Ignore.count(BB->getParent()->getName())) continue;
-            double timing = MT->count(*I, PI.getExecutionCount(BB), PI.getExecutionCount(CI)); // IO 模型
-#ifndef NDEBUG
-            if(TimingDebug)
-               outs() << "  " << PI.getTrapedIndex(I) << "\t" << timing << "\n";
-#endif
-            MpiTiming += timing;
-         }
-      }
-      if(isa<MPITiming>(S) && MpiTiming < DBL_EPSILON){ // MpiTiming is Zero
-         auto MT = cast<MPITiming>(S);
-         for(auto I : PI.getAllTrapedValues(MPIFullInfo)){
+         auto S = PI.getAllTrapedValues(MPInfo);
+         auto U = PI.getAllTrapedValues(MPIFullInfo);
+         S.insert(S.end(), U.begin(), U.end());
+         for(auto I : S){
             const CallInst* CI = cast<CallInst>(I);
             const BasicBlock* BB = CI->getParent();
             if(Ignore.count(BB->getParent()->getName())) continue;
@@ -147,10 +136,23 @@ bool ProfileTimingPrint::runOnModule(Module &M)
             MpiTiming += timing;
          }
       }
+      if(isa<LibCallTiming>(S) && CallTiming < DBL_EPSILON){
+         auto CT = cast<LibCallTiming>(S);
+         for(auto& F : M){
+            for(auto& BB : F){
+               for(auto& I : BB){
+                  if(CallInst* CI = dyn_cast<CallInst>(&I)){
+                     CallTiming += CT->count(*CI, PI.getExecutionCount(&BB));
+                  }
+               }
+            }
+         }
+      }
    }
-   AbsoluteTiming = BlockTiming + MpiTiming;
+   AbsoluteTiming = BlockTiming + MpiTiming + CallTiming;
    outs()<<"Block Timing: "<<BlockTiming<<" ns\n";
    outs()<<"MPI Timing: "<<MpiTiming<<" ns\n";
+   outs()<<"Call Timing: "<<CallTiming<<" ns\n";
    outs()<<"Timing: "<<AbsoluteTiming<<" ns\n";
    return false;
 }
