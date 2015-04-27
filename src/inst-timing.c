@@ -7,32 +7,42 @@
 
 #include "libtiming.c"
 
-#define REPNUM 10000
+#define REPNUM 50000
 #define INSNUM 2000
 #define ALLOCA_NUM 100
 
 //ref+=inst_template(TEMPLATE,VAR);
 #define REPEAT(TEMPLATE, REP, VAR...)                                          \
-  {                                                                            \
-    sum = 0;                                                                   \
-    for (int i = 0; i < REP; ++i) {                                            \
-      beg = timing();                                                          \
-      ref += inst_template(TEMPLATE, ##VAR);                                   \
-      end = timing();                                                          \
-      sum += end - beg - t_err;                                                \
-    }                                                                          \
-    sum /= REP;                                                                \
-    ref /= REP;                                                                \
-    double ins_cycles = (double)sum / INSNUM;                                  \
-    printf(TEMPLATE ":\t%lf nanoseconds,\t%lf cycles\n",                       \
-           ins_cycles *cycle_time, ins_cycles);                                \
-  }
+   {                                                                           \
+      for (unsigned i = 0; i < REP; ++i) {                                     \
+         beg = timing();                                                       \
+         ref += inst_template(TEMPLATE, ##VAR);                                \
+         end = timing();                                                       \
+         sum[i] = end - beg - t_err;                                           \
+      }                                                                        \
+      ref /= REP;                                                              \
+      double ins_cycles = (double)median(sum, REPNUM) / INSNUM;                \
+      printf(TEMPLATE ":\t%lf nanoseconds,\t%lf cycles\n",                     \
+             ins_cycles* cycle_time, ins_cycles);                              \
+   }
 #define REPEAT_INST(TEMPLATE, VAR...) REPEAT(TEMPLATE, REPNUM, ##VAR)
 #define REPEAT_ALLOCA_INST(TEMPLATE, VAR...) REPEAT(TEMPLATE, ALLOCA_NUM, ##VAR)
 #define REPEAT_GETELE_INST(TEMPLATE, VAR...) REPEAT(TEMPLATE, REPNUM, element, ##VAR)
 
 static int element[1][INSNUM][2];
 static double cycle_time;         
+
+static int int_less(const void* pl, const void* pr)
+{
+   uint64_t l = *(const uint64_t*)pl, r = *(const uint64_t*)pr;
+   return (l==r) ? 0 : l < r;
+}
+
+static uint64_t median(uint64_t* arr, size_t len)
+{
+   qsort(arr, len, sizeof(uint64_t), int_less);
+   return arr[len/2];
+}
 
 int main()
 {
@@ -41,7 +51,7 @@ int main()
    cycle_time = timing_res();
    printf("CPU freq: %lf GHz\n",1/cycle_time);
    volatile int* var = malloc(sizeof(int));
-   uint64_t beg, end, sum = 0;
+   uint64_t beg, end, sum[REPNUM];
    int ref = 0;
    uint64_t t_err = timing_err();
    int integer = 333333;
