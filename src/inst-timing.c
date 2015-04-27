@@ -6,7 +6,6 @@
  */
 
 #include "libtiming.c"
-#include <unistd.h>
 
 #define REPNUM 10000
 #define INSNUM 2000
@@ -34,28 +33,13 @@
 
 static int element[1][INSNUM][2];
 static double cycle_time;         
-static double get_cpu_freq_by_sleep(){
-   uint64_t t_res = timing_res();
-   uint64_t t_err = timing_err();
-   unsigned long beg = 0, end = 0, sum = 0, ref = 0;
-   beg = timing();
-   sleep(1);
-   end = timing();
-   sum += (end-beg-t_err);
-   beg = timing();
-   sleep(0);
-   end = timing();
-   unsigned long sleep_err = end - beg - t_err;
-   sum = sum-sleep_err;
-   double cyc_tim = (1/(double)sum)*1E9;
-   printf("CPU freq: %lf GHz\n",(double)sum/1E9);
-   return cyc_tim;
-}
 
 int main()
 {
    //Here we can also read system file to obtain the hightest CPU frequency  
-   cycle_time = get_cpu_freq_by_sleep();
+   printf("Warnning: shouldn't use this program on laptop\n");
+   cycle_time = timing_res();
+   printf("CPU freq: %lf GHz\n",1/cycle_time);
    volatile int* var = malloc(sizeof(int));
    uint64_t beg, end, sum = 0;
    int ref = 0;

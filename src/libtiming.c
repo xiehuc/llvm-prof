@@ -19,6 +19,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <time.h>
+#include <unistd.h>
 
 /* the define for inst_template.
  * use a template to generate instruction 
@@ -41,7 +42,7 @@ static unsigned long get_cpu_freq_by_sys()
    if(freq==0)
       perror("Unable Read CPU freq:");
    fclose(f);
-   return freq;
+   return freq * 1E3; //convert KHz to Hz
 }
 
 static unsigned long get_cpu_freq_by_proc()
@@ -53,7 +54,7 @@ static unsigned long get_cpu_freq_by_proc()
       return 0;
    }
    char line[256] = {0};
-   unsigned long freq = .0L;
+   unsigned long freq = 0L;
    while(fgets(line, sizeof(line), f)){
       double mhz = 0.0L;
       if (sscanf(line, "cpu MHz\t: %lf", &mhz) == 1){
@@ -66,6 +67,7 @@ static unsigned long get_cpu_freq_by_proc()
    fclose(f);
    return freq;
 }
+
 
 #if (defined TIMING_tsc) || (defined TIMING_tscp)
 
@@ -103,12 +105,12 @@ static inline hp_timing_t _timing(void)
 #endif /*TIMING_TSC*/
 
 
-uint64_t timing_res() 
+double timing_res() 
 {
    unsigned long freq = get_cpu_freq_by_sys();
    if(freq == 0) freq = get_cpu_freq_by_proc();
    if(freq == 0) exit(-1);
-   return 1E9 /*nanosecond*/ / freq;
+   return 1.0E9 /*nanosecond*/ / freq;
 }
 uint64_t timing_err()
 {
@@ -129,9 +131,9 @@ uint64_t timing()
 
 #define CLK_ID CLOCK_PROCESS_CPUTIME_ID
 
-uint64_t timing_res() 
+double timing_res() 
 {
-   return 1;
+   return 1.0;
 }
 uint64_t timing_err()
 {
@@ -152,3 +154,18 @@ uint64_t timing()
    return t.tv_sec*1E9+t.tv_nsec;
 }
 #endif
+
+// return Hz
+static unsigned long get_cpu_freq_by_sleep(){
+   uint64_t t_err = timing_err();
+   unsigned long beg = 0, end = 0, sum = 0;
+   beg = timing();
+   sleep(1);
+   end = timing();
+   sum += (end-beg-t_err);
+   beg = timing();
+   sleep(0);
+   end = timing();
+   sum -= end - beg - t_err; // sub sleep_err
+   return sum;
+}
