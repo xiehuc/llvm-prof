@@ -118,8 +118,9 @@ bool ProfileTimingPrint::runOnModule(Module &M)
       }
       if(isa<MPITiming>(S) && MpiTiming < DBL_EPSILON){ // MpiTiming is Zero
          auto MT = cast<MPITiming>(S);
-         auto S = PI.getAllTrapedValues(MPInfo);
-         auto U = PI.getAllTrapedValues(MPIFullInfo);
+         auto S = PI.getAllTrapedValues(MPIFullInfo);
+         auto U = PI.getAllTrapedValues(MPInfo);
+         if(U.size()>0) outs()<<"Notice: Old Mpi Profiling Format\n";
          S.insert(S.end(), U.begin(), U.end());
          for(auto I : S){
             const CallInst* CI = cast<CallInst>(I);
