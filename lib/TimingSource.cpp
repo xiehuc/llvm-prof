@@ -113,6 +113,16 @@ void TimingSource::print(raw_ostream& OS) const
    OS<<"\n\n";
 }
 
+MPITiming::MPITiming(Kind K, size_t N):TimingSource(K, N)
+{
+   char* REnv = getenv("MPI_SIZE");
+   if(REnv == NULL){
+      errs()<<"please set environment MPI_SIZE same as when profiling\n";
+      exit(-1);
+   }
+   this->R = atoi(REnv);
+}
+
 StringRef LmbenchTiming::getName(EnumTy IG)
 {
    static SmallVector<std::string,NumGroups> InstGroupNames;
@@ -275,7 +285,7 @@ double IrinstTiming::count(BasicBlock& BB) const
 }
 void IrinstTiming::load_irinst(const char* file, double* cpu_times)
 {
-   static std::map<StringRef, IrinstTiming::EnumTy> InstMap = 
+   static const std::map<StringRef, IrinstTiming::EnumTy> InstMap = 
    {
       {"load",          LOAD},
       {"store",         STORE},
@@ -376,12 +386,6 @@ MPBenchReTiming::MPBenchReTiming()
 {
    file_initializer = NULL;
    bandwidth = latency = NULL;
-   char* REnv = getenv("MPI_SIZE");
-   if(REnv == NULL){
-      errs()<<"please set environment MPI_SIZE same as when profiling\n";
-      exit(-1);
-   }
-   this->R = atoi(REnv);
 }
 
 MPBenchReTiming::~MPBenchReTiming()
@@ -484,7 +488,7 @@ double MPBenchTiming::count(const llvm::Instruction& I, double bfreq,
       return bfreq * (*latency)(O) + C * D * log(R) / (*bandwidth)(O);
 }
 
-static std::map<StringRef, LibFnTiming::EnumTy> LibFnMap = 
+static const std::map<StringRef, LibFnTiming::EnumTy> LibFnMap = 
 {
    {"sqrt", SQRT},
    {"log",  LOG},
@@ -517,6 +521,37 @@ double LibFnTiming::count(const llvm::CallInst& CI, double bfreq) const
    return ret;
 }
 
+LatencyTiming::LatencyTiming()
+    : MPITiming(Kind::Latency, MPINumSpec)
+    , T(params)
+{
+   static const std::map<StringRef, LatencyTiming::EnumTy> MPIMap = 
+   {
+      {"mpi_latency", MPI_LATENCY},
+      {"mpi_bandwidth", MPI_BANDWIDTH}
+   };
+   file_initializer = [](const char* file, double* param){
+      load_and_init_with_map(file, param, MPIMap);
+   };
+}
+
+double LatencyTiming::count(const llvm::Instruction &I, double bfreq, double total) const
+{
+   if(total<DBL_EPSILON || bfreq < DBL_EPSILON) return 0.;
+   const CallInst* CI = dyn_cast<CallInst>(&I);
+   if(CI == NULL) return 0.;
+   unsigned C = 0;
+   try{
+      C = lle::get_mpi_collection(CI);
+   }catch(const std::out_of_range& e){
+      return 0;
+   }
+   if (C == 0) {
+      return bfreq * get(MPI_LATENCY) + total / get(MPI_BANDWIDTH);
+   } else
+      return bfreq * get(MPI_LATENCY) + C * total * log(R) / get(MPI_BANDWIDTH);
+}
+
 const char* LmbenchTiming::Name = TimingSource::Register<LmbenchTiming>(
     "lmbench", "loading lmbench timing source");
 const char* IrinstTiming::Name = TimingSource::Register<IrinstTiming>(
@@ -529,3 +564,5 @@ const char* MPBenchReTiming::Name = TimingSource::Register<MPBenchReTiming>(
     "mpbench-re", "loading mpbench timing source for new mpi format");
 const char* LibFnTiming::Name = TimingSource::Register<LibFnTiming>(
     "libfn", "loading lib func call timing source");
+const char* LatencyTiming::Name = TimingSource::Register<LatencyTiming>(
+    "latency", "load mpi latency timing source");

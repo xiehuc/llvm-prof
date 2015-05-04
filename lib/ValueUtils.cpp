@@ -74,7 +74,6 @@ GlobalVariable* lle::access_global_variable(Instruction *I)
 /** Mpi Specific
  * DataType: name->{categroy, count param idx}
  */
-const unsigned MpiSpecIgnore = 3;
 static 
 std::map<StringRef, 
    std::pair<unsigned char, unsigned char> > 

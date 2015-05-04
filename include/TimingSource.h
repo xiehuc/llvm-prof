@@ -30,6 +30,7 @@ class TimingSource{
       MPI = BBlockLast,
       MPBench,
       MPBenchRe, // a mpbench source for new mpi format
+      Latency,
       MPILast,
       LibCall = MPILast,
       LibFn,
@@ -92,7 +93,8 @@ class MPITiming: public TimingSource
    virtual double count(const llvm::Instruction& I, double bfreq,
                         double count) const = 0; // io part
    protected:
-   MPITiming(Kind K, size_t N):TimingSource(K, N) {}
+   MPITiming(Kind K, size_t N);
+   unsigned R;
 };
 
 class LibCallTiming: public TimingSource
@@ -210,7 +212,6 @@ class MPBenchReTiming : public MPITiming
    protected: 
    FreeExpression* bandwidth;
    FreeExpression* latency;
-   unsigned R;
 };
 
 class MPBenchTiming : public MPBenchReTiming
@@ -222,6 +223,23 @@ class MPBenchTiming : public MPBenchReTiming
    }
 
    MPBenchTiming();
+
+   double count(const llvm::Instruction& I, double bfreq,
+                double count) const override;
+};
+
+enum MPISpec { MPI_LATENCY, MPI_BANDWIDTH, MPINumSpec };
+
+class LatencyTiming : public MPITiming, public _timing_source::T<MPISpec>
+{
+   public:
+   typedef MPISpec EnumTy;
+   static const char* Name;
+   static bool classof(const TimingSource* S) {
+      return S->getKind() == Kind::Latency;
+   }
+
+   LatencyTiming();
 
    double count(const llvm::Instruction& I, double bfreq,
                 double count) const override;
