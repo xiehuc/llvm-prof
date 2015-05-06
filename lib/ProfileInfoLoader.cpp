@@ -66,14 +66,14 @@ static inline uint64_t ByteSwap(uint64_t Var, bool Really)
           ((Var & (255UL << 56U)) >> 56U);
 }
 
-static unsigned AddCounts(unsigned A, unsigned B) {
+static uint64_t AddCounts(uint64_t A, uint64_t B) {
   // If either value is undefined, use the other.
   if (A == ProfileInfoLoader::Uncounted) return B;
   if (B == ProfileInfoLoader::Uncounted) return A;
   return A + B;
 }
 
-template<class IntT=unsigned>
+template<class IntT>
 static void ReadProfilingBlock(const char *ToolName, FILE *F,
                                bool ShouldByteSwap,
                                std::vector<IntT> &Data) {
@@ -145,7 +145,7 @@ static void ReadValueProfilingContents(const char* ToolName, FILE* F,
 #undef EXIT_IF_ERROR
 }
 
-const unsigned ProfileInfoLoader::Uncounted = ~0U;
+const uint64_t ProfileInfoLoader::Uncounted = ~0U;
 
 // ProfileInfoLoader ctor - Read the specified profiling data file, exiting the
 // program if the file is invalid or broken.

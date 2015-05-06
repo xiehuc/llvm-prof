@@ -47,7 +47,7 @@ public:
   // the program if the file is invalid or broken.
   ProfileInfoLoader(const char *ToolName, const std::string &Filename);
 
-  static const unsigned Uncounted;
+  static const uint64_t Uncounted;
 
   unsigned getNumExecutions() const { return CommandLines.size(); }
   const std::string &getExecution(unsigned i) const { return CommandLines[i]; }
