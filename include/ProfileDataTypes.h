@@ -34,6 +34,7 @@ enum ProfilingType {
    SLGInfo      = 101, /* StoreLoadGlobal profiling info  */
    MPInfo       = 102, /* MPI Inst profiling info         */
    MPIFullInfo  = 103, /* an expand MPI Inst profiling info contain datatype */
+   BlockInfo64  = 104, /* Block profiling information with 64bit */
 };
 
 // special flags used in value profiling

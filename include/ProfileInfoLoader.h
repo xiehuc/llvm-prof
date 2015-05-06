@@ -33,7 +33,7 @@ class ProfileInfoLoader {
   const std::string &Filename;
   std::vector<std::string> CommandLines;
   std::vector<unsigned>    FunctionCounts;
-  std::vector<unsigned>    BlockCounts;
+  std::vector<uint64_t>    BlockCounts;
   std::vector<unsigned>    EdgeCounts;
   std::vector<unsigned>    OptimalEdgeCounts;
   std::vector<unsigned>    BBTrace;
@@ -64,7 +64,7 @@ public:
   // getRawBlockCounts - This method is used by consumers of block counting
   // information.
   //
-  const std::vector<unsigned> &getRawBlockCounts() const {
+  const std::vector<uint64_t> &getRawBlockCounts() const {
     return BlockCounts;
   }
 

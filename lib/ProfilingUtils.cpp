@@ -30,13 +30,13 @@ void llvm::InsertProfilingInitCall(Function *MainFn, const char *FnName,
   LLVMContext &Context = MainFn->getContext();
   Type *ArgVTy =
     PointerType::getUnqual(Type::getInt8PtrTy(Context));
-  PointerType *UIntPtr = arrayType ? arrayType :
-    Type::getInt32PtrTy(Context);
+  PointerType *UIntPtr = arrayType ? arrayType : Array->getType();
+  Type* NumElemTy = Array->getType()->getElementType();
   Module &M = *MainFn->getParent();
   Constant *InitFn = M.getOrInsertFunction(FnName, Type::getInt32Ty(Context),
                                            Type::getInt32Ty(Context),
                                            ArgVTy, UIntPtr,
-                                           Type::getInt32Ty(Context),
+                                           NumElemTy,
                                            (Type *)0);
 
   // This could force argc and argv into programs that wouldn't otherwise have
@@ -62,7 +62,7 @@ void llvm::InsertProfilingInitCall(Function *MainFn, const char *FnName,
     // pass null.
     Args[2] = ConstantPointerNull::get(UIntPtr);
   }
-  Args[3] = ConstantInt::get(Type::getInt32Ty(Context), NumElements);
+  Args[3] = ConstantInt::get(NumElemTy, NumElements);
 
   CallInst *InitCall = CallInst::Create(InitFn, Args, "newargc", InsertPos);
 

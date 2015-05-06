@@ -243,8 +243,9 @@ bool LoaderPass::runOnModule(Module &M) {
   }
 
   BlockInformation.clear();
-  Counters = PIL.getRawBlockCounts();
-  if (Counters.size() > 0) {
+  std::vector<uint64_t> Counters64 = PIL.getRawBlockCounts();
+  if (Counters64.size() > 0) {
+    std::vector<uint64_t>& Counters = Counters64;
     ReadCount = 0;
     for (Module::iterator F = M.begin(), E = M.end(); F != E; ++F) {
       if (F->isDeclaration()) continue;

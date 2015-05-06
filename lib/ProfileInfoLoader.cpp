@@ -60,12 +60,13 @@ static unsigned AddCounts(unsigned A, unsigned B) {
   return A + B;
 }
 
+template<class IntT=unsigned>
 static void ReadProfilingBlock(const char *ToolName, FILE *F,
                                bool ShouldByteSwap,
-                               std::vector<unsigned> &Data) {
+                               std::vector<IntT> &Data) {
   // Read the number of entries...
-  unsigned NumEntries;
-  if (fread(&NumEntries, sizeof(unsigned), 1, F) != 1) {
+  IntT NumEntries;
+  if (fread(&NumEntries, sizeof(IntT), 1, F) != 1) {
     errs() << ToolName << ": data packet truncated!\n";
     perror(0);
     exit(1);
@@ -73,10 +74,10 @@ static void ReadProfilingBlock(const char *ToolName, FILE *F,
   NumEntries = ByteSwap(NumEntries, ShouldByteSwap);
 
   // Read the counts...
-  std::vector<unsigned> TempSpace(NumEntries);
+  std::vector<IntT> TempSpace(NumEntries);
 
   // Read in the block of data...
-  if (fread(&TempSpace[0], sizeof(unsigned)*NumEntries, 1, F) != 1) {
+  if (fread(&TempSpace[0], sizeof(IntT)*NumEntries, 1, F) != 1) {
     errs() << ToolName << ": data packet truncated!\n";
     perror(0);
     exit(1);
@@ -89,11 +90,11 @@ static void ReadProfilingBlock(const char *ToolName, FILE *F,
 
   // Accumulate the data we just read into the data.
   if (!ShouldByteSwap) {
-    for (unsigned i = 0; i != NumEntries; ++i) {
+    for (IntT i = 0; i != NumEntries; ++i) {
       Data[i] = AddCounts(TempSpace[i], Data[i]);
     }
   } else {
-    for (unsigned i = 0; i != NumEntries; ++i) {
+    for (IntT i = 0; i != NumEntries; ++i) {
       Data[i] = AddCounts(ByteSwap(TempSpace[i], true), Data[i]);
     }
   }
@@ -219,6 +220,9 @@ ProfileInfoLoader::ProfileInfoLoader(const char *ToolName,
    case MPIFullInfo:
       ReadProfilingBlock(ToolName, F, ShouldByteSwap, MPIFullCounters);
       break;
+
+   case BlockInfo64:
+      ReadProfilingBlock<uint64_t>(ToolName, F, ShouldByteSwap, BlockCounts);
 
    default:
       errs() << ToolName << ": Unknown packet type #" << PacketType << "!\n";

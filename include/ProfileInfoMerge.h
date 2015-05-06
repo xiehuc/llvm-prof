@@ -15,7 +15,7 @@ class ProfileInfoMerge
    std::string Toolname;
    std::vector<std::string> CommandLines;
    std::vector<unsigned> FunctionCounts;
-   std::vector<unsigned> BlockCounts;
+   std::vector<uint64_t> BlockCounts;
    std::vector<unsigned> EdgeCounts;
    std::vector<unsigned> OptimalEdgeCounts;
    std::vector<unsigned> BBTrace;
