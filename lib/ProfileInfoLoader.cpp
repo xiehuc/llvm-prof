@@ -53,6 +53,19 @@ static inline unsigned ByteSwap(unsigned Var, bool Really) {
          ((Var & (255U<<24U)) >> 24U);
 }
 
+static inline uint64_t ByteSwap(uint64_t Var, bool Really)
+{
+   if (!Really) return Var;
+   return ((Var & (255UL <<  0U)) << 56U) |
+          ((Var & (255UL <<  8U)) << 40U) |
+          ((Var & (255UL << 16U)) << 24U) | 
+          ((Var & (255UL << 24U)) <<  8U) |
+          ((Var & (255UL << 32U)) >>  8U) | 
+          ((Var & (255UL << 40U)) >> 24U) |
+          ((Var & (255UL << 48U)) >> 40U) |
+          ((Var & (255UL << 56U)) >> 56U);
+}
+
 static unsigned AddCounts(unsigned A, unsigned B) {
   // If either value is undefined, use the other.
   if (A == ProfileInfoLoader::Uncounted) return B;
@@ -123,9 +136,11 @@ static void ReadValueProfilingContents(const char* ToolName, FILE* F,
 			EXIT_IF_ERROR;
 		}
 		Data[i].resize(TempSpace.size());
+      uint64_t (*BS)(uint64_t, bool) = ByteSwap;
+
 		//tranverse TempSpace with ByteSwap and write to Data[i]
 		std::transform(TempSpace.begin(), TempSpace.end(), Data[i].begin(),
-				std::bind2nd(std::ptr_fun(ByteSwap), ShouldByteSwap));
+				std::bind(BS, std::placeholders::_1, ShouldByteSwap));
 	}
 #undef EXIT_IF_ERROR
 }
@@ -149,7 +164,7 @@ ProfileInfoLoader::ProfileInfoLoader(const char *ToolName,
     errs() << " Warnning '" << Filename << "' seems empty\n";
   }
   fseek(F, 0, SEEK_SET);
-  std::vector<unsigned> WriteCount;
+  std::vector<unsigned> TempCounters32;
 
   // Keep reading packets until we run out of them.
   unsigned PacketType;
@@ -189,7 +204,13 @@ ProfileInfoLoader::ProfileInfoLoader(const char *ToolName,
       break;
 
     case BlockInfo:
-      ReadProfilingBlock(ToolName, F, ShouldByteSwap, BlockCounts);
+       ReadProfilingBlock(ToolName, F, ShouldByteSwap, TempCounters32);
+       if (BlockCounts.size() < TempCounters32.size())
+          BlockCounts.resize(TempCounters32.size());
+       std::transform(TempCounters32.begin(), TempCounters32.end(),
+                      BlockCounts.begin(), BlockCounts.begin(),
+                      std::plus<uint64_t>());
+       TempCounters32.clear();
       break;
 
     case EdgeInfo:
@@ -223,6 +244,7 @@ ProfileInfoLoader::ProfileInfoLoader(const char *ToolName,
 
    case BlockInfo64:
       ReadProfilingBlock<uint64_t>(ToolName, F, ShouldByteSwap, BlockCounts);
+      break;
 
    default:
       errs() << ToolName << ": Unknown packet type #" << PacketType << "!\n";
