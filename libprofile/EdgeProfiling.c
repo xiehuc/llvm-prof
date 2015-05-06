@@ -16,8 +16,8 @@
 #include "Profiling.h"
 #include <stdlib.h>
 
-static unsigned *ArrayStart;
-static unsigned NumElements;
+static uint64_t *ArrayStart;
+static uint64_t NumElements;
 
 /* EdgeProfAtExitHandler - When the program exits, just write out the profiling
  * data.
@@ -28,7 +28,7 @@ static void EdgeProfAtExitHandler(void) {
    * collected into simple edge profiles.  Since we directly count each edge, we
    * just write out all of the counters directly.
    */
-  write_profiling_data(EdgeInfo, ArrayStart, NumElements);
+  write_profiling_data_long(EdgeInfo64, ArrayStart, NumElements);
 }
 
 
@@ -36,7 +36,7 @@ static void EdgeProfAtExitHandler(void) {
  * profiling library.  It is responsible for setting up the atexit handler.
  */
 int llvm_start_edge_profiling(int argc, const char **argv,
-                              unsigned *arrayStart, unsigned numElements) {
+                              uint64_t *arrayStart, uint64_t numElements) {
   int Ret = save_arguments(argc, argv);
   ArrayStart = arrayStart;
   NumElements = numElements;

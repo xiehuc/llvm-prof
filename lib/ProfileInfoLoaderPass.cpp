@@ -68,7 +68,7 @@ namespace {
     // blocks as possbile.
     virtual void recurseBasicBlock(const BasicBlock *BB);
     virtual void readEdgeOrRemember(Edge, Edge&, unsigned &, double &);
-    virtual void readEdge(ProfileInfo::Edge, std::vector<unsigned>&);
+    virtual void readEdge(ProfileInfo::Edge, std::vector<uint64_t>&);
 
     /// getAdjustedAnalysisPointer - This method is used when a pass implements
     /// an analysis interface through multiple inheritance.  If needed, it
@@ -140,7 +140,7 @@ void LoaderPass::recurseBasicBlock(const BasicBlock *BB) {
 }
 
 void LoaderPass::readEdge(ProfileInfo::Edge e,
-                          std::vector<unsigned> &ECs) {
+                          std::vector<uint64_t> &ECs) {
   if (ReadCount < ECs.size()) {
     double weight = ECs[ReadCount++];
     if (weight != ProfileInfoLoader::Uncounted) {
@@ -173,9 +173,10 @@ bool LoaderPass::runOnModule(Module &M) {
   ProfileInfoLoader PIL("profile-loader", Filename);
 
   EdgeInformation.clear();
-  std::vector<unsigned> Counters = PIL.getRawEdgeCounts();
-  if (Counters.size() > 0) {
+  std::vector<uint64_t> Counters64 = PIL.getRawEdgeCounts();
+  if (Counters64.size() > 0) {
     ReadCount = 0;
+    std::vector<uint64_t>& Counters = Counters64;
     for (Module::iterator F = M.begin(), E = M.end(); F != E; ++F) {
       if (F->isDeclaration()) continue;
       DEBUG(dbgs() << "Working on " << F->getName() << "\n");
@@ -194,7 +195,8 @@ bool LoaderPass::runOnModule(Module &M) {
     NumEdgesRead = ReadCount;
   }
 
-  Counters = PIL.getRawOptimalEdgeCounts();
+#if 0
+  std::vector<unsigned> Counters = PIL.getRawOptimalEdgeCounts();
   if (Counters.size() > 0) {
     ReadCount = 0;
     for (Module::iterator F = M.begin(), E = M.end(); F != E; ++F) {
@@ -241,9 +243,10 @@ bool LoaderPass::runOnModule(Module &M) {
     }
     NumEdgesRead = ReadCount;
   }
+#endif
 
   BlockInformation.clear();
-  std::vector<uint64_t> Counters64 = PIL.getRawBlockCounts();
+  Counters64 = PIL.getRawBlockCounts();
   if (Counters64.size() > 0) {
     std::vector<uint64_t>& Counters = Counters64;
     ReadCount = 0;
@@ -264,7 +267,7 @@ bool LoaderPass::runOnModule(Module &M) {
   }
 
   FunctionInformation.clear();
-  Counters = PIL.getRawFunctionCounts();
+  std::vector<unsigned> Counters = PIL.getRawFunctionCounts();
   if (Counters.size() > 0) {
     ReadCount = 0;
     for (Module::iterator F = M.begin(), E = M.end(); F != E; ++F) {

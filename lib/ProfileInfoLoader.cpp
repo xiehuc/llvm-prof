@@ -206,7 +206,7 @@ ProfileInfoLoader::ProfileInfoLoader(const char *ToolName,
     case BlockInfo:
        ReadProfilingBlock(ToolName, F, ShouldByteSwap, TempCounters32);
        if (BlockCounts.size() < TempCounters32.size())
-          BlockCounts.resize(TempCounters32.size());
+          BlockCounts.resize(TempCounters32.size(), Uncounted);
        std::transform(TempCounters32.begin(), TempCounters32.end(),
                       BlockCounts.begin(), BlockCounts.begin(),
                       std::plus<uint64_t>());
@@ -214,7 +214,13 @@ ProfileInfoLoader::ProfileInfoLoader(const char *ToolName,
       break;
 
     case EdgeInfo:
-      ReadProfilingBlock(ToolName, F, ShouldByteSwap, EdgeCounts);
+      ReadProfilingBlock(ToolName, F, ShouldByteSwap, TempCounters32);
+       if (EdgeCounts.size() < TempCounters32.size())
+          EdgeCounts.resize(TempCounters32.size(), Uncounted);
+       std::transform(TempCounters32.begin(), TempCounters32.end(),
+                      EdgeCounts.begin(), EdgeCounts.begin(),
+                      std::plus<uint64_t>());
+       TempCounters32.clear();
       break;
 
     case OptEdgeInfo:
@@ -244,6 +250,10 @@ ProfileInfoLoader::ProfileInfoLoader(const char *ToolName,
 
    case BlockInfo64:
       ReadProfilingBlock<uint64_t>(ToolName, F, ShouldByteSwap, BlockCounts);
+      break;
+
+   case EdgeInfo64:
+      ReadProfilingBlock<uint64_t>(ToolName, F, ShouldByteSwap, EdgeCounts);
       break;
 
    default:

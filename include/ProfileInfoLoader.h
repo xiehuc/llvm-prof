@@ -34,7 +34,7 @@ class ProfileInfoLoader {
   std::vector<std::string> CommandLines;
   std::vector<unsigned>    FunctionCounts;
   std::vector<uint64_t>    BlockCounts;
-  std::vector<unsigned>    EdgeCounts;
+  std::vector<uint64_t>    EdgeCounts;
   std::vector<unsigned>    OptimalEdgeCounts;
   std::vector<unsigned>    BBTrace;
   std::vector<unsigned>	   ValueCounts;
@@ -71,7 +71,7 @@ public:
   // getEdgeCounts - This method is used by consumers of edge counting
   // information.
   //
-  const std::vector<unsigned> &getRawEdgeCounts() const {
+  const std::vector<uint64_t> &getRawEdgeCounts() const {
     return EdgeCounts;
   }
 

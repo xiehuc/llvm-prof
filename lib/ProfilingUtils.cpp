@@ -116,19 +116,18 @@ void llvm::IncrementCounterInBlock(BasicBlock *BB, unsigned CounterNum,
   while (isa<AllocaInst>(InsertPos))
     ++InsertPos;
 
-  LLVMContext &Context = BB->getContext();
-
   // Create the getelementptr constant expression
   std::vector<Constant*> Indices(2);
-  Indices[0] = Constant::getNullValue(Type::getInt32Ty(Context));
-  Indices[1] = ConstantInt::get(Type::getInt32Ty(Context), CounterNum);
+  Type* ETy = cast<ArrayType>(CounterArray->getType()->getElementType())->getElementType();
+  Indices[0] = Constant::getNullValue(ETy);
+  Indices[1] = ConstantInt::get(ETy, CounterNum);
   Constant *ElementPtr =
     ConstantExpr::getGetElementPtr(CounterArray, Indices);
 
   // Load, increment and store the value back.
   Value *OldVal = new LoadInst(ElementPtr, "OldFuncCounter", InsertPos);
   Value *NewVal = BinaryOperator::Create(Instruction::Add, OldVal,
-                                 ConstantInt::get(Type::getInt32Ty(Context), 1),
+                                 ConstantInt::get(ETy, 1),
                                          "NewFuncCounter", InsertPos);
   new StoreInst(NewVal, ElementPtr, InsertPos);
 }
