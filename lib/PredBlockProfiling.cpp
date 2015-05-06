@@ -36,7 +36,9 @@ static void IncrementBlockCounters(llvm::Value* Inc, unsigned Index, GlobalVaria
 
    // Load, increment and store the value back.
    Value* OldVal = Builder.CreateLoad(ElementPtr, "OldBlockCounter");
-   Value* NewVal = Builder.CreateAdd(OldVal, Inc, "NewBlockCounter");
+   Value* NewVal = Builder.CreateAdd(
+       OldVal, Builder.CreateZExtOrBitCast(Inc, Type::getInt64Ty(Context)),
+       "NewBlockCounter");
    Builder.CreateStore(NewVal, ElementPtr);
 }
 
