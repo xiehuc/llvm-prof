@@ -30,8 +30,9 @@ void llvm::InsertProfilingInitCall(Function *MainFn, const char *FnName,
   LLVMContext &Context = MainFn->getContext();
   Type *ArgVTy =
     PointerType::getUnqual(Type::getInt8PtrTy(Context));
-  PointerType *UIntPtr = arrayType ? arrayType : Array->getType();
-  Type* NumElemTy = Array->getType()->getElementType();
+  Type* NumElemTy
+      = cast<ArrayType>(Array->getType()->getElementType())->getElementType();
+  PointerType *UIntPtr = arrayType ? arrayType : PointerType::get(NumElemTy, 0);
   Module &M = *MainFn->getParent();
   Constant *InitFn = M.getOrInsertFunction(FnName, Type::getInt32Ty(Context),
                                            Type::getInt32Ty(Context),
@@ -170,4 +171,3 @@ void llvm::InsertProfilingShutdownCall(Function *Callee, Module *Mod) {
   GlobalDtors->setInitializer(ConstantArray::get(
       cast<ArrayType>(GlobalDtors->getType()->getElementType()), dtors));
 }
-
