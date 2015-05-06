@@ -49,7 +49,7 @@ bool PredBlockProfiler::runOnModule(Module& M)
    for (Module::iterator F = M.begin(), E = M.end(); F != E; ++F) 
       NumBlocks += F->size();
 
-	Type*ATy = ArrayType::get(Type::getInt32Ty(M.getContext()),NumBlocks);
+	Type*ATy = ArrayType::get(Type::getInt64Ty(M.getContext()),NumBlocks);
 	GlobalVariable* Counters = new GlobalVariable(M, ATy, false,
 			GlobalVariable::InternalLinkage, Constant::getNullValue(ATy),
 			"BlockPredCounters");
