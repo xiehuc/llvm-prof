@@ -209,7 +209,7 @@ ProfileInfoLoader::ProfileInfoLoader(const char *ToolName,
           BlockCounts.resize(TempCounters32.size(), Uncounted);
        std::transform(TempCounters32.begin(), TempCounters32.end(),
                       BlockCounts.begin(), BlockCounts.begin(),
-                      std::plus<uint64_t>());
+                      AddCounts);
        TempCounters32.clear();
       break;
 
@@ -219,7 +219,7 @@ ProfileInfoLoader::ProfileInfoLoader(const char *ToolName,
           EdgeCounts.resize(TempCounters32.size(), Uncounted);
        std::transform(TempCounters32.begin(), TempCounters32.end(),
                       EdgeCounts.begin(), EdgeCounts.begin(),
-                      std::plus<uint64_t>());
+                      AddCounts);
        TempCounters32.clear();
       break;
 
