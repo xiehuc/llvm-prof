@@ -41,7 +41,7 @@ static int int_less(const void* pl, const void* pr)
 static uint64_t median(uint64_t* arr, size_t len)
 {
    qsort(arr, len, sizeof(uint64_t), int_less);
-   return arr[len/2];
+   return arr[len/4*3];
 }
 
 int main()
