@@ -437,7 +437,7 @@ double MPBenchReTiming::count(const llvm::Instruction& I, double bfreq,
    if (C == 0) {
       return bfreq * (*latency)(O) + total / (*bandwidth)(O);
    } else
-      return bfreq * (*latency)(O) + C * total * log(R) / (*bandwidth)(O);
+      return bfreq * (*latency)(O) + C * total * log2(R) / (*bandwidth)(O);
 }
 
 void MPBenchReTiming::print(llvm::raw_ostream &OS) const
@@ -485,7 +485,7 @@ double MPBenchTiming::count(const llvm::Instruction& I, double bfreq,
    if (C == 0) {
       return bfreq * (*latency)(O) + D / (*bandwidth)(O);
    } else
-      return bfreq * (*latency)(O) + C * D * log(R) / (*bandwidth)(O);
+      return bfreq * (*latency)(O) + C * D * log2(R) / (*bandwidth)(O);
 }
 
 static const std::map<StringRef, LibFnTiming::EnumTy> LibFnMap = 
@@ -549,7 +549,7 @@ double LatencyTiming::count(const llvm::Instruction &I, double bfreq, double tot
    if (C == 0) {
       return bfreq * get(MPI_LATENCY) + total / get(MPI_BANDWIDTH);
    } else
-      return bfreq * get(MPI_LATENCY) + C * total * log(R) / get(MPI_BANDWIDTH);
+      return bfreq * get(MPI_LATENCY) + C * total * log2(R) / get(MPI_BANDWIDTH);
 }
 
 const char* LmbenchTiming::Name = TimingSource::Register<LmbenchTiming>(
