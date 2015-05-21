@@ -5,7 +5,6 @@ set(SOURCES
   EdgeProfiling.c
   OptimalEdgeProfiling.c
   ValueProfiling.c
-  SLGlobalProfiling.c
   MPIProfiling.c
   PredBlockProfiling.c
   )

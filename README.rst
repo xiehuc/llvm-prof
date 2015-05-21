@@ -65,8 +65,6 @@ extra profilings
 -----------------
 
 * *ValueProfiling*    : provide value profiling, could trap some value.
-* *SLGlobalProfiling* : provide store load profiling on global variables, could
-  find dynamic data denpendencies.
 * *PredBlockProfiling* : similar to edge profiling, different is it increase
   counter with a value, not 1. it is used in prediction block frequence.
 * *MPIProfiling* : profiling for mpi call's count parameter
