@@ -76,15 +76,16 @@ GlobalVariable* lle::access_global_variable(Instruction *I)
  */
 static 
 std::map<StringRef, 
-   std::pair<unsigned char, unsigned char> > 
+   std::pair<MPICategoryType, unsigned char> > 
    MpiSpec = {
-   {"mpi_allreduce_" , {2, 2}} , 
-   {"mpi_reduce_"    , {1, 2}} , 
-   {"mpi_send_"      , {0, 1}} , 
-   {"mpi_recv_"      , {0, 1}} , 
-   {"mpi_isend_"     , {0, 1}} , 
-   {"mpi_irecv_"     , {0, 1}} , 
-   {"mpi_bcast_"     , {1, 1}}
+   {"mpi_allreduce_" , {MPI_CT_REDUCE2 , 2}} ,
+   {"mpi_reduce_"    , {MPI_CT_REDUCE  , 2}} ,
+   {"mpi_send_"      , {MPI_CT_P2P     , 1}} ,
+   {"mpi_recv_"      , {MPI_CT_P2P     , 1}} ,
+   {"mpi_isend_"     , {MPI_CT_P2P     , 1}} ,
+   {"mpi_irecv_"     , {MPI_CT_P2P     , 1}} ,
+   {"mpi_bcast_"     , {MPI_CT_REDUCE  , 1}} ,
+   {"mpi_alltoall_"  , {MPI_CT_NSIDES  , 1}}
 };
 
 unsigned lle::get_mpi_count_idx(const llvm::CallInst* CI)
@@ -98,7 +99,7 @@ unsigned lle::get_mpi_count_idx(const llvm::CallInst* CI)
       return 0;
    }
 }
-unsigned lle::get_mpi_collection(const llvm::CallInst* CI)
+MPICategoryType lle::get_mpi_collection(const llvm::CallInst* CI)
 {
    Value* CV = const_cast<CallInst*>(CI)->getCalledValue();
    Function* Called = dyn_cast<Function>(castoff(CV));

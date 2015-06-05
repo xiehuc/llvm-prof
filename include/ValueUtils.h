@@ -33,14 +33,16 @@ namespace lle{
     */
    unsigned get_mpi_count_idx(const llvm::CallInst*);
 
+   enum MPICategoryType {
+      MPI_CT_P2P      = 0, 
+      MPI_CT_REDUCE   = 1, // collect
+      MPI_CT_REDUCE2  = 2, // double collect
+      MPI_CT_NSIDES   = 3  // n times communicate
+   };
    /**
     * return mpi collection category
-    * category:
-    *   == 0 --- p2p
-    *   == 1 --- collect
-    *   == 2 --- double collect
-    *   == unknow --- throw std::out_of_range
+    * if unknow --- throw std::out_of_range
     */
-   unsigned get_mpi_collection(const llvm::CallInst*) noexcept(false);
+   MPICategoryType get_mpi_collection(const llvm::CallInst*) noexcept(false);
 }
 #endif

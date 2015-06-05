@@ -537,19 +537,23 @@ LatencyTiming::LatencyTiming()
 
 double LatencyTiming::count(const llvm::Instruction &I, double bfreq, double total) const
 {
+   using namespace lle;
    if(total<DBL_EPSILON || bfreq < DBL_EPSILON) return 0.;
    const CallInst* CI = dyn_cast<CallInst>(&I);
    if(CI == NULL) return 0.;
-   unsigned C = 0;
+   double latency = get(MPI_LATENCY), bandwidth = get(MPI_BANDWIDTH);
+   MPICategoryType C = MPI_CT_P2P;
    try{
       C = lle::get_mpi_collection(CI);
    }catch(const std::out_of_range& e){
       return 0;
    }
-   if (C == 0) {
-      return bfreq * get(MPI_LATENCY) + total / get(MPI_BANDWIDTH);
-   } else
-      return bfreq * get(MPI_LATENCY) + C * total * log2(R) / get(MPI_BANDWIDTH);
+   if (C == MPI_CT_P2P) {
+      return bfreq * latency + total / bandwidth;
+   } else if (C <= MPI_CT_REDUCE2)
+      return bfreq * latency + C * total * log2(R) / bandwidth;
+   else
+      return 2R * (bfreq * latency + total / bandwidth);
 }
 
 const char* LmbenchTiming::Name = TimingSource::Register<LmbenchTiming>(
