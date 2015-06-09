@@ -553,7 +553,7 @@ double LatencyTiming::count(const llvm::Instruction &I, double bfreq, double tot
    } else if (C <= MPI_CT_REDUCE2)
       return bfreq * latency + C * total * log2(R) / bandwidth;
    else
-      return 2R * (bfreq * latency + total / bandwidth);
+      return 2 * R * (bfreq * latency + total / bandwidth);
 }
 
 const char* LmbenchTiming::Name = TimingSource::Register<LmbenchTiming>(
