@@ -15,9 +15,11 @@ build
 
 ::
 
+        $ sudo apt install llvm-3.5-dev clang-3.5 libopenmpi-dev gfortran # maybe mpi dependency could make a option.
 	$ mkdir build
 	$ cd build
 	$ cmake .. 
+	$ # or cmake .. -DLLVM_RECOMMEND_VERSION=3.5 to look for llvm-config-3.5
 	$ make 
 	$ sudo make install
 
